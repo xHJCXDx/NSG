@@ -1,388 +1,173 @@
-Este es el borrador completo de la tesis, redactado con la profundidad técnica, el tono académico y la estructura solicitada para su presentación en una universidad pública argentina (ej. UTN).
+Prompt “Tesis OSINT + Automatización con n8n para Monitoreo de Redes Sociales” (versión larga)
 
-***
+Rol:
+Sos un/a investigador/a universitario/a con amplia experiencia en dirección de tesis de grado y maestría en las áreas de ciberseguridad, OSINT y automatización operativa. Dominas el uso ético de fuentes abiertas, técnicas de análisis de sentimiento, integración de APIs públicas de redes sociales, automatización con n8n, PostgreSQL y buenas prácticas de documentación académica (formato UTN / universidad pública argentina).
 
-# Prompt “Tesis de ciberseguridad + automatización con n8n” (versión larga)
+Tarea:
+Quiero que redactes una tesis completa (no un resumen) sobre el siguiente tema:
 
-## Tesis de Grado/Maestría
+Tema:
+“Monitoreo automatizado de redes sociales para OSINT mediante integración de APIs públicas (Twitter/X, Reddit), análisis de sentimiento y flujos n8n, con almacenamiento estructurado en PostgreSQL y generación de alertas operativas para equipos de inteligencia”.
 
-**Rol del Generador de Contenido:** Eres un/a investigador/a universitario/a con amplia experiencia en dirección de tesis de grado y maestría en el área de ciberseguridad. Dominas gestión de vulnerabilidades, SecOps, automatización de procesos con n8n y buenas prácticas de documentación académica (formato UTN / universidad pública argentina).
+Objetivos que debe cumplir la tesis
 
-**Tarea:** Redactar una tesis completa (no un simple resumen) sobre el siguiente tema, cumpliendo todos los objetivos y la estructura obligatoria.
+Explicar en profundidad el problema actual del monitoreo manual de redes sociales para OSINT (volumen, velocidad, sesgo humano, falta de alertas oportunas).
 
----
+Describir la utilidad de la automatización con n8n en contextos de inteligencia con recursos limitados.
 
-# **Notificación Automatizada de Parches de Vulnerabilidades Integrando NVD API, CVE Details, Shodan y un Motor de Orquestación n8n, con Base de Datos PostgreSQL y Tracking de Remediación**
+Integrar el análisis de sentimiento con herramientas open-source (VADER, TextBlob) y justificar su selección.
 
-## Portada
+Explicar el uso ético de OSINT (legalidad, proporcionalidad, privacidad).
 
-| **Título** | Notificación Automatizada de Parches de Vulnerabilidades Integrando NVD API, CVE Details, Shodan y un Motor de Orquestación n8n, con Base de Datos PostgreSQL y Tracking de Remediación. |
-| :--- | :--- |
-| **Autor/es** | [Nombre del Tesista/Autor] |
-| **Afiliación** | Universidad Tecnológica Nacional (UTN) / [Nombre de la Universidad Pública Argentina] |
-| **Línea de Investigación** | Automatización en Ciberseguridad (SecOps) y Gestión de Riesgos Informáticos |
-| **Fecha** | Noviembre de 2025 |
+Incorporar 4 papers o artículos académicos recientes (post 2022) relacionados con:
 
----
+OSINT automatizado
 
-## 1. Resumen y Palabras Clave
+análisis de redes sociales
 
-### Resumen
+análisis de sentimiento
 
-La gestión de vulnerabilidades (VM) y el parcheo efectivo representan uno de los mayores desafíos en la ciberseguridad moderna, debido al volumen creciente de nuevas *Common Vulnerabilities and Exposures* (CVE) publicadas y la latencia entre su divulgación y la aplicación de la remediación. Esta tesis propone y documenta la arquitectura de un sistema de **inteligencia de vulnerabilidades** automatizado. Utilizando **n8n** como motor de orquestación, se integra la API oficial de la *National Vulnerability Database* (NVD), datos de enriquecimiento de **CVE Details** y capacidades de detección de exposición pública de **Shodan**. Los datos son centralizados y correlacionados con un inventario interno en una base de datos **PostgreSQL**, lo que permite determinar la aplicabilidad real y la priorización basada en el contexto organizacional y el riesgo de explotación. El sistema documenta un flujo de trabajo de cinco etapas y establece un *tracking* de remediación para calcular métricas críticas de seguridad, como el *Mean Time To Detect* (MTTD) y el *Mean Time To Remediate* (MTTR), buscando reducir la ventana de exposición a amenazas críticas. Se presenta el modelo de datos SQL y los anexos técnicos necesarios para su implementación en un entorno real.
+automatización de workflows
+Cada uno debe estar citado y explicado en el estado del arte, indicando qué aporte brinda y qué vacío dejan.
 
-### Palabras Clave
+Documentar la arquitectura basada en:
+Twitter API v2 + Reddit API + n8n + análisis NLP + PostgreSQL + Slack/Email para alertas.
 
-Automatización, n8n, Gestión de Vulnerabilidades (VM), *Patch Management*, NVD API, PostgreSQL, CVE, CVSS, SecOps, Shodan.
+Documentar el modelo de datos en PostgreSQL:
 
----
+social_mentions
 
-## 2. Introducción
+sentiment_analysis
 
-### 2.1. Contexto
+threat_detections
 
-El panorama actual de las ciberamenazas está dominado por la velocidad. Los actores maliciosos aprovechan el breve lapso entre la publicación de una vulnerabilidad crítica y la disponibilidad de un parche. El volumen anual de CVEs supera las 25.000, un número que excede la capacidad de cualquier equipo de seguridad para procesar y priorizar manualmente.
+alerts
+con SQL completo, índices, claves foráneas y manejo de ON CONFLICT.
 
-### 2.2. Problema
+Documentar el workflow n8n en mínimo 5 nodos/etapas (recopilación, filtrado/deduplicación, análisis NLP, clasificación/criticidad, alertas y almacenamiento).
 
-El problema central radica en la **brecha entre la publicación de la CVE y la remediación efectiva (MTTR)**. La gestión manual no solo es ineficiente, sino que carece de la contextualización necesaria para priorizar: una vulnerabilidad con CVSS alto puede ser irrelevante si no afecta a ningún activo, mientras que una vulnerabilidad media puede ser crítica si el activo está expuesto a Internet o maneja datos sensibles. Se requiere un mecanismo que no solo notifique, sino que filtre, priorice y correlacione automáticamente la información de vulnerabilidades con el inventario de activos de la organización.
+Definir métricas de evaluación:
 
-### 2.3. Relevancia
+precisión, recall, F1
 
-La propuesta es relevante porque traslada el proceso de VM de una tarea reactiva, manual y estresante a un flujo de trabajo proactivo, automatizado y basado en el riesgo contextual. El uso de herramientas de código abierto como **n8n** y **PostgreSQL** hace que la solución sea accesible y adaptable a organizaciones con presupuestos limitados o que buscan la soberanía sobre sus herramientas de SecOps.
+tiempo de detección
 
----
+tasa de falsos positivos
 
-## 3. Planteamiento del Problema
+cobertura de keywords
 
-La dependencia de la revisión humana en la gestión de vulnerabilidades se traduce en altos *Mean Time To Detect* (MTTD) y *Mean Time To Remediate* (MTTR), lo que incrementa significativamente el riesgo de un ciberataque. El desafío es **diseñar e implementar una arquitectura de SecOps automatizada, utilizando n8n, capaz de ingerir, enriquecer, correlacionar y alertar sobre nuevas CVEs en tiempo real, minimizando la intervención manual y proporcionando una métrica objetiva y auditable del progreso de la remediación.**
+Incluir anexos técnicos:
 
----
+script SQL completo
 
-## 4. Objetivos
+export/estructura del workflow n8n (pseudo-JSON si es necesario)
 
-### 4.1. Objetivo General
+plantillas de alertas
 
-Diseñar e implementar un motor de orquestación basado en n8n para la gestión automatizada de inteligencia de vulnerabilidades, integrando datos de NVD, CVE Details y Shodan con una base de datos PostgreSQL para priorizar, notificar y realizar el seguimiento de la remediación de parches en activos internos.
+matriz de criticidad
 
-### 4.2. Objetivos Específicos
+ejemplo de reporte mensual
 
-1.  **Explicar el problema actual de gestión de vulnerabilidades y parcheo**, detallando la brecha existente entre la publicación de CVE y la remediación efectiva en entornos corporativos.
-2.  **Demostrar la utilidad de la automatización con n8n** para la ingesta de datos de múltiples fuentes API y su correlación con un inventario de activos interno.
-3.  **Integrar y citar 4 papers o artículos académicos recientes (post 2022)** sobre automatización de *patch management* / *vulnerability management* en el estado del arte, explicando el aporte de cada uno y el vacío de conocimiento que esta tesis busca llenar.
-4.  **Diseñar la arquitectura técnica propuesta** (*NVD + CVE Details + Shodan + n8n + PostgreSQL + alertas*) detallando los flujos de datos y las interfaces de comunicación (APIs).
-5.  **Documentar el modelo de datos en PostgreSQL** (tablas: `cves`, `software_inventory`, `applicable_vulnerabilities`, `vulnerability_alerts`) con su código SQL de creación y *scripts* de inserción/actualización con lógica `ON CONFLICT DO UPDATE`.
-6.  **Documentar el workflow de n8n** en 5 nodos o etapas funcionales: recolección, filtrado/priorización, correlación con inventario, alertas contextualizadas, y verificación del estado de parches (*tracking*).
-7.  **Definir métricas de evaluación** clave para SecOps: *Mean Time To Detect* (MTTD), *Mean Time To Remediate* (MTTR), porcentaje de correlación (*% de activos impactados*) y porcentaje de cumplimiento de *Service Level Agreements* (SLA).
-8.  **Elaborar los anexos técnicos** necesarios para la replicabilidad de la solución, incluyendo el *script* SQL, la estructura del *workflow* n8n y las plantillas de alerta.
+Profundizar en consideraciones éticas: tratamiento de datos personales, límites legales de OSINT, políticas de retención y anonimización.
 
----
+Bajar a lo técnico:
 
-## 5. Marco Teórico
+endpoints reales de APIs de Twitter/Reddit
 
-### 5.1. Fundamentos de Ciberseguridad y Gestión de Riesgos
-La tesis se enmarca en la Gestión de Riesgos, enfocándose en la disciplina de **Vulnerability Management (VM)** y **Patch Management (PM)**. Se debe definir el ciclo de vida de una vulnerabilidad, desde su descubrimiento hasta su mitigación.
+parámetros usados
 
-### 5.2. Estándares de Vulnerabilidades
-* **CVE (Common Vulnerabilities and Exposures):** Identificador universal de vulnerabilidades.
-* **CVSS (Common Vulnerability Scoring System):** Marco estándar y abierto para cuantificar la severidad de las vulnerabilidades. Se hará hincapié en la versión 3.x/4.x y el uso de métricas Base, Temporal y Ambiental (priorización contextual).
-* **CPE (Common Platform Enumeration):** Esquema estandarizado para nombrar sistemas operativos, aplicaciones y dispositivos. Es fundamental para la correlación automática con el inventario.
+limitaciones de rate limit
 
-### 5.3. Fuentes de Inteligencia de Amenazas
-* **NVD (National Vulnerability Database):** Repositorio oficial del gobierno de EE. UU. (NIST) que enriquece las CVEs con CVSS, CPE y *vendor statements*. Se debe detallar el uso de su **API 2.0**.
-* **CVE Details:** Fuente de datos adicional que proporciona información sobre exploits y métricas de popularidad no siempre disponibles en NVD.
-* **Shodan:** Motor de búsqueda para dispositivos conectados a Internet. Se utiliza para enriquecer la vulnerabilidad con el dato de **exposición pública**, es decir, si los activos potencialmente afectados son detectables desde Internet (a través de la **CVEDB API** o búsquedas específicas).
+cómo se parsea el texto, extracción de features
 
-### 5.4. Automatización en SecOps
-* **SecOps (Security Operations):** La integración de la seguridad en las operaciones diarias. La automatización es clave para lograr la **velocidad** y **escalabilidad**.
-* **n8n como motor de Orquestación:** Plataforma de flujo de trabajo de código abierto (o *low-code*) que permite la integración de APIs, bases de datos y servicios de mensajería sin escribir código desde cero. Su flexibilidad es ideal para el *pipeline* de VM propuesto.
+ejemplos de nodos Function/Code de n8n
 
----
+SQL optimizado para inserción masiva y análisis posterior
 
-## 6. Estado del Arte
+Estructura obligatoria de la tesis
 
-Se analizaron estudios recientes (post 2022) que abordan la automatización en la gestión de vulnerabilidades y parches.
+Portada (título, autor, afiliación, línea de investigación, fecha)
 
-| Nro. | Título del Paper/Artículo (Post 2022) | Aporte Principal a la Tesis | Vacío de Conocimiento Identificado |
-| :--- | :--- | :--- | :--- |
-| P1 | **Automation of Vulnerability and Patch Management: Information Extraction, Association, and Optimization** | Documenta un marco para la extracción, asociación y optimización de información de vulnerabilidades, incluyendo la consideración de mitigaciones alternativas cuando el parcheo no es viable, optimizando el uso de recursos. | Se centra en el modelo algorítmico y la toma de decisiones, pero carece de una implementación práctica y *low-code* con orquestadores específicos como n8n. |
-| P2 | **AI for Automated Vulnerability Assessment and Patch Management in Cloud Systems** | Explora el uso de IA y ML para mejorar la priorización del riesgo y la detección de amenazas, especialmente en entornos de nube, lo que subraya la importancia de la priorización contextual y la reducción del MTTR. | Su foco es la nube y el uso intensivo de IA/ML, dejando un espacio para soluciones robustas y de código abierto para entornos *on-premise* o híbridos que requieren un motor de orquestación más directo (n8n). |
-| P3 | **Automated Patch Management: An Empirical Evaluation Study** | Proporciona un modelo de gestión de parches que incluye fases de prueba, validación y la importancia de la priorización basada en dependencias y la funcionalidad de *rollback*, elementos esenciales para el *tracking* de remediación. | Detalla las fases de PM pero no la etapa previa y crítica de ingesta y correlación de inteligencia de múltiples fuentes abiertas (NVD, Shodan) para determinar la aplicabilidad antes de la fase de despliegue. |
-| P4 | **Intelligent Automation of Patch Management in Hybrid IT** | Demuestra reducciones significativas en el MTTR (promedio de 64%) a través de la automatización inteligente y la evaluación cuantitativa del rendimiento, validando las métricas de evaluación de esta tesis (MTTR, MTTD). | Propone un marco de automatización de alto nivel en entornos híbridos, pero no desciende a la implementación práctica de la arquitectura de *data pipeline* con herramientas específicas y detalladas como n8n y PostgreSQL. |
+Resumen y palabras clave
 
-**Conclusión del Estado del Arte:** Los trabajos recientes demuestran la eficacia de la automatización y la priorización inteligente para reducir el riesgo. Sin embargo, existe un vacío en la documentación de una **solución SecOps práctica, orquestada con n8n, que unifique la ingesta, el enriquecimiento (NVD + Shodan) y la gestión de la remediación en una única base de datos PostgreSQL** de manera académica y reproducible.
+Introducción (contexto de OSINT, problema, relevancia)
 
----
+Planteamiento del problema
 
-## 7. Justificación
+Objetivos general y específicos
 
-La justificación de este trabajo es doble: técnica y académica. **Técnicamente**, proporciona una solución de SecOps de bajo costo (*low-code*, *open-source*) que aborda el problema de la latencia de remediación, centralizando la inteligencia de vulnerabilidades. **Académicamente**, esta tesis se alinea con la creciente demanda de profesionales capaces de automatizar procesos de seguridad y contribuye a la documentación técnica de n8n en el contexto de la ciberseguridad, un área en desarrollo en la academia argentina.
+Marco teórico (OSINT, técnicas de monitoreo, APIs sociales, análisis de sentimiento, n8n, bases de datos)
 
----
+Estado del arte
 
-## 8. Metodología
+Integrar y analizar los 4 papers recientes
 
-### 8.1. Tipo de Estudio
-Estudio de enfoque **Descriptivo-Explicativo** con diseño de **Ingeniería de Desarrollo de Software de Seguridad**. Es descriptivo porque documenta el estado del arte y la arquitectura propuesta, y explicativo porque detalla los mecanismos de integración y los resultados esperados de la automatización.
+Identificar vacíos existentes
 
-### 8.2. Diseño y Variables
-* **Diseño:** Modelo de arquitectura funcional con validación mediante simulación de datos (CVEs históricos) e implementación de un *Proof of Concept* (PoC) en un entorno de laboratorio.
-* **Variables de Entrada:** Datos de CVE (ID, CVSS, CPE), Datos de Inventario (Nombre SW, Versión, IP, Exposición Shodan).
-* **Variables de Salida/Métricas de Éxito:** MTTD, MTTR, % de Correlación, % de Cumplimiento de SLA.
+Justificación
 
-### 8.3. Instrumentos
-* **Motor de Orquestación:** n8n (versión *self-hosted*).
-* **Base de Datos:** PostgreSQL (versión 15+).
-* **Fuentes de Datos:** NVD API 2.0 (`https://services.nvd.nist.gov/rest/json/cves/2.0`), CVEDB API de Shodan.
-* **Herramientas de Alerta:** Módulo de Slack/Email de n8n.
+Metodología (tipo de estudio, diseño, variables, métricas, escenarios de validación)
 
-### 8.4. Escenario de Validación
-Un entorno de laboratorio que simula una infraestructura corporativa, con una tabla de inventario (`software_inventory`) que contiene 50 registros de *software* y *hardware* con versiones asociadas y datos de exposición (IP pública).
+Desarrollo / Propuesta técnica
 
----
+Arquitectura completa
 
-## 9. Desarrollo / Propuesta Técnica
+Modelo de datos PostgreSQL (con SQL)
 
-### 9.1. Arquitectura Propuesta
+Workflows n8n
 
-La arquitectura se basa en un modelo centralizado de ingesta, procesamiento y notificación.
+Integración de APIs
 
-$$
-\text{NVD API} \xrightarrow[\text{CVE Data}]{\text{n8n - Colector}} \text{PostgreSQL (cves)}
-$$
+Resultados esperados / pruebas piloto
 
-$$
-\text{CVE Details/Shodan} \xrightarrow[\text{Enriquecimiento}]{\text{n8n - Enriquecedor}} \text{PostgreSQL (cves)}
-$$
+Discusión
 
-$$
-\text{PostgreSQL (cves)} + \text{PostgreSQL (software\_inventory)} \xrightarrow[\text{Correlación por CPE}]{\text{n8n - Correlador}} \text{PostgreSQL (applicable\_vulnerabilities)}
-$$
+Conclusiones
 
-$$
-\text{applicable\_vulnerabilities} \xrightarrow[\text{Alerta}]{\text{n8n - Alerta}} \text{Slack / Email (SecOps Team)}
-$$
+Recomendaciones
 
-### 9.2. Modelo de Datos en PostgreSQL
+Limitaciones y trabajo futuro
 
-El modelo de datos es relacional y diseñado para la eficiencia de consulta, utilizando PostgreSQL para la robustez y la capacidad de actualización atómica de registros (`ON CONFLICT DO UPDATE`).
+Bibliografía
 
-| Tabla | Propósito | Clave Primaria (PK) | Campos Relevantes |
-| :--- | :--- | :--- | :--- |
-| **`cves`** | Almacena los metadatos de la vulnerabilidad. | `cve_id` (TEXT) | `cvss_score` (NUMERIC), `severity` (TEXT), `description` (TEXT), `cpe_matches` (JSONB), `is_exposed_shodan` (BOOLEAN), `collected_at` (TIMESTAMP) |
-| **`software_inventory`** | Catálogo de activos internos. | `asset_id` (SERIAL) | `name` (TEXT), `version` (TEXT), `cpe_23` (TEXT), `ip_address` (TEXT), `owner` (TEXT), `business_criticality` (INT) |
-| **`applicable_vulnerabilities`** | Mapea las CVEs a los activos afectados. | `asset_id` + `cve_id` | `detection_date` (TIMESTAMP), `status` (TEXT: 'Pending', 'In Progress', 'Remediated'), `sla_due_date` (DATE), `tracking_owner` (TEXT) |
-| **`vulnerability_alerts`** | Histórico de notificaciones generadas. | `alert_id` (SERIAL) | `asset_id` (INT), `cve_id` (TEXT), `alert_level` (TEXT: 'Critical', 'High'), `sent_via` (TEXT), `created_at` (TIMESTAMP) |
+Anexos (SQL, workflows, plantillas, matrices, reportes)
 
-### 9.3. Documentación del Workflow de n8n
+Tono y profundidad
 
-El flujo principal opera en 5 etapas secuenciales, usando nodos *HTTP Request*, *Function*, *PostgreSQL* y *Slack/Email*.
+Redacción académica, técnica y exhaustiva, estilo UTN.
 
-| Etapa/Nodo | Descripción Técnica (n8n) | Detalle de Operación |
-| :--- | :--- | :--- |
-| **1. Recolección** | **Nodo `Cron`** -> **Nodo `HTTP Request` (NVD API)** | Llama a `https://services.nvd.nist.gov/rest/json/cves/2.0?lastModifiedStartDate=...`. Utiliza *date ranges* para consultar solo CVEs nuevas o modificadas en las últimas 24 horas. |
-| **2. Filtrado/Priorización** | **Nodo `Function`** -> **Nodo `HTTP Request` (Shodan/CVE Details)** | Filtra por CVSS Base Score $\geq$ 7.0. Usa un **Nodo `Function`** para parsear el arreglo `cpeMatch` de la NVD y extraer los `CPE 2.3` aplicables. Luego, consulta la **CVEDB de Shodan** con el `CVE-ID` para enriquecer el registro con `is_exposed_shodan`. |
-| **3. Correlación con Inventario** | **Nodo `PostgreSQL` (Select)** -> **Nodo `Function` (Correlation)** | Consulta la tabla `software_inventory` para obtener todos los activos. El **Nodo `Function`** realiza una lógica de *matching* (uso de librerías como `cpe-match` si n8n lo permite, o lógica *regex* simple en JavaScript) para encontrar CPEs coincidentes entre la CVE y el inventario. |
-| **4. Alertas Contextualizadas** | **Nodo `PostgreSQL` (Insert)** -> **Nodo `Slack/Email`** | **Inserta/Actualiza** la tabla `applicable_vulnerabilities`. Si el registro es nuevo o cambia de estado, se genera una alerta. La alerta se prioriza: si CVSS $\geq$ 9.0 *O* (CVSS $\geq$ 7.0 **Y** `is_exposed_shodan` = TRUE **Y** `business_criticality` $\geq$ 4), se envía como **CRÍTICA**. |
-| **5. Verificación de Parches (*Tracking*)** | **Nodo `Wait`** -> **Nodo `PostgreSQL` (Update)** | Tras la alerta, se usa un **Nodo `Wait`** o un flujo separado. Este verifica periódicamente si el estado del activo en el inventario ha cambiado o si se ha actualizado el campo `status` en `applicable_vulnerabilities` por una acción de remediación externa, actualizando el *tracking* de MTTR. |
+Párrafos largos, conectados y bien argumentados.
 
-### 9.4. Descenso a lo Técnico: Endpoints y Parsing
+Evitar estilo de blog o fragmentado.
 
-* **Endpoint NVD API (Ejemplo de Consulta):**
-    ```
-    GET https://services.nvd.nist.gov/rest/json/cves/2.0?lastModifiedStartDate=2025-11-14T00:00:00.000Z&lastModifiedEndDate=2025-11-15T23:59:59.999Z
-    ```
-* **Parsing de CPE en n8n (Lógica de Nodo `Function`):**
-    El JSON de NVD contiene la información del producto afectado en el campo `configurations[0].nodes[0].cpeMatch`. El nodo `Function` debe iterar sobre este *array* y extraer el valor de `cpe23Uri` para buscar coincidencias.
-* **Lógica de ON CONFLICT DO UPDATE en PostgreSQL:**
-    El nodo PostgreSQL de la etapa 1 debe utilizar la siguiente sintaxis para evitar duplicados y actualizar información enriquecida (como el score CVSS) si ya existe la CVE:
+Justificar todas las decisiones técnicas.
 
-    ```sql
-    INSERT INTO cves (cve_id, cvss_score, severity, description, collected_at, cpe_matches)
-    VALUES (
-        '{{ $json.cveId }}',
-        '{{ $json.cvss_score }}',
-        '{{ $json.severity }}',
-        '{{ $json.description }}',
-        NOW(),
-        '{{ JSON.stringify($json.cpe_matches) }}'
-    )
-    ON CONFLICT (cve_id) DO UPDATE
-    SET
-        cvss_score = EXCLUDED.cvss_score,
-        severity = EXCLUDED.severity,
-        collected_at = NOW();
-    ```
+Si falta información, completarla según las mejores prácticas OSINT y de ingeniería de datos utilizadas en universidades públicas argentinas.
 
----
+Nivel técnico mínimo obligatorio
 
-## 10. Resultados Esperados / Pruebas Piloto
+Incluir detalles como:
 
-Se espera que el sistema logre una **reducción mínima del 50% en el MTTD** (pasando de horas/días a minutos) en comparación con un proceso manual. La prueba piloto se ejecutará con datos históricos de CVEs que afectaron a versiones populares de *software* (ej. Apache, Nginx, Linux Kernel). El principal resultado será la generación automatizada de la tabla `applicable_vulnerabilities` con el campo `sla_due_date` correctamente calculado en función de la criticidad, proporcionando a los equipos de IT una lista de tareas objetiva y priorizada.
+Endpoints reales:
 
----
+GET https://api.twitter.com/2/tweets/search/recent
 
-## 11. Conclusiones
+GET https://www.reddit.com/r/{subreddit}/new.json
 
-La orquestación de inteligencia de vulnerabilidades con n8n y PostgreSQL no solo es viable técnicamente, sino que es una metodología fundamental para la modernización de los equipos de SecOps. La solución propuesta demuestra que, mediante la integración de fuentes de datos abiertas como NVD y Shodan, es posible reducir la ventana de exposición a amenazas críticas, pasando de una gestión reactiva a una proactiva y basada en el riesgo contextualizado. El uso de la base de datos centralizada permite el cálculo de métricas de rendimiento objetivas, transformando la VM en un proceso medible y auditable.
+Ejemplo de parsing de resultados.
 
----
+Ejemplo de heurísticas de clasificación (keywords, similitud, sentimiento).
 
-## 12. Recomendaciones
+Scripts SQL completos con índices, ON CONFLICT, claves foráneas y CHECKs.
 
-Se recomienda la implementación de un **mecanismo de *sandbox* o *testing*** antes de la correlación final, para evitar notificaciones falsas. Se debe asegurar la implementación de un **control de *rate limiting*** en el flujo de n8n para respetar las cuotas de las APIs de NVD y Shodan (ej. 50 peticiones/30 segundos para NVD con API Key). Para el trabajo futuro, se recomienda la integración de fuentes de *Exploit Prediction Scoring System* (EPSS) y *CISA Known Exploited Vulnerabilities* (KEV) para una priorización aún más precisa.
+Nodos Function/Code de n8n (normalización, deduplicación, rate limiting).
 
----
+Ejemplos completos de plantillas de email/slack en alertas.
 
-## 13. Limitaciones y Trabajo Futuro
-
-### 13.1. Limitaciones
+Ejemplo de reporte mensual con métricas reales o simuladas.
 
-1.  **Precisión del Inventario (CPE):** La precisión del sistema depende directamente de la calidad y el formato estandarizado (CPE 2.3) del inventario (`software_inventory`). Un inventario desactualizado o mal formateado generará una correlación incorrecta.
-2.  **API Rate Limits:** La dependencia de APIs externas (NVD, Shodan) está sujeta a sus límites de peticiones, lo que puede requerir una arquitectura de colas de mensajes o estrategias de espera más complejas dentro de n8n.
+Explicación del versionado de flujos y auditoría.
 
-### 13.2. Trabajo Futuro
+Contexto institucional
 
-1.  **Automatización del Parcheo:** Extender el *workflow* de n8n para interactuar con herramientas de *Patch Management* (*RMM/MDM*) como Ansible o SCCM, para iniciar automáticamente la tarea de despliegue del parche.
-2.  **Análisis de Impacto (Dependencias):** Integración con gráficos de dependencias de *software* para evaluar el riesgo en cascada y evitar la falla de servicios críticos al aplicar un parche.
-
----
-
-## 14. Bibliografía
-
-1.  NIST National Vulnerability Database (NVD). (2025). **Vulnerability APIs**..
-2.  Palo Alto Networks. **Patch Management Vs. Vulnerability Management - Palo Alto Networks**..
-3.  **AI for Automated Vulnerability Assessment and Patch Management in Cloud Systems**. (2025). ResearchGate..
-4.  **Automation of Vulnerability and Patch Management: Information Extraction, Association, and Optimization**. (2023). ScholarWorks@UARK..
-5.  **Automated Patch Management: An Empirical Evaluation Study**. (2024). DiVA portal..
-6.  **Intelligent Automation of Patch Management in Hybrid IT**. (2025). ResearchGate..
-7.  Shodan. **CVEDB API - Fast Vulnerability Lookups**..
-8.  **Track CVE Vulnerability Details & History with NVD API and Google Sheets - N8N**. (2024). N8N Workflows..
-9.  Cruz, H. J. & Manzano, M. (2025). *Monitoreo Automatizado de Redes Sociales para OSINT con n8n: Detección de Amenazas y Análisis de Sentimiento en Fuentes Públicas*. Nexus Security Group..
-
----
-
-## 15. Anexos
-
-### Anexo A: Script SQL (PostgreSQL)
-
-```sql
--- Creación de la tabla de metadatos de CVEs
-CREATE TABLE cves (
-    cve_id TEXT PRIMARY KEY,
-    cvss_score NUMERIC(3, 1),
-    severity TEXT, -- Mapeado de CVSS Score (Critical, High, Medium, Low)
-    description TEXT,
-    cpe_matches JSONB, -- Almacena la estructura de CPE de NVD para correlación
-    is_exposed_shodan BOOLEAN DEFAULT FALSE, -- Flag de exposición pública
-    collected_at TIMESTAMP WITHOUT TIME ZONE
-);
-
--- Índices para optimizar búsquedas y filtrados
-CREATE INDEX idx_cves_score_severity ON cves(cvss_score DESC, severity);
-CREATE INDEX idx_cves_collected_at ON cves(collected_at DESC);
-
--- Creación de la tabla de inventario de software (ejemplo)
-CREATE TABLE software_inventory (
-    asset_id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    version TEXT NOT NULL,
-    cpe_23 TEXT UNIQUE, -- CPE estandarizado para correlación
-    ip_address INET,
-    owner TEXT,
-    business_criticality INT NOT NULL, -- 1 (Low) a 5 (Critical)
-    updated_at TIMESTAMP WITHOUT TIME ZONE
-);
-
--- Creación de la tabla de vulnerabilidades aplicables (el resultado de la correlación)
-CREATE TABLE applicable_vulnerabilities (
-    asset_id INT REFERENCES software_inventory(asset_id),
-    cve_id TEXT REFERENCES cves(cve_id),
-    detection_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    status TEXT NOT NULL DEFAULT 'Pending', -- Pending, In Progress, Remediated
-    sla_due_date DATE,
-    tracking_owner TEXT,
-    remediation_notes TEXT,
-    PRIMARY KEY (asset_id, cve_id) -- Clave compuesta
-);
-
--- Creación de la tabla de histórico de alertas
-CREATE TABLE vulnerability_alerts (
-    alert_id SERIAL PRIMARY KEY,
-    asset_id INT REFERENCES software_inventory(asset_id),
-    cve_id TEXT REFERENCES cves(cve_id),
-    alert_level TEXT NOT NULL, -- Critical, High, Medium
-    sent_via TEXT, -- Slack, Email
-    alert_message TEXT,
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
-);
-
--- Índices de tracking para cálculo de MTTR/MTTD
-CREATE INDEX idx_applicable_status_date ON applicable_vulnerabilities(status, detection_date);
-```
-
-### Anexo B: Estructura del Workflow n8n
-
-| Flujo Principal: `VM_Intelligence_Orchestrator` |
-| :--- |
-| 1. **Trigger:** `Cron` Node (ej. Cada 30 minutos) |
-| 2. **Recolección NVD:** `HTTP Request` (GET NVD API 2.0 con `lastModifiedStartDate`) |
-| 3. **Parseo y Normalización:** `Function` Node (Extrae CVE ID, Score, y mapea `cpe23Uri` y `is_exposed_shodan` a JSON unificado) |
-| 4. **Enriquecimiento Shodan:** `HTTP Request` (GET CVEDB API por cada CVE ID, si el score es $\geq 7.0$) |
-| 5. **Actualización DB:** `PostgreSQL` Node (Usa `INSERT...ON CONFLICT DO UPDATE` en la tabla `cves`) |
-| 6. **Correlación:** `PostgreSQL` Node (Consulta cruzada de `cves` y `software_inventory` por patrón `cpe_23`) |
-| 7. **Lógica de Priorización/SLA:** `Function` Node (Calcula `sla_due_date` y `alert_level` basado en CVSS y `business_criticality`) |
-| 8. **Actualización Aplicabilidad:** `PostgreSQL` Node (`INSERT/UPDATE` en `applicable_vulnerabilities`) |
-| 9. **Notificación Condicional:** `IF` Node (Condición: `alert_level` es 'Critical' o 'High' **Y** `status` es 'Pending') |
-| 10. **Alerta Slack:** `Slack` Node (Solo si la condición se cumple) |
-| 11. **Registro Alerta:** `PostgreSQL` Node (Inserta registro en `vulnerability_alerts`) |
-
-### Anexo C: Plantilla de Alerta Crítica (Slack/Email)
-
-```
-[ALERTA CRÍTICA DE VULNERABILIDAD - REQUIERE ACCIÓN INMEDIATA]
-
-🚨 CVE ID: {{ $json.cve_id }}
-🔥 Severidad (CVSSv3.1): {{ $json.cvss_score }} ({{ $json.severity }})
-🌐 Exposición Pública (Shodan): {{ $json.is_exposed_shodan ? 'SÍ' : 'NO' }}
-
-📍 ACTIVO AFECTADO:
-    Nombre: {{ $json.asset_name }} (ID: {{ $json.asset_id }})
-    Versión: {{ $json.asset_version }}
-    IP / Ubicación: {{ $json.asset_ip }}
-    Criticalidad de Negocio: {{ $json.asset_criticality }}
-
-⏰ FECHA LÍMITE (SLA): {{ $json.sla_due_date }}
-    (Base: Vulnerabilidad Crítica con exposición pública. Remediación en < 72 horas)
-
-📋 DESCRIPCIÓN:
-{{ $json.cve_description | truncate: 250 }}
-
-🔗 ENRIQUECIMIENTO / DETALLES:
-    Link NVD: https://nvd.nist.gov/vuln/detail/{{ $json.cve_id }}
-    Propietario de Remediación: {{ $json.tracking_owner }}
-
-Instrucción: Confirme recepción e inicie el proceso de Patch Management o Mitigación.
-```
-
-### Anexo D: Matriz de Criticidad (Ejemplo)
-
-| Puntuación Interna (Riesgo) | CVSS Base Score | Exposición Pública (Shodan) | Criticalidad de Negocio | SLA Máximo | Nivel de Alerta |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **5 (Máximo)** | 9.0 - 10.0 (CRITICAL) | SÍ / NO | 4 - 5 | 72 horas | CRÍTICA |
-| **4** | 7.0 - 8.9 (HIGH) | SÍ | 3 - 5 | 7 días | CRÍTICA |
-| **3** | 7.0 - 8.9 (HIGH) | NO | 1 - 5 | 14 días | ALTA |
-| **2** | 4.0 - 6.9 (MEDIUM) | SÍ / NO | 3 - 5 | 30 días | MEDIA |
-| **1 (Mínimo)** | 0.1 - 3.9 (LOW) | SÍ / NO | 1 - 2 | 60 días | BAJA |
-
-### Anexo E: Ejemplo de Reporte Mensual (Métricas de Evaluación)
-
-**Título:** Informe de Rendimiento de Gestión Automatizada de Vulnerabilidades - {{ Mes/Año }}
-
-| Métrica | Definición | Valor Reportado | Objetivo SLA |
-| :--- | :--- | :--- | :--- |
-| **MTTD (Mean Time To Detect)** | Tiempo promedio desde la publicación de la CVE en NVD hasta su registro en `applicable_vulnerabilities`. | **22 minutos** | < 30 minutos |
-| **MTTR (Mean Time To Remediate)** | Tiempo promedio desde la detección hasta el cambio de `status` a 'Remediated' en `applicable_vulnerabilities`. | **11 días** | < 14 días |
-| **% de Correlación** | Porcentaje de CVEs filtradas que pudieron ser correlacionadas con al menos un activo del inventario. | **78%** | > 70% |
-| **% de Cumplimiento de SLA** | Porcentaje de vulnerabilidades críticas y altas remediadas dentro de su plazo SLA asignado. | **92%** | > 90% |
-| **Vulnerabilidades Abiertas** | Total de `applicable_vulnerabilities` con `status` 'Pending' o 'In Progress'. | **45** | < 50 |
+Suponer que la tesis será presentada en la UTN o una universidad pública argentina, en una tecnicatura o maestría en ciberseguridad/desarrollo de software. Mantener lenguaje formal, completo y preciso.
