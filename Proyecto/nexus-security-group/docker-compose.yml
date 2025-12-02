@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_instance
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=CHANGE_THIS_N8N_PASSWORD_SECURELY
+      - N8N_HOST=localhost # Cambiar a tu dominio si lo despliegas públicamente
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/ # Cambiar a tu URL de webhook si usas dominios
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires # Ajusta a tu zona horaria
+      # Para utilizar PostgreSQL como base de datos (recomendado para producción)
+      # Descomentar y configurar si se desea usar la base de datos PostgreSQL ya instalada
+      # - DB_TYPE=postgresdb
+      # - DB_POSTGRESDB_HOST=localhost # O la IP/nombre del host de tu servidor PostgreSQL
+      # - DB_POSTGRESDB_PORT=5432
+      # - DB_POSTGRESDB_DATABASE=n8n_db # Nombre de la base de datos para n8n
+      # - DB_POSTGRESDB_USER=n8n_user # Usuario de PostgreSQL para n8n
+      # - DB_POSTGRESDB_PASSWORD=CHANGE_THIS_DB_PASSWORD_SECURELY
+    volumes:
+      - n8n_data:/home/node/.n8n
+    # Si usas PostgreSQL como base de datos para n8n, descomenta la siguiente línea
+    # depends_on:
+    #   - postgres # Asegúrate de que tu servicio postgres se llame "postgres" si está en el mismo docker-compose
+volumes:
+  n8n_data:
