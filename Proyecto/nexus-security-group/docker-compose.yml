@@ -1,7 +1,20 @@
 services:
+  postgres:
+    image: postgres:15
+    container_name: osint-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 753951456
+      POSTGRES_DB: nexus-security-gr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
   n8n:
     image: n8nio/n8n:latest
-    container_name: n8n_instance
+    container_name: osint-n8n
     restart: always
     ports:
       - "5678:5678"
@@ -24,5 +37,17 @@ services:
       - DB_POSTGRESDB_PASSWORD=753951456
     volumes:
       - n8n_data:/home/hjcxd/Onedrive/UTN/Tesis/NSG/Proyecto/nexus-security-group/datos.n8n
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  sentiment-api:
+    build: ./sentiment-api
+    container_name: osint-sentiment-api
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
 volumes:
   n8n_data: #Define un volumen nombrado para la persistencia de los datos internos de n8n (workflows, credenciales, etc.).
+  postgres_data:
+EOF

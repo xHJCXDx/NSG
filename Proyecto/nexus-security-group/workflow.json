@@ -1,0 +1,544 @@
+{
+  "name": "Twitter OSINT Monitor - Complete",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger-001",
+      "name": "Schedule Every 15 Minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Rate Limit Check\nconst rateLimitKey = 'twitter_search_rate_limit';\nconst rateLimitData = $execution.customData.get(rateLimitKey) || {\n  remaining: 300,\n  reset: Date.now() + (15 * 60 * 1000)\n};\n\nif (Date.now() > rateLimitData.reset) {\n  rateLimitData.remaining = 300;\n  rateLimitData.reset = Date.now() + (15 * 60 * 1000);\n}\n\nif (rateLimitData.remaining <= 5) {\n  const waitMinutes = Math.ceil((rateLimitData.reset - Date.now()) / 60000);\n  throw new Error(`Rate limit low (${rateLimitData.remaining} remaining). Waiting ${waitMinutes} minutes.`);\n}\n\nrateLimitData.remaining -= 1;\n$execution.customData.set(rateLimitKey, rateLimitData);\n\nreturn [{ \n  json: { \n    quota_remaining: rateLimitData.remaining,\n    quota_reset_at: new Date(rateLimitData.reset).toISOString()\n  } \n}];"
+      },
+      "id": "rate-limit-check-002",
+      "name": "Rate Limit Check",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.twitter.com/2/tweets/search/recent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twitterOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=(ciberataque OR ransomware OR \"data breach\" OR phishing OR malware) lang:es -is:retweet -is:reply"
+            },
+            {
+              "name": "max_results",
+              "value": "100"
+            },
+            {
+              "name": "tweet.fields",
+              "value": "=created_at,author_id,lang,public_metrics,entities,conversation_id,referenced_tweets"
+            },
+            {
+              "name": "user.fields",
+              "value": "=username,name,verified,public_metrics,description,created_at"
+            },
+            {
+              "name": "expansions",
+              "value": "=author_id,referenced_tweets.id"
+            },
+            {
+              "name": "start_time",
+              "value": "={{ $now.minus({minutes: 20}).toISO() }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "retry": {
+            "enabled": true,
+            "maxTries": 3,
+            "waitBetweenTries": 5000
+          }
+        }
+      },
+      "id": "twitter-api-search-003",
+      "name": "Twitter API Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        650,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Twitter API Response\nconst response = $input.item.json;\n\nif (!response.data || response.data.length === 0) {\n  return [];\n}\n\nconst tweets = response.data;\nconst users = response.includes?.users || [];\nconst referencedTweets = response.includes?.tweets || [];\n\nconst userMap = {};\nusers.forEach(user => {\n  userMap[user.id] = user;\n});\n\nconst parsedTweets = tweets.map(tweet => {\n  const author = userMap[tweet.author_id] || {};\n  \n  // Extract URLs\n  const urls = tweet.entities?.urls?.map(u => u.expanded_url || u.url) || [];\n  \n  // Extract hashtags\n  const hashtags = tweet.entities?.hashtags?.map(h => h.tag) || [];\n  \n  // Extract mentions\n  const mentions = tweet.entities?.mentions?.map(m => m.username) || [];\n  \n  // Detect if reply or quote\n  const isReply = tweet.referenced_tweets?.some(rt => rt.type === 'replied_to') || false;\n  const isQuote = tweet.referenced_tweets?.some(rt => rt.type === 'quoted') || false;\n  const replyToId = tweet.referenced_tweets?.find(rt => rt.type === 'replied_to')?.id;\n  \n  return {\n    platform: 'twitter',\n    external_id: tweet.id,\n    text_content: tweet.text,\n    language: tweet.lang,\n    created_at: tweet.created_at,\n    author_username: author.username || 'unknown',\n    author_id: tweet.author_id,\n    author_verified: author.verified || false,\n    author_followers_count: author.public_metrics?.followers_count || 0,\n    author_description: author.description || null,\n    likes_count: tweet.public_metrics?.like_count || 0,\n    shares_count: tweet.public_metrics?.retweet_count || 0,\n    replies_count: tweet.public_metrics?.reply_count || 0,\n    views_count: tweet.public_metrics?.impression_count || 0,\n    urls: urls,\n    hashtags: hashtags,\n    mentions: mentions,\n    has_media: (tweet.entities?.media && tweet.entities.media.length > 0) || false,\n    is_reply: isReply,\n    is_quote: isQuote,\n    reply_to_id: replyToId || null,\n    conversation_id: tweet.conversation_id || null,\n    raw_data: tweet\n  };\n});\n\nreturn parsedTweets.map(tweet => ({ json: tweet }));"
+      },
+      "id": "parse-tweets-004",
+      "name": "Parse Tweets",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Deduplication using Set\nconst items = $input.all();\nconst processedIds = $execution.customData.get('processedTwitterIds') || new Set();\nconst newTweets = [];\n\nfor (const item of items) {\n  const externalId = item.json.external_id;\n  \n  if (!processedIds.has(externalId)) {\n    newTweets.push(item);\n    processedIds.add(externalId);\n  }\n}\n\n// Limit Set size to prevent memory issues\nif (processedIds.size > 10000) {\n  const idsArray = Array.from(processedIds);\n  processedIds.clear();\n  idsArray.slice(-10000).forEach(id => processedIds.add(id));\n}\n\n$execution.customData.set('processedTwitterIds', processedIds);\n\nconsole.log(`Deduplication: ${items.length} total, ${newTweets.length} new, ${items.length - newTweets.length} duplicates filtered`);\n\nreturn newTweets;"
+      },
+      "id": "deduplicate-005",
+      "name": "Deduplicate",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://sentiment-api:5000/analyze",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.text_content }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "sentiment-analysis-006",
+      "name": "Sentiment Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1250,
+        300
+      ],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "functionCode": "// Merge sentiment results with tweet data\nconst items = $input.all();\nconst analyzedItems = [];\n\nfor (const item of items) {\n  const tweet = item.json;\n  const sentiment = tweet.sentiment_analysis || {};\n  \n  // Classify threat based on heuristics\n  const threatClassification = classifyThreat(tweet, sentiment);\n  \n  tweet.sentiment = sentiment;\n  tweet.threat = threatClassification;\n  \n  analyzedItems.push({ json: tweet });\n}\n\nfunction classifyThreat(tweet, sentiment) {\n  let score = 0;\n  let matchedKeywords = [];\n  let threatType = 'general';\n  \n  const text = tweet.text_content.toLowerCase();\n  \n  // Critical keywords (30 points each)\n  const criticalKeywords = {\n    'ransomware': 30,\n    'data breach': 30,\n    'filtración masiva': 30,\n    'zero-day': 30,\n    'apt': 25\n  };\n  \n  // High keywords (20 points each)\n  const highKeywords = {\n    'phishing': 20,\n    'malware': 20,\n    'exploit': 20,\n    'vulnerabilidad crítica': 20,\n    'comprometido': 20,\n    'hackeado': 20\n  };\n  \n  // Medium keywords (10 points each)\n  const mediumKeywords = {\n    'ataque': 10,\n    'amenaza': 10,\n    'ciberataque': 15,\n    'seguridad': 5,\n    'incidente': 10\n  };\n  \n  // Evaluate keywords\n  Object.entries(criticalKeywords).forEach(([kw, points]) => {\n    if (text.includes(kw)) {\n      score += points;\n      matchedKeywords.push(kw);\n      threatType = 'critical_security_incident';\n    }\n  });\n  \n  Object.entries(highKeywords).forEach(([kw, points]) => {\n    if (text.includes(kw)) {\n      score += points;\n      matchedKeywords.push(kw);\n      if (threatType === 'general') threatType = 'security_threat';\n    }\n  });\n  \n  Object.entries(mediumKeywords).forEach(([kw, points]) => {\n    if (text.includes(kw)) {\n      score += points;\n      matchedKeywords.push(kw);\n    }\n  });\n  \n  // Sentiment adjustment\n  if (sentiment.sentiment_label === 'negative') {\n    score += 15;\n  }\n  \n  // Engagement adjustment\n  const totalEngagement = tweet.likes_count + tweet.shares_count + (tweet.replies_count * 2);\n  if (totalEngagement > 1000) {\n    score += 20;\n  } else if (totalEngagement > 100) {\n    score += 10;\n  } else if (totalEngagement > 10) {\n    score += 5;\n  }\n  \n  // Author credibility\n  if (tweet.author_verified) {\n    score += 10;\n  }\n  \n  if (tweet.author_followers_count > 100000) {\n    score += 15;\n  } else if (tweet.author_followers_count > 10000) {\n    score += 10;\n  } else if (tweet.author_followers_count > 1000) {\n    score += 5;\n  }\n// URL presence (potential phishing)\n if (tweet.urls && tweet.urls.length > 0) {\n score += 5;\n // Check for suspicious TLDs\n const suspiciousTLDs = ['.tk', '.ml', '.ga', '.cf', '.gq', '.xyz', '.top'];\n const hasSuspiciousTLD = tweet.urls.some(url => \n suspiciousTLDs.some(tld => url.toLowerCase().includes(tld))\n );\n if (hasSuspiciousTLD) {\n score += 15;\n threatType = 'potential_phishing';\n }\n }\n \n // Determine criticality level\n let criticalityLevel;\n if (score >= 60) {\n criticalityLevel = 'critical';\n } else if (score >= 40) {\n criticalityLevel = 'high';\n } else if (score >= 20) {\n criticalityLevel = 'medium';\n } else {\n criticalityLevel = 'low';\n }\n \n // Normalize confidence\n const confidenceScore = Math.min(score / 100, 0.99);\n \n return {\n threat_type: threatType,\n criticality_level: criticalityLevel,\n confidence_score: confidenceScore,\n matched_keywords: matchedKeywords,\n raw_score: score\n };\n}\n\nreturn analyzedItems;"
+      },
+      "id": "classify-threat-007",
+      "name": "Classify Threat",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO social_mentions (\n platform, external_id, text_content, language, created_at,\n author_username, author_id, author_verified, author_followers_count, author_description,\n likes_count, shares_count, replies_count, views_count,\n urls, hashtags, mentions, has_media,\n is_reply, is_quote, reply_to_id, conversation_id,\n raw_data, processing_status\n)\nVALUES (\n '{{ $json.platform }}',\n '{{ $json.external_id }}',\n {{ $json.text_content ? `'${$json.text_content.replace(/'/g, \"''\")}'` : 'NULL' }},\n '{{ $json.language }}',\n '{{ $json.created_at }}',\n '{{ $json.author_username }}',\n '{{ $json.author_id }}',\n {{ $json.author_verified }},\n {{ $json.author_followers_count }},\n {{ $json.author_description ? `'${$json.author_description.replace(/'/g, \"''\")}'` : 'NULL' }},\n {{ $json.likes_count }},\n {{ $json.shares_count }},\n {{ $json.replies_count }},\n {{ $json.views_count }},\n {{ $json.urls && $json.urls.length > 0 ? `ARRAY[${$json.urls.map(u =>` '${u}'`).join(',')}]` : 'NULL' }},\n {{ $json.hashtags && $json.hashtags.length > 0 ? `ARRAY[${$json.hashtags.map(h =>` '${h}'`).join(',')}]` : 'NULL' }},\n {{ $json.mentions && $json.mentions.length > 0 ? `ARRAY[${$json.mentions.map(m =>` '${m}'`).join(',')}]` : 'NULL' }},\n {{ $json.has_media }},\n {{ $json.is_reply }},\n {{ $json.is_quote }},\n {{ $json.reply_to_id ? `'${$json.reply_to_id}'` : 'NULL' }},\n {{ $json.conversation_id ? `'${$json.conversation_id}'` : 'NULL' }},\n '{{ JSON.stringify($json.raw_data) }}'::jsonb,\n 'processed'\n)\nON CONFLICT (platform, external_id) \nDO UPDATE SET\n likes_count = EXCLUDED.likes_count,\n shares_count = EXCLUDED.shares_count,\n replies_count = EXCLUDED.replies_count,\n views_count = EXCLUDED.views_count,\n processing_status = 'processed',\n last_updated = NOW()\nRETURNING mention_id;"
+      },
+      "id": "insert-mention-008",
+      "name": "Insert Social Mention",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1650,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL OSINT DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO sentiment_analysis (\n mention_id,\n vader_compound, vader_pos, vader_neu, vader_neg,\n textblob_polarity, textblob_subjectivity,\n final_sentiment_score, sentiment_label,\n confidence_score, analysis_method\n)\nVALUES (\n {{ $json.mention_id }},\n {{ $json.sentiment.vader?.compound || 0 }},\n {{ $json.sentiment.vader?.pos || 0 }},\n {{ $json.sentiment.vader?.neu || 0 }},\n {{ $json.sentiment.vader?.neg || 0 }},\n {{ $json.sentiment.textblob?.polarity || 0 }},\n {{ $json.sentiment.textblob?.subjectivity || 0 }},\n {{ $json.sentiment.ensemble_score || 0 }},\n '{{ $json.sentiment.sentiment_label || "neutral" }}',\n {{ $json.sentiment.confidence_score || 0.5 }},\n 'ensemble'\n)\nON CONFLICT (mention_id) DO NOTHING\nRETURNING sentiment_id;"
+      },
+      "id": "insert-sentiment-009",
+      "name": "Insert Sentiment Analysis",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1850,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL OSINT DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO threat_detections (\n mention_id, sentiment_id,\n threat_type, criticality_level, confidence_score,\n matched_keywords, detection_method, risk_score\n)\nVALUES (\n {{ $json.mention_id }},\n {{ $json.sentiment_id }},\n '{{ $json.threat.threat_type }}',\n '{{ $json.threat.criticality_level }}',\n {{ $json.threat.confidence_score }},\n {{ $json.threat.matched_keywords.length > 0 ? `ARRAY[${$json.threat.matched_keywords.map(k =>` '${k}'`).join(',')}]` : 'NULL' }},\n 'heuristic',\n {{ $json.threat.raw_score }}\n)\nON CONFLICT (mention_id)\nDO UPDATE SET\n criticality_level = EXCLUDED.criticality_level,\n confidence_score = EXCLUDED.confidence_score,\n risk_score = EXCLUDED.risk_score,\n last_updated = NOW()\nRETURNING detection_id;"
+      },
+      "id": "insert-detection-010",
+      "name": "Insert Threat Detection",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        2050,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL OSINT DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.threat.criticality_level }}",
+              "operation": "equals",
+              "value2": "critical"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      },
+      "id": "if-critical-011",
+      "name": "IF Critical or High",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#security-alerts",
+        "text": "={{ $json.alert_message }}",
+        "blocksUi": "={{ $json.slack_blocks }}",
+        "otherOptions": {
+          "mrkdwn": true
+        }
+      },
+      "id": "slack-alert-012",
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [
+        2450,
+        200
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "2",
+          "name": "Slack OSINT Workspace"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "osint-monitor@organization.com",
+        "toEmail": "security-team@organization.com",
+        "subject": "={{ $json.email_subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.email_html }}",
+        "options": {
+          "priority": "high"
+        }
+      },
+      "id": "email-alert-013",
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2450,
+        400
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "3",
+          "name": "SMTP Server"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build alert content\nconst items = $input.all();\nconst alerts = [];\n\nfor (const item of items) {\n const data = item.json;\n \n const severityEmoji = {\n 'critical': '🔴',\n 'high': '🟠',\n 'medium': '🟡',\n 'low': '⚪'\n };\n \n const emoji = severityEmoji[data.threat.criticality_level] || '⚪';\n \n // Build Slack blocks\n const slackBlocks = JSON.stringify([\n {\n "type": "header",\n "text": {\n "type": "plain_text",\n "text": `${emoji} ALERTA DE AMENAZA - ${data.threat.criticality_level.toUpperCase()}`\n }\n },\n {\n "type": "section",\n "fields": [\n {"type": "mrkdwn", "text": `*Plataforma:*\\n${data.platform.toUpperCase()}`},\n {"type": "mrkdwn", "text": `*Fecha:*\\n${new Date(data.created_at).toLocaleString('es-AR')}`},\n {"type": "mrkdwn", "text": `*Tipo:*\\n${data.threat.threat_type.replace(/_/g, ' ')}`},\n {"type": "mrkdwn", "text": `*Confianza:*\\n${(data.threat.confidence_score * 100).toFixed(1)}%`}\n ]\n },\n {\n "type": "section",\n "text": {\n "type": "mrkdwn",\n "text": `*Contenido:*\\n>${data.text_content.substring(0, 500)}${data.text_content.length > 500 ? '...' : ''}`\n }\n },\n {\n "type": "section",\n "fields": [\n {"type": "mrkdwn", "text": `*Autor:*\\n@${data.author_username}${data.author_verified ? ' ✓' : ''}`},\n {"type": "mrkdwn", "text": `*Seguidores:*\\n${data.author_followers_count.toLocaleString('es-AR')}`}\n ]\n },\n {\n "type": "section",\n "fields": [\n {"type": "mrkdwn", "text": `*Engagement:*\\n❤️ ${data.likes_count} | 🔄 ${data.shares_count} | 💬 ${data.replies_count}`},\n {"type": "mrkdwn", "text": `*Sentimiento:*\\n${data.sentiment.sentiment_label} (${data.sentiment.ensemble_score?.toFixed(3) || 'N/A'})`}\n ]\n },\n {\n "type": "section",\n "text": {\n "type": "mrkdwn",\n "text": `*Keywords:*\\n${data.threat.matched_keywords.map(k =>` \`${k}\\``).join(', ')}`\n }\n },\n {\n "type": "actions",\n "elements": [\n {\n "type": "button",\n "text": {"type": "plain_text", "text": "Ver Original"},\n "url": `https://twitter.com/i/status/${data.external_id}`,\n "style": "primary"\n },\n {\n "type": "button",\n "text": {"type": "plain_text", "text": "Falso Positivo"},\n "value": `fp_${data.detection_id}`,\n "action_id": "mark_false_positive"\n }\n ]\n },\n {\n "type": "context",\n "elements": [\n {"type": "mrkdwn", "text": `Detection ID: ${data.detection_id} | Mention ID: ${data.mention_id}`}\n ]\n }\n ]);\n \n // Build email HTML\n const severityColor = {\n 'critical': '#DC2626',\n 'high': '#EA580C',\n 'medium': '#F59E0B',\n 'low': '#6B7280'\n };\n const color = severityColor[data.threat.criticality_level];\n \n const emailHtml = `\n<!DOCTYPE html>\n<html>\n<head>\n <meta charset=\"UTF-8\">\n <style>\n body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n .header { background: ${color}; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }\n .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }\n .section { margin-bottom: 20px; }\n .label { font-weight: bold; color: #4b5563; }\n .value { margin-top: 5px; }\n .button { display: inline-block; padding: 12px 24px; background: ${color}; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; }\n .footer { background: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280; }\n </style>\n</head>\n<body>\n <div class=\"container\">\n <div class=\"header\">\n <h1>${emoji} ALERTA DE AMENAZA</h1>\n <p>Criticidad: ${data.threat.criticality_level.toUpperCase()}</p>\n </div>\n <div class=\"content\">\n <div class=\"section\">\n <div class=\"label\">Contenido</div>\n <div class=\"value\" style=\"background: white; padding: 15px; border-left: 4px solid ${color};\">\n ${data.text_content}\n </div>\n </div>\n <div class=\"section\">\n <div class=\"label\">Autor</div>\n <div class=\"value\">@${data.author_username} ${data.author_verified ? '✓' : ''} (${data.author_followers_count.toLocaleString('es-AR')} seguidores)</div>\n </div>\n <div style=\"text-align: center; margin-top: 30px;\">\n <a href=\"https://twitter.com/i/status/${data.external_id}\" class=\"button\">Ver Publicación Original</a>\n </div>\n </div>\n <div class=\"footer\">\n <p>Detection ID: ${data.detection_id} | ${new Date().toLocaleString('es-AR')}</p>\n </div>\n </div>\n</body>\n</html>\n` ;\n \n alerts.push({\n json: {\n ...data,\n alert_message: `${emoji} *ALERTA ${data.threat.criticality_level.toUpperCase()}*: ${data.text_content.substring(0, 100)}...`,\n slack_blocks: slackBlocks,\n email_subject: `[${data.threat.criticality_level.toUpperCase()}] Amenaza detectada en Twitter`,\n email_html: emailHtml\n }\n });\n}\n\nreturn alerts;"
+      },
+      "id": "build-alert-014",
+      "name": "Build Alert Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO alerts (\n detection_id, alert_title, alert_message, alert_severity,\n channels_sent, slack_channel, sent_at, delivery_status\n)\nVALUES (\n {{ $json.detection_id }},\n 'Amenaza {{ $json.threat.criticality_level }} detectada',\n '{{ $json.alert_message.replace(/'/g, "''") }}',\n '{{ $json.threat.criticality_level }}',\n ARRAY['slack', 'email'],\n '#security-alerts',\n NOW(),\n 'sent'\n)\nRETURNING alert_id;"
+      },
+      "id": "log-alert-015",
+      "name": "Log Alert in DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        2650,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL OSINT DB"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO execution_logs (\n workflow_name, execution_id, status,\n mentions_collected, mentions_processed, detections_generated, alerts_generated,\n started_at, completed_at\n)\nVALUES (\n 'Twitter OSINT Monitor',\n '{{ $execution.id }}',\n 'success',\n {{ $('Parse Tweets').itemMatching(0)?.length || 0 }},\n {{ $('Deduplicate').itemMatching(0)?.length || 0 }},\n {{ $('Insert Threat Detection').itemMatching(0)?.length || 0 }},\n {{ $('Log Alert in DB').itemMatching(0)?.length || 0 }},\n '{{ $execution.startedAt }}',\n NOW()\n);"
+      },
+      "id": "log-execution-016",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        2850,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL OSINT DB"
+        }
+      },
+      "alwaysOutputData": true
+    }
+  ],
+  "connections": {
+    "Schedule Every 15 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Check": {
+      "main": [
+        [
+          {
+            "node": "Twitter API Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twitter API Search": {
+      "main": [
+        [
+          {
+            "node": "Parse Tweets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Tweets": {
+      "main": [
+        [
+          {
+            "node": "Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deduplicate": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Classify Threat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Threat": {
+      "main": [
+        [
+          {
+            "node": "Insert Social Mention",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Social Mention": {
+      "main": [
+        [
+          {
+            "node": "Insert Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Insert Threat Detection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Threat Detection": {
+      "main": [
+        [
+          {
+            "node": "IF Critical or High",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Critical or High": {
+      "main": [
+        [
+          {
+            "node": "Build Alert Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Alert Content": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Slack Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Alert in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Alert in DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Alert in DB": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "error-handler-workflow-id"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "id": "osint-tag-id",
+      "name": "OSINT"
+    },
+    {
+      "id": "twitter-tag-id",
+      "name": "Twitter"
+    }
+  ],
+  "meta": {
+    "instanceId": "your-n8n-instance-id"
+  },
+  "createdAt": "2025-01-15T10:00:00.000Z",
+  "updatedAt": "2025-01-15T15:30:00.000Z"
+}
