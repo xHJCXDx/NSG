@@ -806,7 +806,7 @@ Además del análisis de sentimiento, varias técnicas de NLP complementarias en
 
 n8n es una plataforma de automatización de workflows extensible y fair-code (código fuente disponible pero con restricciones de uso comercial) que permite diseñar, ejecutar y monitorear procesos automatizados mediante una interfaz visual basada en nodos. A diferencia de plataformas SaaS como Zapier o Make (anteriormente Integromat) que operan exclusivamente en cloud bajo modelo de subscripción, n8n puede self-hostearse, garantizando control total sobre datos procesados y eliminando costos recurrentes.
 
-**Arquitectura de n8n**
+#### **Arquitectura de n8n**
 
 n8n implementa una arquitectura modular compuesta por los siguientes elementos fundamentales:
 
@@ -822,7 +822,7 @@ n8n implementa una arquitectura modular compuesta por los siguientes elementos f
 
 **Credentials**: Sistema seguro de almacenamiento de credenciales (API keys, tokens OAuth, passwords) encriptadas y reutilizables entre workflows.
 
-**Ventajas de n8n para OSINT Automatizado**
+### **Ventajas de n8n para OSINT Automatizado**
 
 **Self-Hosting y Control de Datos**: n8n puede ejecutarse en infraestructura propia (on-premise o cloud privado), crítico cuando se procesa información de inteligencia potencialmente sensible. Esto elimina riesgos de third-party access inherentes a SaaS platforms.
 
@@ -5181,6 +5181,10 @@ DataReportal. (2024). _Digital 2024: Global Overview Report_. https://datareport
 -- PostgreSQL 14+
 -- ============================================
 
+-- Crear la Base de Datos:
+-- CREATE DATABASE mi_nueva_db OWNER usuario_dev ENCODING 'UTF8';
+-- CREATE DATABASE "nexus-security-gr" OWNER postgres ENCODING 'UTF8';
+
 -- Crear extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- Para búsquedas de similitud
@@ -5688,24 +5692,29 @@ CREATE TRIGGER trigger_calculate_duration
 -- =========================================
 -- VISTAS MATERIALIZADAS PARA REPORTING -- ============================================
 
--- Vista: Estadísticas diarias de menciones CREATE MATERIALIZED VIEW daily_mention_stats AS SELECT DATE(sm.created_at) as date, sm.platform, sa.sentiment_label, td.criticality_level, COUNT(DISTINCT sm.mention_id) as mention_count, COUNT(DISTINCT CASE WHEN td.detection_id IS NOT NULL THEN sm.mention_id END) as threat_count, COUNT(DISTINCT CASE WHEN a.alert_id IS NOT NULL THEN sm.mention_id END) as alert_count, AVG(sa.final_sentiment_score) as avg_sentiment_score, AVG(sm.likes_count + sm.shares_count + sm.replies_count) as avg_engagement, MAX(sm.likes_count + sm.shares_count + sm.replies_count) as max_engagement FROM social_mentions sm LEFT JOIN sentiment_analysis sa ON sm.mention_id = sa.mention_id LEFT JOIN threat_detections td ON sm.mention_id = td.mention_id LEFT JOIN alerts a ON td.detection_id = a.detection_id WHERE sm.created_at >= CURRENT_DATE - INTERVAL '90 days' GROUP BY DATE(sm.created_at), sm.platform, sa.sentiment_label, td.criticality_level;
+-- Vista: Estadísticas diarias de menciones 
+CREATE MATERIALIZED VIEW daily_mention_stats AS SELECT DATE(sm.created_at) as date, sm.platform, sa.sentiment_label, td.criticality_level, COUNT(DISTINCT sm.mention_id) as mention_count, COUNT(DISTINCT CASE WHEN td.detection_id IS NOT NULL THEN sm.mention_id END) as threat_count, COUNT(DISTINCT CASE WHEN a.alert_id IS NOT NULL THEN sm.mention_id END) as alert_count, AVG(sa.final_sentiment_score) as avg_sentiment_score, AVG(sm.likes_count + sm.shares_count + sm.replies_count) as avg_engagement, MAX(sm.likes_count + sm.shares_count + sm.replies_count) as max_engagement FROM social_mentions sm LEFT JOIN sentiment_analysis sa ON sm.mention_id = sa.mention_id LEFT JOIN threat_detections td ON sm.mention_id = td.mention_id LEFT JOIN alerts a ON td.detection_id = a.detection_id WHERE sm.created_at >= CURRENT_DATE - INTERVAL '90 days' GROUP BY DATE(sm.created_at), sm.platform, sa.sentiment_label, td.criticality_level;
 
 CREATE UNIQUE INDEX ON daily_mention_stats (date, platform, COALESCE(sentiment_label, 'unknown'), COALESCE(criticality_level, 'none'));
 
--- Vista: Top keywords por detecciones CREATE MATERIALIZED VIEW top_keywords_stats AS SELECT keyword, COUNT(*) as detection_count, COUNT(DISTINCT DATE(td.detected_at)) as days_active, AVG(td.confidence_score) as avg_confidence, COUNT(CASE WHEN td.criticality_level IN ('high', 'critical') THEN 1 END) as high_severity_count, MAX(td.detected_at) as last_detection FROM threat_detections td, UNNEST(td.matched_keywords) as keyword WHERE td.detected_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY keyword ORDER BY detection_count DESC;
+-- Vista: Top keywords por detecciones 
+CREATE MATERIALIZED VIEW top_keywords_stats AS SELECT keyword, COUNT(*) as detection_count, COUNT(DISTINCT DATE(td.detected_at)) as days_active, AVG(td.confidence_score) as avg_confidence, COUNT(CASE WHEN td.criticality_level IN ('high', 'critical') THEN 1 END) as high_severity_count, MAX(td.detected_at) as last_detection FROM threat_detections td, UNNEST(td.matched_keywords) as keyword WHERE td.detected_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY keyword ORDER BY detection_count DESC;
 
 CREATE INDEX ON top_keywords_stats (detection_count DESC);
 
--- Vista: Performance de workflows CREATE MATERIALIZED VIEW workflow_performance_stats AS SELECT workflow_name, DATE(started_at) as date, COUNT(*) as execution_count, COUNT(CASE WHEN status = 'success' THEN 1 END) as success_count, COUNT(CASE WHEN status = 'error' THEN 1 END) as error_count, AVG(duration_seconds) as avg_duration_seconds, AVG(mentions_processed) as avg_mentions_processed, AVG(detections_generated) as avg_detections_generated, SUM(api_calls_made) as total_api_calls FROM execution_logs WHERE started_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY workflow_name, DATE(started_at);
+-- Vista: Performance de workflows 
+CREATE MATERIALIZED VIEW workflow_performance_stats AS SELECT workflow_name, DATE(started_at) as date, COUNT(*) as execution_count, COUNT(CASE WHEN status = 'success' THEN 1 END) as success_count, COUNT(CASE WHEN status = 'error' THEN 1 END) as error_count, AVG(duration_seconds) as avg_duration_seconds, AVG(mentions_processed) as avg_mentions_processed, AVG(detections_generated) as avg_detections_generated, SUM(api_calls_made) as total_api_calls FROM execution_logs WHERE started_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY workflow_name, DATE(started_at);
 
 CREATE INDEX ON workflow_performance_stats (workflow_name, date DESC);
 
--- Función para refrescar todas las vistas materializadas CREATE OR REPLACE FUNCTION refresh_all_materialized_views() RETURNS void AS $$ BEGIN REFRESH MATERIALIZED VIEW CONCURRENTLY daily_mention_stats; REFRESH MATERIALIZED VIEW CONCURRENTLY top_keywords_stats; REFRESH MATERIALIZED VIEW CONCURRENTLY workflow_performance_stats; END; $$ LANGUAGE plpgsql;
+-- Función para refrescar todas las vistas materializadas 
+CREATE OR REPLACE FUNCTION refresh_all_materialized_views() RETURNS void AS $$ BEGIN REFRESH MATERIALIZED VIEW CONCURRENTLY daily_mention_stats; REFRESH MATERIALIZED VIEW CONCURRENTLY top_keywords_stats; REFRESH MATERIALIZED VIEW CONCURRENTLY workflow_performance_stats; END; $$ LANGUAGE plpgsql;
 
 -- =========================================
 -- PROCEDIMIENTOS DE MANTENIMIENTO -- ============================================
 
--- Procedimiento: Purgar datos antiguos CREATE OR REPLACE PROCEDURE purge_old_data(retention_days INTEGER DEFAULT 365) LANGUAGE plpgsql AS $$ DECLARE cutoff_date TIMESTAMPTZ; deleted_mentions INTEGER; deleted_logs INTEGER; BEGIN cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
+-- Procedimiento: Purgar datos antiguos 
+CREATE OR REPLACE PROCEDURE purge_old_data(retention_days INTEGER DEFAULT 365) LANGUAGE plpgsql AS $$ DECLARE cutoff_date TIMESTAMPTZ; deleted_mentions INTEGER; deleted_logs INTEGER; BEGIN cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
 
 
 -- Purgar menciones antiguas (CASCADE eliminará registros relacionados)
@@ -5735,7 +5744,9 @@ VACUUM ANALYZE execution_logs;
 
 END; $$;
 
--- Procedimiento: Optimizar base de datos CREATE OR REPLACE PROCEDURE optimize_database() LANGUAGE plpgsql AS $$ BEGIN -- Actualizar estadísticas ANALYZE social_mentions; ANALYZE sentiment_analysis; ANALYZE threat_detections; ANALYZE alerts; ANALYZE keywords_monitor; ANALYZE execution_logs;
+-- Procedimiento: Optimizar base de datos 
+CREATE OR REPLACE PROCEDURE optimize_database() LANGUAGE plpgsql AS $$ BEGIN -- Actualizar estadísticas 
+ANALYZE social_mentions; ANALYZE sentiment_analysis; ANALYZE threat_detections; ANALYZE alerts; ANALYZE keywords_monitor; ANALYZE execution_logs;
 
 -- Reindexar si hay fragmentación
 REINDEX TABLE CONCURRENTLY social_mentions;
@@ -5748,41 +5759,63 @@ RAISE NOTICE 'Database optimization completed successfully';
 
 END; $$;
 
--- ============================================ -- QUERIES ÚTILES PARA REPORTING -- ============================================
+============================================
+-- QUERIES ÚTILES PARA REPORTING -- ============================================
 
--- Query: Resumen diario de actividad CREATE OR REPLACE VIEW daily_activity_summary AS SELECT CURRENT_DATE as report_date, COUNT(DISTINCT sm.mention_id) as total_mentions, COUNT(DISTINCT CASE WHEN sm.created_at >= CURRENT_DATE THEN sm.mention_id END) as mentions_today, COUNT(DISTINCT td.detection_id) as total_detections, COUNT(DISTINCT CASE WHEN td.detected_at >= CURRENT_DATE THEN td.detection_id END) as detections_today, COUNT(DISTINCT CASE WHEN td.criticality_level = 'critical' AND td.detected_at >= CURRENT_DATE THEN td.detection_id END) as critical_today, COUNT(DISTINCT CASE WHEN a.created_at >= CURRENT_DATE THEN a.alert_id END) as alerts_today, COUNT(DISTINCT CASE WHEN a.acknowledged = FALSE AND a.created_at >= CURRENT_DATE THEN a.alert_id END) as unacknowledged_alerts FROM social_mentions sm LEFT JOIN threat_detections td ON sm.mention_id = td.mention_id LEFT JOIN alerts a ON td.detection_id = a.detection_id WHERE sm.created_at >= CURRENT_DATE - INTERVAL '7 days';
+-- Query: Resumen diario de actividad 
+CREATE OR REPLACE VIEW daily_activity_summary AS SELECT CURRENT_DATE as report_date, COUNT(DISTINCT sm.mention_id) as total_mentions, COUNT(DISTINCT CASE WHEN sm.created_at >= CURRENT_DATE THEN sm.mention_id END) as mentions_today, COUNT(DISTINCT td.detection_id) as total_detections, COUNT(DISTINCT CASE WHEN td.detected_at >= CURRENT_DATE THEN td.detection_id END) as detections_today, COUNT(DISTINCT CASE WHEN td.criticality_level = 'critical' AND td.detected_at >= CURRENT_DATE THEN td.detection_id END) as critical_today, COUNT(DISTINCT CASE WHEN a.created_at >= CURRENT_DATE THEN a.alert_id END) as alerts_today, COUNT(DISTINCT CASE WHEN a.acknowledged = FALSE AND a.created_at >= CURRENT_DATE THEN a.alert_id END) as unacknowledged_alerts FROM social_mentions sm LEFT JOIN threat_detections td ON sm.mention_id = td.mention_id LEFT JOIN alerts a ON td.detection_id = a.detection_id WHERE sm.created_at >= CURRENT_DATE - INTERVAL '7 days';
 
--- Query: Top amenazas sin resolver CREATE OR REPLACE VIEW unresolved_threats AS SELECT td.detection_id, td.threat_type, td.criticality_level, td.detected_at, sm.text_content, sm.author_username, sm.platform, td.review_status, EXTRACT(EPOCH FROM (NOW() - td.detected_at))/3600 as hours_since_detection FROM threat_detections td JOIN social_mentions sm ON td.mention_id = sm.mention_id WHERE td.review_status IN ('pending', 'reviewing', 'investigating') AND td.criticality_level IN ('high', 'critical') ORDER BY td.criticality_level DESC, td.detected_at ASC;
+-- Query: Top amenazas sin resolver 
+CREATE OR REPLACE VIEW unresolved_threats AS SELECT td.detection_id, td.threat_type, td.criticality_level, td.detected_at, sm.text_content, sm.author_username, sm.platform, td.review_status, EXTRACT(EPOCH FROM (NOW() - td.detected_at))/3600 as hours_since_detection FROM threat_detections td JOIN social_mentions sm ON td.mention_id = sm.mention_id WHERE td.review_status IN ('pending', 'reviewing', 'investigating') AND td.criticality_level IN ('high', 'critical') ORDER BY td.criticality_level DESC, td.detected_at ASC;
 
 -- ============================================ 
 -- CONFIGURACIÓN DE SEGURIDAD 
 -- ============================================
 
--- Crear roles CREATE ROLE osint_admin; CREATE ROLE osint_analyst; CREATE ROLE osint_readonly;
+-- Crear roles 
+CREATE ROLE osint_admin; CREATE ROLE osint_analyst; CREATE ROLE osint_readonly;
 
--- Permisos para admin (todos) GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO osint_admin; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO osint_admin; GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO osint_admin;
+-- Permisos para admin (todos) 
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO osint_admin; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO osint_admin; GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO osint_admin;
 
--- Permisos para analyst (lectura + escritura en algunas tablas) GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_analyst; GRANT INSERT, UPDATE ON threat_detections TO osint_analyst; GRANT INSERT, UPDATE ON alerts TO osint_analyst; GRANT INSERT ON user_activity TO osint_analyst;
+-- Permisos para analyst (lectura + escritura en algunas tablas) 
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_analyst; GRANT INSERT, UPDATE ON threat_detections TO osint_analyst; GRANT INSERT, UPDATE ON alerts TO osint_analyst; GRANT INSERT ON user_activity TO osint_analyst;
 
--- Permisos para readonly (solo lectura) GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
+-- Permisos para readonly (solo lectura) 
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
 
--- Row Level Security (ejemplo para multi-tenancy futuro) ALTER TABLE social_mentions ENABLE ROW LEVEL SECURITY; ALTER TABLE threat_detections ENABLE ROW LEVEL SECURITY;
+-- Row Level Security (ejemplo para multi-tenancy futuro) 
+ALTER TABLE social_mentions ENABLE ROW LEVEL SECURITY; ALTER TABLE threat_detections ENABLE ROW LEVEL SECURITY;
 
--- Política: Los usuarios solo ven sus propias detecciones -- (Deshabilitado por defecto; habilitar cuando se implemente multi-tenancy) -- CREATE POLICY user_isolation_policy ON threat_detections -- FOR ALL -- TO osint_analyst -- USING (reviewed_by = current_user OR reviewed_by IS NULL);
+-- Política: Los usuarios solo ven sus propias detecciones (Deshabilitado por defecto; habilitar cuando se implemente multi-tenancy) 
+CREATE POLICY user_isolation_policy ON threat_detections FOR ALL TO osint_analyst USING (reviewed_by = current_user OR reviewed_by IS NULL);
 
 -- ============================================ 
 -- DATOS INICIALES 
 -- ============================================
 
--- Keywords iniciales de ejemplo INSERT INTO keywords_monitor (keyword_text, keyword_type, keyword_category, keyword_weight, trigger_immediate_alert, description) VALUES ('ransomware', 'threat_term', 'critical', 30, TRUE, 'Menciones de ransomware'), ('data breach', 'threat_term', 'critical', 30, TRUE, 'Filtraciones de datos'), ('zero-day', 'threat_term', 'critical', 25, TRUE, 'Vulnerabilidades zero-day'), ('phishing', 'threat_term', 'high', 20, FALSE, 'Campañas de phishing'), ('malware', 'threat_term', 'high', 20, FALSE, 'Malware general'), ('exploit', 'threat_term', 'high', 15, FALSE, 'Exploits y vulnerabilidades'), ('vulnerability', 'threat_term', 'medium', 10, FALSE, 'Vulnerabilidades en general'), ('ciberataque', 'threat_term', 'high', 20, FALSE, 'Ataques cibernéticos (español)'), ('filtración', 'threat_term', 'high', 20, FALSE, 'Filtraciones (español)'), ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)') ON CONFLICT (keyword_text) DO NOTHING;
+-- Keywords iniciales de ejemplo 
+INSERT INTO keywords_monitor (keyword_text, keyword_type, keyword_category, keyword_weight, trigger_immediate_alert, description) VALUES ('ransomware', 'threat_term', 'critical', 30, TRUE, 'Menciones de ransomware'), ('data breach', 'threat_term', 'critical', 30, TRUE, 'Filtraciones de datos'), ('zero-day', 'threat_term', 'critical', 25, TRUE, 'Vulnerabilidades zero-day'), ('phishing', 'threat_term', 'high', 20, FALSE, 'Campañas de phishing'), ('malware', 'threat_term', 'high', 20, FALSE, 'Malware general'), ('exploit', 'threat_term', 'high', 15, FALSE, 'Exploits y vulnerabilidades'), ('vulnerability', 'threat_term', 'medium', 10, FALSE, 'Vulnerabilidades en general'), ('ciberataque', 'threat_term', 'high', 20, FALSE, 'Ataques cibernéticos (español)'), ('filtración', 'threat_term', 'high', 20, FALSE, 'Filtraciones (español)'), ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)') ON CONFLICT (keyword_text) DO NOTHING;
 
--- ============================================ -- COMENTARIOS EN TABLAS -- ============================================
+-- ============================================ 
+-- COMENTARIOS EN TABLAS 
+-- ============================================
 
 COMMENT ON TABLE social_mentions IS 'Menciones recopiladas de redes sociales'; COMMENT ON TABLE sentiment_analysis IS 'Resultados de análisis de sentimiento'; COMMENT ON TABLE threat_detections IS 'Detecciones de amenazas potenciales'; COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas'; COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente'; COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows'; COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
 
--- ============================================ -- FINALIZACIÓN -- ============================================
+-- ============================================ 
+-- FINALIZACIÓN 
+-- ============================================
 
--- Mensaje de confirmación DO $$ BEGIN RAISE NOTICE '============================================'; RAISE NOTICE 'OSINT Monitoring System Schema Created Successfully'; RAISE NOTICE 'Version: 1.0'; RAISE NOTICE 'Timestamp: %', NOW(); RAISE NOTICE '============================================'; END $$;
+-- Mensaje de confirmación 
+DO $$ 
+BEGIN RAISE NOTICE'============================================'; 
+RAISE NOTICE 'OSINT Monitoring System Schema Created Successfully'; 
+RAISE NOTICE 'Version: 1.0'; 
+RAISE NOTICE 'Timestamp: %', 
+NOW(); 
+RAISE NOTICE '============================================'; 
+END $$;
 
 ````
 
@@ -6171,71 +6204,158 @@ Hardware Recomendado:
 - Red: 100 Mbps+
 
 Software:
-- Ubuntu 20.04 LTS o superior
+- Ubuntu 20.04 LTS o superior, Kali linux
 - Docker 20.10+
 - Docker Compose 1.29+
 - PostgreSQL 14+ (puede ser dockerizado)
+- n8n
 - Python 3.9+ (para sentiment API)
 ```
 
+
 **D.2. Instalación Paso a Paso**
+Primero instalar los requerimientos.
+
+**D.2.1. Instalación de Docker**
 
 ```bash
 # Paso 1: Actualizar sistema
 sudo apt update && sudo apt upgrade -y
 
-# Paso 2: Instalar Docker
+# Paso 2: Instalar Docker 
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
+# Opcional: Instalación docker con APT Pinning(Para KALI LINUX)
+	#Paso 1: Configuración de Dependencias
+	sudo apt update 
+	sudo apt install apt-transport-https ca-certificates curl gnupg2 software-properties-common -y
+	#Paso 2: Añadir el Repositorio Oficial de Docker
+	# 1. Añadir la clave GPG de Docker
+	curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+	# 2. Añadir el repositorio de Docker, apuntando a Debian Bullseye
+	echo \
+	  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+	  bullseye stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+	#Paso 3: Definir la Prioridad de APT (Pinning)
+	echo -e "Package: docker-ce*\nPin: release o=Docker\nPin-Priority: 1000" | sudo tee /etc/apt/preferences.d/docker.pref > /dev/null
+	#Paso 4: Instalación Final de Docker
+	sudo apt update
+	sudo apt install docker-ce docker-ce-cli containerd.io -y
+	#Paso 5: Configuración Post-Instalación (Imprescindible)
+	# 1. Habilitar inicio automático y arrancar el servicio inmediatamente
+	sudo systemctl enable docker --now
+	
+	# 2. Añadir tu usuario al grupo 'docker' (creado en el paso 4)
+	sudo usermod -aG docker $USER
+	
+	# 3. Aplicar el cambio de grupo (sin reiniciar la PC)
+	newgrp docker
+	#Verificación de instalación
+	docker run hello-world
+
 # Paso 3: Instalar Docker Compose
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
+```
 
-# Paso 4: Crear directorio del proyecto
-mkdir -p ~/osint-monitor
-cd ~/osint-monitor
+**D.2.2. Instalación de PostgreSQL 14+ en Kali Linux**
 
-# Paso 5: Crear docker-compose.yml
+La instalación en Kali Linux, al ser un derivado de Debian, sigue un proceso muy similar al de Ubuntu/Debian, pero requiere añadir explícitamente el repositorio oficial de PostgreSQL.
+
+```bash
+# Paso 1: Actualizar el sistema y dependencias
+# Asegurarse de que el sistema esté actualizado e instalar paquetes necesarios.
+sudo apt update
+sudo apt install -y curl gnupg
+
+# Paso 2: Añadir la clave GPG del repositorio de PostgreSQL
+# Esto verifica la autenticidad de los paquetes.
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
+
+# Paso 3: Añadir el repositorio oficial de PostgreSQL
+# Creamos un archivo de lista de fuentes para que APT encuentre los paquetes.
+echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+
+# Paso 4: Actualizar la lista de paquetes e instalar PostgreSQL
+# Actualizamos de nuevo para incluir los nuevos paquetes del repositorio de Postgres.
+sudo apt update
+sudo apt install -y postgresql-14
+
+# Paso 5: Verificar la instalación y el estado del servicio
+# El servicio debería iniciarse automáticamente.
+sudo systemctl status postgresql
+
+# Debería mostrar "active (exited)". Es normal, ya que el servicio principal es gestionado por un script.
+# Para verificar la conexión, podemos cambiar al usuario 'postgres' y abrir la consola psql.
+sudo -u postgres psql -c "SELECT version();"
+
+# El comando anterior debería devolver la versión de PostgreSQL 14.
+
+# Paso 6: Habilitar el inicio automático (opcional pero recomendado)
+# Asegurarse de que PostgreSQL se inicie con el sistema.
+sudo systemctl enable postgresql
+
+#Iniciar servicio PostgreSQL
+sudo systemctl start postgresql
+```
+```
+
+**D.2.2.1. Problema con Docker Compose**
+En caso de tener inconvenientes con este ejecutar los siguientes comando:
+
+```bash
+# Paso 1: Descargar la Última Versión
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# Paso 2: Permisos de Ejecución
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+**D.2.3. Instalación del proyecto**
+
+```bash
+# Paso 1: Crear directorio del proyecto
+mkdir -p ~/nexus-security-group
+cd ~/nexus-security-group
+
+# Paso 2: Crear docker-compose.yml
 cat > docker-compose.yml <<EOF
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15
     container_name: osint-postgres
     environment:
-      POSTGRES_USER: osint_user
-      POSTGRES_PASSWORD: CHANGE_THIS_PASSWORD
-      POSTGRES_DB: osint_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: PASSWORD
+      POSTGRES_DB: nexus-security-gr
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped
-
   n8n:
     image: n8nio/n8n:latest
     container_name: osint-n8n
+    ports:
+      - "5678:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=CHANGE_THIS_PASSWORD
-      - N8N_HOST=0.0.0.0
+      - N8N_BASIC_AUTH_PASSWORD=PASSWORD
+      - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://your-domain.com
+      - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=osint_user
-      - DB_POSTGRESDB_PASSWORD=CHANGE_THIS_PASSWORD
-    ports:
-      - "5678:5678"
+      - DB_POSTGRESDB_DATABASE=nexus-security-gr
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=PASSWORD
     volumes:
       - n8n_data:/home/node/.n8n
     depends_on:
@@ -6248,17 +6368,16 @@ services:
     ports:
       - "5000:5000"
     restart: unless-stopped
-
 volumes:
   postgres_data:
   n8n_data:
 EOF
 
-# Paso 6: Crear directorio para sentiment API
+# Paso 3: Crear directorio para sentiment API
 mkdir -p sentiment-api
 cd sentiment-api
 
-# Paso 7: Crear Dockerfile para sentiment API
+# Paso 4: Crear Dockerfile para sentiment API
 cat > Dockerfile <<EOF
 FROM python:3.9-slim
 
@@ -6275,80 +6394,93 @@ EXPOSE 5000
 CMD ["python", "sentiment_api.py"]
 EOF
 
-# Paso 8: Crear sentiment_api.py
+# Paso 5: Crear sentiment_api.py
 cat > sentiment_api.py <<EOF
 from flask import Flask, request, jsonify
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer from textblob import TextBlob
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
 
-app = Flask(**name**) analyzer = SentimentIntensityAnalyzer()
+app = Flask(__name__)
+analyzer = SentimentIntensityAnalyzer()
 
-@app.route('/health', methods=['GET']) def health(): return jsonify({'status': 'healthy'}), 200
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'healthy'}), 200
 
-@app.route('/analyze', methods=['POST']) def analyze_sentiment(): try: data = request.json text = data.get('text', '')
-    if not text:
-        return jsonify({'error': 'No text provided'}), 400
+@app.route('/analyze', methods=['POST'])
+def analyze_sentiment():
+    try:
+        data = request.json
+        text = data.get('text', '')
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # VADER analysis
+        vader_scores = analyzer.polarity_scores(text)
+        
+        # TextBlob analysis
+        blob = TextBlob(text)
+        textblob_scores = {
+            'polarity': blob.sentiment.polarity,
+            'subjectivity': blob.sentiment.subjectivity
+        }
+        
+        # Ensemble: promedio de VADER compound y TextBlob polarity
+        ensemble_score = (vader_scores['compound'] + textblob_scores['polarity']) / 2
+        
+        # Clasificación final
+        if ensemble_score >= 0.05:
+            label = 'positive'
+        elif ensemble_score <= -0.05:
+            label = 'negative'
+        else:
+            label = 'neutral'
+        
+        # Confidence score basado en convergencia de métodos
+        score_diff = abs(vader_scores['compound'] - textblob_scores['polarity'])
+        confidence = 1.0 - (score_diff / 2)  # Normalizado 0-1
+        
+        return jsonify({
+            'vader': vader_scores,
+            'textblob': textblob_scores,
+            'ensemble_score': round(ensemble_score, 4),
+            'sentiment_label': label,
+            'confidence_score': round(confidence, 3)
+        }), 200
     
-    # VADER analysis
-    vader_scores = analyzer.polarity_scores(text)
-    
-    # TextBlob analysis
-    blob = TextBlob(text)
-    textblob_scores = {
-        'polarity': blob.sentiment.polarity,
-        'subjectivity': blob.sentiment.subjectivity
-    }
-    
-    # Ensemble: promedio de VADER compound y TextBlob polarity
-    ensemble_score = (vader_scores['compound'] + textblob_scores['polarity']) / 2
-    
-    # Clasificación final
-    if ensemble_score >= 0.05:
-        label = 'positive'
-    elif ensemble_score <= -0.05:
-        label = 'negative'
-    else:
-        label = 'neutral'
-    
-    # Confidence score basado en convergencia de métodos
-    score_diff = abs(vader_scores['compound'] - textblob_scores['polarity'])
-    confidence = 1.0 - (score_diff / 2)  # Normalizado 0-1
-    
-    return jsonify({
-        'vader': vader_scores,
-        'textblob': textblob_scores,
-        'ensemble_score': round(ensemble_score, 4),
-        'sentiment_label': label,
-        'confidence_score': round(confidence, 3)
-    }), 200
-    
-except Exception as e:
-    return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-if **name** == '**main**': app.run(host='0.0.0.0', port=5000, debug=False) EOF
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
+EOF
 
 cd .. 
 
-# Paso 9: Copiar init.sql (script de creación de schema del Anexo A)
+# Paso 6: Copiar init.sql (script de creación de schema del Anexo A)
 
 # Copiar el contenido completo del script SQL del Anexo A.1 a init.sql
 
-cat > init.sql <<'EOF' -- Pegar aquí el contenido completo del script SQL del Anexo A.1 EOF
+cat > init.sql <<'EOF' -- Pegar aquí el contenido completo del script SQL del Anexo A.1 
+EOF
 
-# Paso 10: Iniciar servicios
+# Paso 7: Iniciar servicios
 
 docker-compose up -d
 
-# Paso 11: Verificar que todos los servicios están corriendo
+# Paso 8: Verificar que todos los servicios están corriendo
 
 docker-compose ps
 
-# Paso 12: Ver logs
+# Paso 9: Ver logs
 
 docker-compose logs -f
 
-# Paso 13: Acceder a n8n
+# Paso 10: Acceder a n8n
 
-echo "n8n está disponible en http://localhost:5678" echo "Usuario: admin" echo "Contraseña: CHANGE_THIS_PASSWORD (cambiar en docker-compose.yml)"
+echo "n8n está disponible en " 
+echo "Usuario: admin" 
+echo "Contraseña: CHANGE_THIS_PASSWORD (cambiar en docker-compose.yml)"
 
 ```
 
@@ -6428,7 +6560,7 @@ echo "n8n está disponible en http://localhost:5678" echo "Usuario: admin" echo 
 
 ```bash
 # Verificar PostgreSQL
-docker exec -it osint-postgres psql -U osint_user -d osint_db -c "\dt"
+docker exec -it osint-postgres psql -U postgrest -d nexus-security-group -c "\dt"
 
 # Debería mostrar todas las tablas creadas
 
