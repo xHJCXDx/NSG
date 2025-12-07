@@ -6948,6 +6948,34 @@ echo "Contraseña: CHANGE_THIS_PASSWORD (cambiar en docker-compose.yml)"
 
 ```
 
+Para la obtención de la credencial de Twitter aplicamos el siguiente formulario de solicitud de acceso a la API:
+``` Markdown
+Nuestro proyecto es una investigación sin fines de lucro conducida por UTN Argentina con el objetivo de realización de tesis para dicha facultad: Comprender la difusión de la información de salud pública; Analizar el discurso político en línea; Estudiar la formación de comunidades virtuales.
+
+1. Metodología y Acceso a Datos
+Alcance del Estudio: La investigación se enfoca en el análisis de contenido público, anonimizado y agregado.
+
+Endpoints Utilizados: Accederemos principalmente a los endpoints de búsqueda (search/all/2 o search/stream) para recopilar publicaciones (tweets) que cumplan con criterios específicos y acotados (ej. publicaciones con palabras clave específicas durante un período de tiempo definido).
+
+Datos Recopilados: Recopilamos únicamente datos públicos de X, incluyendo el texto de la publicación, metadatos de la publicación (ID, fecha, métricas de engagement), y metadatos del autor (ID, nombre de usuario, conteo de seguidores). La recolección es selectiva y solo se enfoca en los datos estrictamente necesarios para el análisis propuesto.
+
+Propósito Científico: El objetivo es aplicar métodos de Procesamiento de Lenguaje Natural (NLP) y Análisis de Redes Sociales (SNA) para generar insights científicos que contribuyan al conocimiento en el campo de ciberseguridad.
+
+2. Ética, Almacenamiento y Cumplimiento
+Dado que se trata de un proyecto académico, el énfasis en la ética y la protección de datos es fundamental.
+
+Anonimización y Agregación: Los resultados de la investigación y las publicaciones académicas se basarán en datos agregados y anonimizados. Los tweets individuales no serán citados textualmente ni se expondrán datos personales de usuarios sin su consentimiento explícito, en estricto cumplimiento con las políticas de X.
+
+Almacenamiento Seguro: Los datos brutos recopilados se almacenan en un entorno seguro dentro de un servidor local, protegidos mediante protocolos de cifrado y acceso limitado a los investigadores principales del proyecto.
+
+Retención de Datos: La retención de los datos se limitará al período de la investigación (aproximadamente 1 año). Nos comprometemos a eliminar los datos de nuestra base de datos si un usuario elimina la publicación original en la plataforma, conforme a la política de X.
+
+Naturaleza No Comercial: Esta investigación no tiene fines comerciales. Los resultados se divulgarán a través de conferencias y tesis, y no se utilizarán para la monetización, la reventa de datos o la creación de productos competitivos.
+
+3. Conclusión y Compromiso
+El proyecto cumple con todos los estándares éticos de nuestra institución y está diseñado para garantizar la privacidad del usuario. Nos comprometemos a cumplir rigurosamente con los Términos de Servicio y las Políticas de la API de X para Investigación Académica.
+```
+
 **D.4. Importar Workflow**
 
 ```
