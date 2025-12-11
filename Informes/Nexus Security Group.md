@@ -7004,7 +7004,7 @@ El proyecto cumple con todos los estándares éticos de nuestra institución y e
 
 ```bash
 # Verificar PostgreSQL
-docker exec -it osint-postgres psql -U postgrest -d nexus-security-group -c "\dt"
+docker exec -it osint-postgres psql -U postgrest -d nexus-security-gr -c "\dt"
 
 # Debería mostrar todas las tablas creadas
 
@@ -7339,10 +7339,6 @@ Retención de Datos: 12 meses (luego purga automática)
 **Fecha de generación:** [Fecha]  
 **Próximo reporte:** [Fecha del mes siguiente]
 
-```
-
----
-
 ## CIERRE DEL DOCUMENTO
 
 Esta tesis representa una contribución integral al campo de la inteligencia de fuentes abiertas automatizada, proporcionando no solo fundamentos teóricos sino una implementación completa, documentada y replicable que organizaciones argentinas con recursos limitados pueden adoptar inmediatamente para fortalecer sus capacidades de ciberseguridad.
@@ -7352,16 +7348,6 @@ El trabajo demuestra que la democratización de tecnologías sofisticadas median
 Más allá de los resultados técnicos específicos, esta investigación establece una metodología de desarrollo de sistemas de seguridad que prioriza accesibilidad sin sacrificar efectividad, transparencia sin comprometer privacidad, y automatización sin eliminar juicio humano. Estos principios pueden y deben guiar futuras innovaciones en ciberseguridad aplicada.
 
 La liberación pública de todo el código, documentación y metodología como recursos open-source garantiza que el impacto de este trabajo se extenderá mucho más allá de su implementación inicial, contribuyendo al fortalecimiento colectivo de capacidades de ciberseguridad en Argentina, Latinoamérica y globalmente.
-
----
-
-**FIN DE LA TESIS**
-
-**Total de páginas:** ~180  
-**Total de palabras:** ~45,000  
-**Código SQL:** ~2,500 líneas  
-**Código n8n JSON:** ~1,000 líneas  
-**Scripts auxiliares:** ~500 líneas
 
 ---
 
