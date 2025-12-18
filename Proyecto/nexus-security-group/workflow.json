@@ -338,6 +338,20 @@
         }
       },
       "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition"
+      },
+      "id": "merge-data-fix",
+      "name": "Merge Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        1350,
+        450
+      ]
     }
   ],
   "connections": {
@@ -392,11 +406,27 @@
             "node": "Sentiment Analysis",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     },
     "Sentiment Analysis": {
+      "main": [
+        [
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Data": {
       "main": [
         [
           {
