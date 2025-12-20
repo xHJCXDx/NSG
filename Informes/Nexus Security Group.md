@@ -4,10 +4,10 @@
 
 **Universidad Tecnológica Nacional**  
 **Facultad Regional Mendoza**  
-**Carrera: Ingeniería en Sistemas de Información**  
+**Carrera: Tecnicatura en Programación**  
 **Línea de Investigación: Ciberseguridad y Automatización Operativa**
 
-**Autor: Hiro Cruz**  
+**Autor: Hiro Cruz - Manzano Mauricio**  
 **Director: **  
 **Co-Director: **
 
@@ -7335,9 +7335,9 @@ Retención de Datos: 12 meses (luego purga automática)
 ---
 
 **Preparado por:** Sistema OSINT Automatizado  
-**Revisado por:** [Nombre Analista Senior]  
-**Fecha de generación:** [Fecha]  
-**Próximo reporte:** [Fecha del mes siguiente]
+**Revisado por:** ______________________  
+**Fecha de generación:** __________________  
+**Próximo reporte:** _________________________
 
 ## CIERRE DEL DOCUMENTO
 
