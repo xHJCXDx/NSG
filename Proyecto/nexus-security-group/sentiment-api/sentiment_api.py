@@ -13,7 +13,16 @@ def health():
 def analyze_sentiment():
     try:
         data = request.json
-        text = data.get('text', '')
+        input_payload = data.get('text', '')
+        tweet_data = {}
+        text = ''
+
+        if isinstance(input_payload, dict):
+            tweet_data = input_payload
+            text = tweet_data.get('text_content', '')
+        else:
+            text = str(input_payload)
+
         if not text:
             return jsonify({'error': 'No text provided'}), 400
         
@@ -42,13 +51,20 @@ def analyze_sentiment():
         score_diff = abs(vader_scores['compound'] - textblob_scores['polarity'])
         confidence = 1.0 - (score_diff / 2)  # Normalizado 0-1
         
-        return jsonify({
+        response_data = tweet_data.copy()
+        response_data['sentiment'] = {
             'vader': vader_scores,
             'textblob': textblob_scores,
             'ensemble_score': round(ensemble_score, 4),
             'sentiment_label': label,
             'confidence_score': round(confidence, 3)
-        }), 200
+        }
+        
+        # Fallback for direct API usage without tweet wrapper (legacy support)
+        if not tweet_data:
+             return jsonify(response_data['sentiment']), 200
+
+        return jsonify(response_data), 200
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
