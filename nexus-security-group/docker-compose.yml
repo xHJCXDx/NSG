@@ -48,6 +48,29 @@ services:
     networks:
       - nexus-net
 
+  n8n-import:
+    image: n8nio/n8n:latest
+    profiles:
+      - tools
+    command: ["n8n", "import:workflow", "--input=/workflows/workflow.json"]
+    environment:
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./workflow.json:/workflows/workflow.json:ro
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - nexus-net
+
   sentiment-api:
     build: ./sentiment-api
     container_name: osint-sentiment-api

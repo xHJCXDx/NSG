@@ -38,6 +38,7 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
 - **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio. Si querés consultar GitHub con mayor margen de rate limit, configurá `GITHUB_TOKEN` como variable de n8n.
+- **Import manual del workflow**: Para importar o actualizar el workflow versionado sin ejecutarlo en cada arranque, usá `docker compose --profile tools run --rm n8n-import`.
 - **Refactor Pendiente**: El `dashboard-api` se está rediseñando para incorporar modelos Pydantic y una capa de repositorios, abandonando el SQL crudo para mayor escalabilidad.
 
 ## Checklist de despliegue
