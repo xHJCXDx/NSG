@@ -35,6 +35,15 @@ CLAUDE.md
 GEMINI.md
 nexus-security-group/diagrama.jpg
 *.backup
+credentials.json
+**/credentials.json
+secrets/
+**/secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
 # OS/editor noise
 .obsidian/

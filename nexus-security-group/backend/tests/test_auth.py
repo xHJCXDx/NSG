@@ -9,6 +9,14 @@ from httpx import AsyncClient, ASGITransport
 AUTH_PATH = Path(__file__).parent.parent / "auth.py"
 
 
+@pytest.fixture(autouse=True)
+def auth_env(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("ADMIN_USER", "test-admin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
+
+
 def test_auth_no_os_getenv():
     """auth.py must not call os.getenv() anywhere."""
     source = AUTH_PATH.read_text()
@@ -33,12 +41,12 @@ def test_auth_no_import_os():
 
 @pytest.mark.anyio
 async def test_login_success():
-    """POST /api/auth/login with default credentials returns HTTP 200 and access_token."""
+    """POST /api/auth/login with configured credentials returns HTTP 200 and access_token."""
     from main import app
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.post(
             "/api/auth/login",
-            data={"username": "admin", "password": "REDACTED_PASSWORD"},
+            data={"username": "test-admin", "password": "test-admin-password"},
         )
     assert response.status_code == 200
     body = response.json()

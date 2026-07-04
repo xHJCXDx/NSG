@@ -8,7 +8,8 @@ Arquitectura automatizada para monitoreo de redes sociales y OSINT, diseñada pa
    Copia el archivo y ajusta las credenciales en la carpeta del código.
    ```bash
    cd nexus-security-group
-   # Crear .env si no existe y ajustar (Postgres, n8n, etc)
+   cp .env.example .env
+   # Editar .env y reemplazar todos los valores change-me antes de levantar servicios
    ```
 
 2. **Levantar los servicios**

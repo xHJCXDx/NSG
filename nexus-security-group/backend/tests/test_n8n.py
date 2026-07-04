@@ -10,6 +10,14 @@ from httpx import AsyncClient, ASGITransport
 N8N_PATH = Path(__file__).parent.parent / "routers" / "n8n.py"
 
 
+@pytest.fixture(autouse=True)
+def auth_env(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("ADMIN_USER", "test-admin")
+    monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
+
+
 def test_n8n_no_os_getenv():
     """routers/n8n.py must not call os.getenv() anywhere."""
     source = N8N_PATH.read_text()
@@ -44,7 +52,7 @@ async def test_proxy_webhook_uses_settings_url():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         login = await client.post(
             "/api/auth/login",
-            data={"username": "admin", "password": "REDACTED_PASSWORD"},
+            data={"username": "test-admin", "password": "test-admin-password"},
         )
     token = login.json()["access_token"]
 

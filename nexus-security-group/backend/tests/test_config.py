@@ -3,24 +3,36 @@ import ast
 import os
 from pathlib import Path
 
+import pytest
 
-def test_settings_default_database_url():
-    """Settings() uses the hardcoded default when no env var is set."""
-    # Ensure DATABASE_URL is NOT in env for this test
-    env_backup = os.environ.pop("DATABASE_URL", None)
-    try:
-        from config import Settings
-        s = Settings()
-        assert s.DATABASE_URL == "postgresql://REDACTED_USER:REDACTED_PASSWORD@localhost:5432/osint_db"
-    finally:
-        if env_backup is not None:
-            os.environ["DATABASE_URL"] = env_backup
+
+SAFE_DATABASE_URL = "postgresql://test-user:test-password@localhost:5432/osint_db"
+SAFE_JWT_SECRET_KEY = "test-jwt-secret"
+SAFE_ADMIN_USER = "test-admin"
+SAFE_ADMIN_PASSWORD = "test-admin-password"
+
+
+def test_settings_requires_database_url(monkeypatch):
+    """Settings() requires DATABASE_URL to come from env or .env."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
+
+    from pydantic import ValidationError
+    from config import Settings
+
+    with pytest.raises(ValidationError):
+        Settings()
 
 
 def test_settings_env_var_override(monkeypatch):
     """Settings() picks up DATABASE_URL from the environment."""
     expected = "postgresql://user:pass@host:5432/mydb"
     monkeypatch.setenv("DATABASE_URL", expected)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
 
     # Force re-instantiation (module-level singleton is already set, test Settings directly)
     from config import Settings
@@ -32,7 +44,12 @@ def test_settings_dotenv_override(tmp_path, monkeypatch):
     """Settings() reads DATABASE_URL from a .env file when no env var is set."""
     expected = "postgresql://user:pass@dotenv:5432/envdb"
     env_file = tmp_path / ".env"
-    env_file.write_text(f"DATABASE_URL={expected}\n")
+    env_file.write_text(
+        f"DATABASE_URL={expected}\n"
+        f"JWT_SECRET_KEY={SAFE_JWT_SECRET_KEY}\n"
+        f"ADMIN_USER={SAFE_ADMIN_USER}\n"
+        f"ADMIN_PASSWORD={SAFE_ADMIN_PASSWORD}\n"
+    )
 
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
@@ -46,8 +63,12 @@ def test_settings_dotenv_override(tmp_path, monkeypatch):
     assert s.DATABASE_URL == expected
 
 
-def test_settings_singleton_importable():
+def test_settings_singleton_importable(monkeypatch):
     """from config import settings does not raise ImportError or ValidationError."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
     from config import settings  # noqa: F401 — import is the test
     assert settings.DATABASE_URL is not None
     assert isinstance(settings.DATABASE_URL, str)
@@ -81,34 +102,45 @@ def test_config_no_internal_imports():
 # --- Tests for Paso B (backend-config-migrate) ---
 
 
-def test_jwt_secret_key_default(monkeypatch):
-    """Settings().JWT_SECRET_KEY equals the hardcoded default when no env var is set."""
+def test_jwt_secret_key_required(monkeypatch):
+    """Settings().JWT_SECRET_KEY must come from env or .env."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
     monkeypatch.delenv("JWT_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
+    from pydantic import ValidationError
     from config import Settings
-    s = Settings()
-    assert s.JWT_SECRET_KEY == "REDACTED_JWT_SECRET"
+    with pytest.raises(ValidationError):
+        Settings()
 
 
 def test_jwt_secret_key_env_override(monkeypatch):
     """Settings() picks up JWT_SECRET_KEY from the environment."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
     monkeypatch.setenv("JWT_SECRET_KEY", "my-prod-secret")
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
     from config import Settings
     s = Settings()
     assert s.JWT_SECRET_KEY == "my-prod-secret"
 
 
-def test_admin_user_password_defaults(monkeypatch):
-    """Settings().ADMIN_USER and ADMIN_PASSWORD equal their hardcoded defaults."""
+def test_admin_user_password_required(monkeypatch):
+    """Settings().ADMIN_USER and ADMIN_PASSWORD must come from env or .env."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
     monkeypatch.delenv("ADMIN_USER", raising=False)
     monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    from pydantic import ValidationError
     from config import Settings
-    s = Settings()
-    assert s.ADMIN_USER == "admin"
-    assert s.ADMIN_PASSWORD == "REDACTED_PASSWORD"
+    with pytest.raises(ValidationError):
+        Settings()
 
 
 def test_admin_credentials_env_override(monkeypatch):
     """Settings() picks up ADMIN_USER and ADMIN_PASSWORD from the environment."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
     monkeypatch.setenv("ADMIN_USER", "ops")
     monkeypatch.setenv("ADMIN_PASSWORD", "s3cr3t")
     from config import Settings
@@ -119,6 +151,10 @@ def test_admin_credentials_env_override(monkeypatch):
 
 def test_n8n_internal_url_default(monkeypatch):
     """Settings().N8N_INTERNAL_URL equals the hardcoded default when no env var is set."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
     monkeypatch.delenv("N8N_INTERNAL_URL", raising=False)
     from config import Settings
     s = Settings()
@@ -127,6 +163,10 @@ def test_n8n_internal_url_default(monkeypatch):
 
 def test_n8n_internal_url_env_override(monkeypatch):
     """Settings() picks up N8N_INTERNAL_URL from the environment."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", SAFE_JWT_SECRET_KEY)
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
     monkeypatch.setenv("N8N_INTERNAL_URL", "http://n8n-prod:5678")
     from config import Settings
     s = Settings()
