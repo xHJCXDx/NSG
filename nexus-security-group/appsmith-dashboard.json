@@ -1,0 +1,36 @@
+{
+  "application": {
+    "name": "OSINT Dashboard",
+    "color": "#D946EF",
+    "icon": "analytics",
+    "navigationSetting": {
+      "showNavbar": true,
+      "orientation": "top",
+      "navStyle": "stacked"
+    }
+  },
+  "pages": [
+    {
+      "name": "Dashboard",
+      "layouts": [
+        {
+          "widgetName": "MainContainer",
+          "backgroundColor": "none",
+          "rightColumn": 1224,
+          "snapColumns": 64,
+          "detachFromLayout": true,
+          "widgetId": "0",
+          "containerStyle": "none",
+          "bottomRow": 1280,
+          "width": 1224,
+          "type": "CANVAS_WIDGET",
+          "snapRows": 113,
+          "parentRowSpace": 1,
+          "dynamicBindingPathList": [],
+          "leftColumn": 0,
+          "children": []
+        }
+      ]
+    }
+  ]
+}
