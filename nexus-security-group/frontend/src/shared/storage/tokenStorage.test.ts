@@ -24,4 +24,8 @@ describe('token storage and auth headers', () => {
       Authorization: 'Bearer fake-jwt',
     });
   });
+
+  it('omits the Authorization header when no token is available', () => {
+    expect(createAuthHeaders(null)).toEqual({});
+  });
 });

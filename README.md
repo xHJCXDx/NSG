@@ -1,6 +1,6 @@
 # Nexus Security Group (NSG) - Monitoreo OSINT Automatizado
 
-Arquitectura automatizada para monitoreo de redes sociales y OSINT, diseñada para detectar amenazas usando APIs públicas (Twitter/Reddit), análisis de sentimiento, n8n y PostgreSQL. 
+Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas usando fuentes públicas como Hacker News, Exploit-DB y GitHub Security Issues, análisis de sentimiento, n8n y PostgreSQL. 
 
 ## Quick path
 
@@ -29,7 +29,7 @@ Arquitectura automatizada para monitoreo de redes sociales y OSINT, diseñada pa
 |----------|------------|-------------|
 | **Frontend** | React + Vite + TS | Interfaz para visualizar métricas, amenazas y alertas. |
 | **Dashboard API** | FastAPI | Provee los datos de PostgreSQL al frontend (ruta `/api`). |
-| **Workflows** | n8n | Orquestador para extraer datos de Twitter/X y Reddit. |
+| **Workflows** | n8n | Orquestador para extraer datos de Hacker News, Exploit-DB y GitHub Security Issues. |
 | **Sentiment API** | VADER / TextBlob | Microservicio para NLP y clasificación de sentimiento. |
 | **Database** | PostgreSQL 15 | Almacena métricas, logs y detecciones (esquema en `init.sql`). |
 | **Gateway** | Traefik | Proxy reverso que rutea todo el tráfico. |
@@ -37,7 +37,7 @@ Arquitectura automatizada para monitoreo de redes sociales y OSINT, diseñada pa
 ## Mantenimiento y Configuración
 
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
-- **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio.
+- **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio. Si querés consultar GitHub con mayor margen de rate limit, configurá `GITHUB_TOKEN` como variable de n8n.
 - **Refactor Pendiente**: El `dashboard-api` se está rediseñando para incorporar modelos Pydantic y una capa de repositorios, abandonando el SQL crudo para mayor escalabilidad.
 
 ## Checklist de despliegue

@@ -9,7 +9,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.ts',
   },
   server: {
-    port: 80,
+    port: 5173,
     host: true,
     proxy: {
       '/api': {
