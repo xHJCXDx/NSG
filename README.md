@@ -39,10 +39,20 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
 - **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio. Si querés consultar GitHub con mayor margen de rate limit, configurá `GITHUB_TOKEN` como variable de n8n.
 - **Import manual del workflow**: Para importar o actualizar el workflow versionado sin ejecutarlo en cada arranque, usá `docker compose --profile tools run --rm n8n-import`.
+- **Credencial PostgreSQL en n8n**: El `workflow.json` versionado no incluye credenciales. Después de importar el workflow, creá una credencial PostgreSQL en n8n con estos datos del entorno Docker:
+  - Host: `postgres`
+  - Port: `5432`
+  - Database: valor de `POSTGRES_DB`
+  - User: valor de `POSTGRES_USER`
+  - Password: valor de `POSTGRES_PASSWORD`
+  - SSL: desactivado para el entorno local de Docker Compose
+  Luego asigná esa credencial a todos los nodos PostgreSQL del workflow: `Check Existing IDs`, `Insert Social Mention`, `Insert Sentiment Analysis`, `Insert Threat Detection`, `Log Alert in DB` y `Log Execution`.
+  Esto se mantiene manual a propósito: n8n exporta/importa credenciales por separado y las cifra con `N8N_ENCRYPTION_KEY`; versionarlas junto al workflow metería secretos o artefactos cifrados frágiles en Git.
 - **Refactor Pendiente**: El `dashboard-api` se está rediseñando para incorporar modelos Pydantic y una capa de repositorios, abandonando el SQL crudo para mayor escalabilidad.
 
 ## Checklist de despliegue
 
 - [ ] Verificar variables de entorno en el `.env`.
 - [ ] Asegurarse de importar el `workflow.json` en n8n.
+- [ ] Crear/asignar la credencial PostgreSQL en los nodos n8n antes de activar el workflow.
 - [ ] Validar que los puertos `80`, `5678` y `8080` estén libres en el host.
