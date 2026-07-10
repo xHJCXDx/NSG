@@ -35,6 +35,23 @@ class ThreatListItem(BaseModel):
     last_updated: Optional[datetime] = None
 
 
+class RelatedMentionResponse(BaseModel):
+    """Small mention context embedded in threat list responses."""
+
+    mention_id: int
+    text_content: Optional[str] = None
+    platform: Optional[str] = None
+
+
+class ThreatListResponse(ThreatListItem):
+    """Threat list item shaped for the current frontend contract."""
+
+    matched_keywords: Optional[list[str]] = None
+    detection_rules_triggered: Optional[list[str]] = None
+    contextual_notes: Optional[str] = None
+    related_mention: Optional[RelatedMentionResponse] = None
+
+
 class ThreatDetail(BaseModel):
     """Full threat detection record including all nullable columns."""
 

@@ -1,9 +1,6 @@
-"""Metrics schemas — MetricsSummaryResponse and SentimentDistribution.
+"""Metrics schemas for aggregate dashboard endpoints."""
+from datetime import datetime
 
-These schemas type the /api/metrics endpoint responses. They are
-aggregate views computed from multiple tables, not directly mapped
-to a single ORM model, but still support ORM-mode for flexibility.
-"""
 from pydantic import BaseModel, ConfigDict
 
 
@@ -32,3 +29,25 @@ class MetricsSummaryResponse(BaseModel):
     total_alerts: int
     unacknowledged_alerts: int
     sentiment_distribution: SentimentDistribution
+
+
+class MetricsSummaryEndpointResponse(BaseModel):
+    """Current /api/metrics/summary response consumed by the frontend."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    total_mentions: int
+    sentiment_distribution: dict[str, int]
+    alerts_count: int
+
+
+class RecentMentionResponse(BaseModel):
+    """Recent mention item returned by /api/metrics/mentions."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    platform: str
+    text: str
+    created_at: datetime
+    author: str | None

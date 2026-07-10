@@ -9,16 +9,29 @@ from schemas.auth import Token, TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
 from schemas.log import ExecutionLogResponse
 from schemas.mention import MentionDetail, MentionListItem
-from schemas.metrics import MetricsSummaryResponse, SentimentDistribution
+from schemas.metrics import (
+    MetricsSummaryEndpointResponse,
+    MetricsSummaryResponse,
+    RecentMentionResponse,
+    SentimentDistribution,
+)
 from schemas.sentiment import SentimentResponse
-from schemas.threat import ThreatDetail, ThreatListItem, ThreatReviewRequest
+from schemas.threat import (
+    RelatedMentionResponse,
+    ThreatDetail,
+    ThreatListItem,
+    ThreatListResponse,
+    ThreatReviewRequest,
+)
 
 __all__ = [
     # auth
     "Token",
     "TokenData",
     # metrics
+    "MetricsSummaryEndpointResponse",
     "MetricsSummaryResponse",
+    "RecentMentionResponse",
     "SentimentDistribution",
     # mention
     "MentionListItem",
@@ -26,7 +39,9 @@ __all__ = [
     # sentiment
     "SentimentResponse",
     # threat
+    "RelatedMentionResponse",
     "ThreatListItem",
+    "ThreatListResponse",
     "ThreatDetail",
     "ThreatReviewRequest",
     # alert
