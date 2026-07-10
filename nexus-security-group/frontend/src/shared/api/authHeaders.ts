@@ -1,4 +1,4 @@
-export function createAuthHeaders(token: string | null) {
+export function createAuthHeaders(token: string | null): HeadersInit {
   if (!token) {
     return {};
   }

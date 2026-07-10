@@ -79,7 +79,7 @@ export function useThreats(token: string | null) {
         const matchesClassification =
           classification.length === 0 ||
           threat.type.toLowerCase() === classification ||
-          (threat.category?.toLowerCase() === classification ?? false);
+          threat.category?.toLowerCase() === classification;
 
         return matchesSearch && matchesSeverity && matchesClassification;
       })
