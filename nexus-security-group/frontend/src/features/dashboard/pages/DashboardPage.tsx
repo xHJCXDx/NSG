@@ -1,10 +1,10 @@
 import { AutomationTriggers } from '../../automation/AutomationTriggers';
-import { MetricsDashboard } from '../../metrics/MetricsDashboard';
+import { Dashboard } from './Dashboard';
 
 export function DashboardPage() {
   return (
     <>
-      <MetricsDashboard />
+      <Dashboard />
       <AutomationTriggers />
     </>
   );
