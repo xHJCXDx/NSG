@@ -46,18 +46,19 @@ export function LoginView() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
+              <div role="alert" className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center">
                 {error}
               </div>
             )}
             
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-300 ml-1">Username</label>
+              <label htmlFor="login-username" className="text-sm font-medium text-gray-300 ml-1">Username</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
+                  id="login-username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -69,12 +70,13 @@ export function LoginView() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-300 ml-1">Password</label>
+              <label htmlFor="login-password" className="text-sm font-medium text-gray-300 ml-1">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-500" />
                 </div>
                 <input
+                  id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

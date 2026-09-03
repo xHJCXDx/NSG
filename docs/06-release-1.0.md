@@ -208,6 +208,14 @@ Estas exclusiones no son olvido: son control de alcance. Si metemos todo junto, 
 
 **Criterio de salida:** Release 1.0 queda lista para demo o entrega académica controlada.
 
+**Progreso de verificación Fase 6:**
+
+- [x] Tests existentes revisados y faltante crítico cubierto: se agregó cobertura enfocada para `loginWithCredentials` y `LoginView`, incluyendo envío URL-encoded a `/api/auth/login`, persistencia del token al autenticar, navegación posterior al login y mensaje accesible ante credenciales inválidas. Verificación enfocada ejecutada: `npm test -- src/features/auth/api.test.ts src/features/auth/LoginView.test.tsx`.
+- [ ] Ejecutar verificación estática y/o tests finales según el flujo acordado.
+- [ ] Revisar rutas protegidas manualmente o por tests.
+- [ ] Confirmar que no queden secretos reales versionados.
+- [ ] Confirmar que los workflows n8n siguen pasando por backend/proxy cuando aplica.
+
 ## Orden de ejecución recomendado
 
 1. Revisar cambios actuales sin commitear.
