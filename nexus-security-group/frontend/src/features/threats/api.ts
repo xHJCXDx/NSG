@@ -1,8 +1,8 @@
 import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { THREATS_COPY, THREATS_DEFAULT_LIMIT, THREATS_ENDPOINT } from './contract';
 import type { RawRelatedMention, RawThreat, RawThreatsResponse, RelatedMention, Threat, ThreatsQuery } from './types';
 
-export const THREATS_ENDPOINT = '/api/threats';
-const DEFAULT_LIMIT = 50;
+export { THREATS_ENDPOINT } from './contract';
 
 const pickThreatsArray = (payload: RawThreat[] | RawThreatsResponse): RawThreat[] => {
   if (Array.isArray(payload)) {
@@ -93,13 +93,13 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
 };
 
 export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<Threat[]> {
-  const params = new URLSearchParams({ limit: String(query.limit ?? DEFAULT_LIMIT) });
+  const params = new URLSearchParams({ limit: String(query.limit ?? THREATS_DEFAULT_LIMIT) });
   const res = await fetch(`${THREATS_ENDPOINT}?${params.toString()}`, {
     headers: createAuthHeaders(token),
   });
 
   if (!res.ok) {
-    throw new Error('Threats could not be loaded');
+    throw new Error(THREATS_COPY.error.title);
   }
 
   const payload = (await res.json()) as RawThreat[] | RawThreatsResponse;

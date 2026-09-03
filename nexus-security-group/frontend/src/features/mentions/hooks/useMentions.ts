@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchMentions } from '../api';
+import { MENTIONS_COPY } from '../contract';
 import type { Mention, MentionFilters, MentionLoadStatus } from '../types';
 
 const initialFilters: MentionFilters = { search: '', platform: '' };
@@ -33,7 +34,7 @@ export function useMentions(token: string | null) {
         }
 
         setMentions([]);
-        setError('Mentions could not be loaded');
+        setError(MENTIONS_COPY.error.title);
         setStatus('error');
       });
 

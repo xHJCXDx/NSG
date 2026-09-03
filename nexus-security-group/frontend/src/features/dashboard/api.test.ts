@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchDashboardSummary } from './api';
+import { DASHBOARD_ENDPOINT } from './contract';
 
 describe('fetchDashboardSummary', () => {
   afterEach(() => {
@@ -23,7 +24,7 @@ describe('fetchDashboardSummary', () => {
 
     await expect(fetchDashboardSummary('fake-jwt')).resolves.toEqual(summary);
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/dashboard/summary', {
+    expect(fetchMock).toHaveBeenCalledWith(DASHBOARD_ENDPOINT, {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });

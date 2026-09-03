@@ -1,4 +1,5 @@
 import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { DASHBOARD_ENDPOINT } from './contract';
 
 export interface DashboardSummaryResponse {
   total_threats: number;
@@ -11,7 +12,7 @@ export interface DashboardSummaryResponse {
 }
 
 export async function fetchDashboardSummary(token: string | null) {
-  const res = await fetch('/api/dashboard/summary', {
+  const res = await fetch(DASHBOARD_ENDPOINT, {
     headers: createAuthHeaders(token),
   });
 

@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AuthProvider } from '../../auth/AuthContext';
+import { AuthProvider } from '../../auth';
 import { ThreatsPage } from './ThreatsPage';
 
 const renderThreatsPage = () => {

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchMetricsSummary } from './api';
+import { METRICS_SUMMARY_ENDPOINT } from './contract';
 
 describe('fetchMetricsSummary', () => {
   afterEach(() => {
@@ -19,7 +20,7 @@ describe('fetchMetricsSummary', () => {
 
     await expect(fetchMetricsSummary('fake-jwt')).resolves.toEqual(summary);
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/metrics/summary', {
+    expect(fetchMock).toHaveBeenCalledWith(METRICS_SUMMARY_ENDPOINT, {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });

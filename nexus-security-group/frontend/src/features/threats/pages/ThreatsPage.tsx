@@ -1,8 +1,9 @@
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth';
 import { ThreatEmptyState } from '../components/ThreatEmptyState';
 import { ThreatErrorState } from '../components/ThreatErrorState';
 import { ThreatsList } from '../components/ThreatsList';
 import { ThreatsToolbar } from '../components/ThreatsToolbar';
+import { THREATS_COPY } from '../contract';
 import { useThreats } from '../hooks/useThreats';
 
 export function ThreatsPage() {
@@ -12,10 +13,10 @@ export function ThreatsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">OSINT monitoring</p>
-        <h1 className="mt-2 text-3xl font-bold text-white">Threats</h1>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">{THREATS_COPY.page.eyebrow}</p>
+        <h1 className="mt-2 text-3xl font-bold text-white">{THREATS_COPY.page.title}</h1>
         <p className="mt-2 max-w-3xl text-gray-400">
-          Review detected threats with severity, classification, confidence, evidence, and optional mention context.
+          {THREATS_COPY.page.description}
         </p>
       </div>
 
@@ -23,7 +24,7 @@ export function ThreatsPage() {
 
       {status === 'loading' && (
         <div className="glass-card p-8 text-gray-300" role="status">
-          Loading threats...
+          {THREATS_COPY.page.loading}
         </div>
       )}
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../auth/AuthContext';
+import { useAuth } from '../../auth';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Activity, Bell, KeyRound, ListChecks, ShieldAlert, Zap } from 'lucide-react';
 import { fetchDashboardSummary, type DashboardSummaryResponse } from '../api';
+import { DASHBOARD_COPY } from '../contract';
 
 export function Dashboard() {
   const { token } = useAuth();
@@ -35,15 +36,15 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white tracking-tight">Overview</h1>
-        <p className="text-gray-400 mt-2">Real-time security and system metrics.</p>
+        <h1 className="text-3xl font-bold text-white tracking-tight">{DASHBOARD_COPY.page.title}</h1>
+        <p className="text-gray-400 mt-2">{DASHBOARD_COPY.page.description}</p>
       </header>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Total Threats</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalThreats}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.total_threats ?? 0)}
             </h3>
@@ -55,7 +56,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Pending Threats</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.pendingThreats}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.pending_threats ?? 0)}
             </h3>
@@ -67,7 +68,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Total Alerts</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalAlerts}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.total_alerts ?? 0)}
             </h3>
@@ -79,7 +80,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Unacknowledged Alerts</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.unacknowledgedAlerts}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.unacknowledged_alerts ?? 0)}
             </h3>
@@ -91,7 +92,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Active Keywords</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activeKeywords}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.active_keywords ?? 0)}
             </h3>
@@ -103,7 +104,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Execution Logs</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.executionLogs}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.execution_logs_count ?? 0)}
             </h3>
@@ -115,7 +116,7 @@ export function Dashboard() {
 
         <div className="glass-card p-6 flex items-start justify-between group md:col-span-3">
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">Activity Count</p>
+            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activityCount}</p>
             <h3 className="text-3xl font-bold text-white">
               {loading ? '-' : (data?.activity_count ?? 0)}
             </h3>
@@ -128,7 +129,7 @@ export function Dashboard() {
 
       {/* Charts Area */}
       <div className="glass-card p-6 min-h-[400px]">
-        <h2 className="text-xl font-bold text-white mb-6">Security Summary</h2>
+        <h2 className="text-xl font-bold text-white mb-6">{DASHBOARD_COPY.chart.title}</h2>
         {loading ? (
           <div className="flex items-center justify-center h-[300px]">
             <div className="w-8 h-8 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
@@ -150,7 +151,7 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="flex items-center justify-center h-[300px] text-gray-400">
-            No data available
+            {DASHBOARD_COPY.chart.noData}
           </div>
         )}
       </div>

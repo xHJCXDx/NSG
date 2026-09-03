@@ -1,3 +1,4 @@
+import { THREATS_COPY } from '../contract';
 import type { ThreatEmptyReason } from '../hooks/useThreats';
 
 interface ThreatEmptyStateProps {
@@ -7,14 +8,8 @@ interface ThreatEmptyStateProps {
 export function ThreatEmptyState({ reason }: ThreatEmptyStateProps) {
   const copy =
     reason === 'no-results'
-      ? {
-          title: 'No matching threats',
-          description: 'Try adjusting the search, severity, or classification filter.',
-        }
-      : {
-          title: 'No threats detected yet',
-          description: 'Detected OSINT threats will appear here when the backend exposes them.',
-        };
+      ? THREATS_COPY.empty.noResults
+      : THREATS_COPY.empty.initial;
 
   return (
     <div className="glass-card p-8 text-center border-dashed border-white/10">

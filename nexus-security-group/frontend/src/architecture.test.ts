@@ -35,10 +35,13 @@ const getImportSpecifiers = (filePath: string): string[] => {
 const referencesFeaturePath = (specifier: string, featurePath: string): boolean =>
   specifier === featurePath || specifier.includes(`/${featurePath}`);
 
+const auditedFeatureNames = ['automation', 'dashboard', 'mentions', 'metrics', 'threats', 'users'];
+
 describe('frontend architecture boundaries', () => {
   it('allows only implemented domain folders and keeps future domains unmaterialized', () => {
-    expect(existsSync(path.join(srcRoot, 'features/mentions'))).toBe(true);
-    expect(existsSync(path.join(srcRoot, 'features/threats'))).toBe(true);
+    for (const featureName of auditedFeatureNames) {
+      expect(existsSync(path.join(srcRoot, 'features', featureName))).toBe(true);
+    }
 
     const futureFeaturePaths = [
       'features/alerts',
@@ -50,6 +53,14 @@ describe('frontend architecture boundaries', () => {
     expect(
       futureFeaturePaths.filter((featurePath) => existsSync(path.join(srcRoot, featurePath))),
     ).toEqual([]);
+  });
+
+  it('ensures every audited feature has a public barrel (index.ts)', () => {
+    const missingBarrels = auditedFeatureNames.filter(
+      (featureName) => !existsSync(path.join(srcRoot, 'features', featureName, 'index.ts')),
+    );
+
+    expect(missingBarrels).toEqual([]);
   });
 
   it('keeps shared modules independent from feature modules', () => {
@@ -67,5 +78,22 @@ describe('frontend architecture boundaries', () => {
     );
 
     expect(filesImportingOldN8nFeature.map((filePath) => path.relative(srcRoot, filePath))).toEqual([]);
+  });
+
+  it('keeps audited feature consumption on public barrels instead of deep imports', () => {
+    const auditedFeaturePaths = auditedFeatureNames.map((featureName) => ['features', featureName].join('/'));
+    const externalDeepImports = listSourceFiles(srcRoot).filter((filePath) => {
+      const relativePath = path.relative(srcRoot, filePath);
+
+      return auditedFeaturePaths.some(
+        (featurePath) =>
+          !relativePath.startsWith(`${featurePath}/`) &&
+          getImportSpecifiers(filePath).some(
+            (specifier) => specifier.startsWith(`${featurePath}/`) || specifier.includes(`/${featurePath}/`),
+          ),
+      );
+    });
+
+    expect(externalDeepImports.map((filePath) => path.relative(srcRoot, filePath))).toEqual([]);
   });
 });

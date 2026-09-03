@@ -1,4 +1,4 @@
-import { AutomationTriggers } from '../../automation/AutomationTriggers';
+import { AutomationTriggers } from '../../automation';
 import { Dashboard } from './Dashboard';
 
 export function DashboardPage() {

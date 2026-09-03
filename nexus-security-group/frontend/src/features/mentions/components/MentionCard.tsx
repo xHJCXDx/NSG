@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react';
+import { MENTIONS_COPY } from '../contract';
 import type { Mention } from '../types';
 
 interface MentionCardProps {
@@ -7,7 +8,7 @@ interface MentionCardProps {
 
 const formatDate = (value: string) => {
   if (!value) {
-    return 'Unknown date';
+    return MENTIONS_COPY.card.unknownDate;
   }
 
   const date = new Date(value);
@@ -39,10 +40,10 @@ export function MentionCard({ mention }: MentionCardProps) {
       <p className="text-gray-100 leading-relaxed">{mention.text}</p>
 
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
-        {mention.author && <span>Author: {mention.author}</span>}
+        {mention.author && <span>{MENTIONS_COPY.card.authorLabel}: {mention.author}</span>}
         {mention.sourceUrl && (
           <a href={mention.sourceUrl} className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300">
-            Source <ExternalLink className="h-3 w-3" />
+            {MENTIONS_COPY.card.sourceLabel} <ExternalLink className="h-3 w-3" />
           </a>
         )}
       </div>

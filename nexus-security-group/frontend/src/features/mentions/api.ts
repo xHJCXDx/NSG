@@ -1,8 +1,8 @@
 import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { MENTIONS_COPY, MENTIONS_DEFAULT_LIMIT, MENTIONS_ENDPOINT } from './contract';
 import type { Mention, MentionsQuery, RawMention, RawMentionsResponse } from './types';
 
-export const MENTIONS_ENDPOINT = '/api/metrics/mentions';
-const DEFAULT_LIMIT = 50;
+export { MENTIONS_ENDPOINT } from './contract';
 
 const pickMentionsArray = (payload: RawMention[] | RawMentionsResponse): RawMention[] => {
   if (Array.isArray(payload)) {
@@ -40,13 +40,13 @@ export const mapRawMention = (raw: RawMention): Mention => {
 };
 
 export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<Mention[]> {
-  const params = new URLSearchParams({ limit: String(query.limit ?? DEFAULT_LIMIT) });
+  const params = new URLSearchParams({ limit: String(query.limit ?? MENTIONS_DEFAULT_LIMIT) });
   const res = await fetch(`${MENTIONS_ENDPOINT}?${params.toString()}`, {
     headers: createAuthHeaders(token),
   });
 
   if (!res.ok) {
-    throw new Error('Mentions could not be loaded');
+    throw new Error(MENTIONS_COPY.error.title);
   }
 
   const payload = (await res.json()) as RawMention[] | RawMentionsResponse;

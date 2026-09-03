@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchThreats } from '../api';
+import { THREATS_COPY } from '../contract';
 import type { Threat, ThreatFilters, ThreatLoadStatus } from '../types';
 
 const initialFilters: ThreatFilters = { search: '', severity: '', classification: '' };
@@ -36,7 +37,7 @@ export function useThreats(token: string | null) {
         }
 
         setThreats([]);
-        setError('Threats could not be loaded');
+        setError(THREATS_COPY.error.title);
         setStatus('error');
       });
 
