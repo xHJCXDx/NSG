@@ -11,7 +11,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict
 
 
-_ExecutionStatus = Literal[
+ExecutionLogStatus = Literal[
     "success", "partial_success", "error", "warning", "timeout"
 ]
 
@@ -27,7 +27,7 @@ class ExecutionLogResponse(BaseModel):
     workflow_name: str
     execution_id: Optional[str] = None
 
-    status: _ExecutionStatus
+    status: ExecutionLogStatus
 
     mentions_collected: Optional[int] = None
     mentions_processed: Optional[int] = None

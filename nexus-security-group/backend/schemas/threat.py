@@ -10,11 +10,11 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict
 
 
-_CriticalityLevel = Literal["low", "medium", "high", "critical"]
-_ReviewStatus = Literal[
+ThreatCriticalityLevel = Literal["low", "medium", "high", "critical"]
+ThreatReviewStatus = Literal[
     "pending", "reviewing", "confirmed", "false_positive", "investigating", "resolved"
 ]
-_RemediationStatus = Literal["none", "in_progress", "completed", "not_required"]
+ThreatRemediationStatus = Literal["none", "in_progress", "completed", "not_required"]
 
 
 class ThreatListItem(BaseModel):
@@ -26,11 +26,11 @@ class ThreatListItem(BaseModel):
     mention_id: int
     threat_type: str
     threat_category: Optional[str] = None
-    criticality_level: _CriticalityLevel
+    criticality_level: ThreatCriticalityLevel
     confidence_score: float
     risk_score: Optional[int] = None
     detected_at: datetime
-    review_status: _ReviewStatus
+    review_status: ThreatReviewStatus
     # Trigger-maintained
     last_updated: Optional[datetime] = None
 
@@ -63,7 +63,7 @@ class ThreatDetail(BaseModel):
 
     threat_type: str
     threat_category: Optional[str] = None
-    criticality_level: _CriticalityLevel
+    criticality_level: ThreatCriticalityLevel
     confidence_score: float
     risk_score: Optional[int] = None
 
@@ -78,13 +78,13 @@ class ThreatDetail(BaseModel):
 
     detected_at: datetime
 
-    review_status: _ReviewStatus
+    review_status: ThreatReviewStatus
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     review_notes: Optional[str] = None
 
     actions_taken: Optional[list[str]] = None
-    remediation_status: Optional[_RemediationStatus] = None
+    remediation_status: Optional[ThreatRemediationStatus] = None
     resolution_time: Optional[datetime] = None
 
     escalated: Optional[bool] = None
@@ -101,7 +101,7 @@ class ThreatReviewRequest(BaseModel):
     No from_attributes — this is a request body, not an ORM response.
     """
 
-    review_status: _ReviewStatus
+    review_status: ThreatReviewStatus
     review_notes: Optional[str] = None
     reviewed_by: Optional[str] = None
-    remediation_status: Optional[_RemediationStatus] = None
+    remediation_status: Optional[ThreatRemediationStatus] = None

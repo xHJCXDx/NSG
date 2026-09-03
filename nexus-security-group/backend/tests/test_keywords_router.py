@@ -4,7 +4,9 @@ import sys
 import types
 
 import pytest
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
@@ -17,6 +19,8 @@ from routers.keywords import (
     delete_keyword,
     get_keyword,
     get_keywords,
+    get_current_user,
+    router,
     update_keyword,
 )
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
@@ -50,12 +54,14 @@ class FakeQuery:
 
 
 class FakeDb:
-    def __init__(self, query):
+    def __init__(self, query, *, commit_exception=None):
         self.query_obj = query
+        self.commit_exception = commit_exception
         self.query_args = []
         self.added = []
         self.deleted = []
         self.committed = False
+        self.rolled_back = False
         self.refreshed = []
 
     def query(self, *args):
@@ -69,7 +75,12 @@ class FakeDb:
         self.deleted.append(obj)
 
     def commit(self):
+        if self.commit_exception is not None:
+            raise self.commit_exception
         self.committed = True
+
+    def rollback(self):
+        self.rolled_back = True
 
     def refresh(self, obj):
         self.refreshed.append(obj)
@@ -113,14 +124,13 @@ def _keyword_row(**overrides):
 
 
 def test_main_registers_api_keywords_routes():
-    route_paths = {route.path for route in app.routes}
-    route_methods_by_path = {}
-    for route in app.routes:
-        if hasattr(route, "methods"):
-            route_methods_by_path.setdefault(route.path, set()).update(route.methods)
+    route_methods_by_path = {
+        path: {method.upper() for method in operations}
+        for path, operations in app.openapi()["paths"].items()
+    }
 
-    assert "/api/keywords" in route_paths
-    assert "/api/keywords/{keyword_id}" in route_paths
+    assert "/api/keywords" in route_methods_by_path
+    assert "/api/keywords/{keyword_id}" in route_methods_by_path
     assert "POST" in route_methods_by_path["/api/keywords"]
     assert "PATCH" in route_methods_by_path["/api/keywords/{keyword_id}"]
     assert "DELETE" in route_methods_by_path["/api/keywords/{keyword_id}"]
@@ -185,6 +195,22 @@ def test_create_keyword_adds_commits_refreshes_and_returns_response_valid_object
     assert response.trigger_immediate_alert is True
 
 
+def test_create_keyword_returns_409_for_duplicate_keyword():
+    fake_db = FakeDb(
+        FakeQuery(),
+        commit_exception=IntegrityError("insert", "params", Exception("duplicate")),
+    )
+    request = KeywordCreate(keyword_text="credential leak")
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_keyword(request=request, db=fake_db, current_user=object())
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Keyword already exists"
+    assert fake_db.rolled_back is True
+    assert fake_db.refreshed == []
+
+
 def test_get_keyword_returns_detail_by_keyword_id():
     keyword = _keyword_row(keyword_id=42, keyword_text="credential leak")
     query = FakeQuery(first_result=keyword)
@@ -236,6 +262,28 @@ def test_update_keyword_changes_only_provided_fields_commits_and_refreshes():
     assert response.is_active is False
 
 
+def test_update_keyword_returns_409_for_duplicate_keyword_text():
+    keyword = _keyword_row(keyword_id=42, keyword_text="ransomware")
+    fake_db = FakeDb(
+        FakeQuery(first_result=keyword),
+        commit_exception=IntegrityError("update", "params", Exception("duplicate")),
+    )
+    request = KeywordUpdate(keyword_text="credential leak")
+
+    with pytest.raises(HTTPException) as exc_info:
+        update_keyword(
+            keyword_id=42,
+            request=request,
+            db=fake_db,
+            current_user=object(),
+        )
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Keyword already exists"
+    assert fake_db.rolled_back is True
+    assert fake_db.refreshed == []
+
+
 def test_update_keyword_raises_404_when_missing_and_does_not_commit():
     query = FakeQuery(first_result=None)
     fake_db = FakeDb(query)
@@ -279,3 +327,53 @@ def test_delete_keyword_raises_404_when_missing_and_does_not_commit():
     assert exc_info.value.detail == "Keyword not found"
     assert fake_db.deleted == []
     assert fake_db.committed is False
+
+
+def test_keyword_routes_declare_response_models_and_auth_dependency():
+    list_route = next(
+        route
+        for route in router.routes
+        if route.path == "/api/keywords" and "GET" in route.methods
+    )
+    detail_route = next(
+        route
+        for route in router.routes
+        if route.path == "/api/keywords/{keyword_id}" and "GET" in route.methods
+    )
+    create_route = next(
+        route
+        for route in router.routes
+        if route.path == "/api/keywords" and "POST" in route.methods
+    )
+    update_route = next(
+        route
+        for route in router.routes
+        if route.path == "/api/keywords/{keyword_id}" and "PATCH" in route.methods
+    )
+    delete_route = next(
+        route
+        for route in router.routes
+        if route.path == "/api/keywords/{keyword_id}" and "DELETE" in route.methods
+    )
+
+    assert list_route.response_model == list[KeywordResponse]
+    assert create_route.response_model is KeywordResponse
+    assert create_route.status_code == 201
+    assert detail_route.response_model is KeywordResponse
+    assert update_route.response_model is KeywordResponse
+    assert delete_route.status_code == 204
+    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in create_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in update_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in delete_route.dependant.dependencies)
+
+
+def test_get_keywords_rejects_invalid_limit():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: object()
+
+    response = TestClient(app).get("/api/keywords", params={"limit": 0})
+
+    assert response.status_code == 422

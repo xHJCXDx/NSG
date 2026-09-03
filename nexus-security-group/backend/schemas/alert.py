@@ -6,13 +6,13 @@ only in Response schemas. AcknowledgeRequest is input-only.
 """
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, StringConstraints
 
 
-_AlertSeverity = Literal["info", "warning", "high", "critical"]
-_DeliveryStatus = Literal["pending", "sent", "delivered", "failed"]
+AlertSeverity = Literal["info", "warning", "high", "critical"]
+AlertDeliveryStatus = Literal["pending", "sent", "delivered", "failed"]
 
 
 class AlertResponse(BaseModel):
@@ -26,14 +26,14 @@ class AlertResponse(BaseModel):
 
     alert_title: str
     alert_message: str
-    alert_severity: _AlertSeverity
+    alert_severity: AlertSeverity
 
     channels_sent: Optional[list[str]] = None
     slack_channel: Optional[str] = None
 
     created_at: datetime
     sent_at: Optional[datetime] = None
-    delivery_status: _DeliveryStatus
+    delivery_status: AlertDeliveryStatus
 
     acknowledged: bool
     acknowledged_by: Optional[str] = None
@@ -49,4 +49,7 @@ class AcknowledgeRequest(BaseModel):
     No from_attributes — this is a request body, not an ORM response.
     """
 
-    acknowledged_by: str
+    acknowledged_by: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=100),
+    ]

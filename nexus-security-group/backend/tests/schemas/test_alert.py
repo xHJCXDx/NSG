@@ -102,8 +102,14 @@ def test_alert_response_trigger_columns_present():
 
 def test_acknowledge_request_happy_path():
     from schemas.alert import AcknowledgeRequest
-    req = AcknowledgeRequest(acknowledged_by="admin")
+    req = AcknowledgeRequest(acknowledged_by="  admin  ")
     assert req.acknowledged_by == "admin"
+
+
+def test_acknowledge_request_rejects_blank_acknowledged_by():
+    from schemas.alert import AcknowledgeRequest
+    with pytest.raises(ValidationError):
+        AcknowledgeRequest(acknowledged_by="   ")
 
 
 def test_alert_response_orm_mode():

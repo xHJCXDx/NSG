@@ -5,7 +5,8 @@ import types
 import uuid
 
 import pytest
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
@@ -13,7 +14,13 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
-from routers.alerts import acknowledge_alert, get_alert, get_alerts
+from routers.alerts import (
+    acknowledge_alert,
+    get_alert,
+    get_alerts,
+    get_current_user,
+    router,
+)
 from schemas.alert import AcknowledgeRequest, AlertResponse
 
 
@@ -23,7 +30,7 @@ class FakeQuery:
         self.first_result = first_result
         self.order_by_args = None
         self.limit_value = None
-        self.filter_args = None
+        self.filter_args = []
 
     def order_by(self, *args):
         self.order_by_args = args
@@ -34,7 +41,7 @@ class FakeQuery:
         return self
 
     def filter(self, *args):
-        self.filter_args = args
+        self.filter_args.append(args)
         return self
 
     def all(self):
@@ -86,14 +93,14 @@ def _alert_row(**overrides):
 
 
 def test_main_registers_api_alerts_routes():
-    route_paths = {route.path for route in app.routes}
     route_methods_by_path = {
-        route.path: route.methods for route in app.routes if hasattr(route, "methods")
+        path: {method.upper() for method in operations}
+        for path, operations in app.openapi()["paths"].items()
     }
 
-    assert "/api/alerts" in route_paths
-    assert "/api/alerts/{alert_id}" in route_paths
-    assert "/api/alerts/{alert_id}/acknowledge" in route_paths
+    assert "/api/alerts" in route_methods_by_path
+    assert "/api/alerts/{alert_id}" in route_methods_by_path
+    assert "/api/alerts/{alert_id}/acknowledge" in route_methods_by_path
     assert "PATCH" in route_methods_by_path["/api/alerts/{alert_id}/acknowledge"]
 
 
@@ -111,6 +118,24 @@ def test_get_alerts_lists_recent_alerts_with_limit():
     response = AlertResponse.model_validate(result[0])
     assert response.alert_id == 10
     assert response.channels_sent == ["slack", "email"]
+
+
+def test_get_alerts_applies_supported_status_filters_before_limit():
+    query = FakeQuery(all_result=[])
+    fake_db = FakeDb(query)
+
+    result = get_alerts(
+        db=fake_db,
+        limit=25,
+        delivery_status="failed",
+        acknowledged=False,
+        current_user=object(),
+    )
+
+    assert result == []
+    assert len(query.filter_args) == 2
+    assert query.order_by_args is not None
+    assert query.limit_value == 25
 
 
 def test_get_alerts_limit_defaults_to_fifty_when_called_directly():
@@ -132,7 +157,7 @@ def test_get_alert_returns_detail_by_alert_id():
 
     detail = AlertResponse.model_validate(result)
     assert result == alert
-    assert query.filter_args is not None
+    assert query.filter_args
     assert detail.alert_id == 42
     assert detail.acknowledged is True
     assert detail.acknowledged_by == "analyst"
@@ -170,7 +195,7 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     assert alert.acknowledged_at is not None
     assert fake_db.committed is True
     assert fake_db.refreshed == [alert]
-    assert query.filter_args is not None
+    assert query.filter_args
     assert response.alert_id == 42
     assert response.acknowledged is True
     assert response.acknowledged_by == "analyst@example.com"
@@ -213,3 +238,36 @@ def test_acknowledge_alert_sets_timezone_aware_acknowledged_at():
     assert alert.acknowledged_at.utcoffset() == timezone.utc.utcoffset(
         alert.acknowledged_at
     )
+
+
+def test_alert_routes_declare_response_models_and_auth_dependency():
+    routes_by_path = {route.path: route for route in router.routes}
+
+    list_route = routes_by_path["/api/alerts"]
+    detail_route = routes_by_path["/api/alerts/{alert_id}"]
+    acknowledge_route = routes_by_path["/api/alerts/{alert_id}/acknowledge"]
+
+    assert list_route.response_model == list[AlertResponse]
+    assert detail_route.response_model is AlertResponse
+    assert acknowledge_route.response_model is AlertResponse
+    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
+    assert any(
+        dep.call is get_current_user for dep in detail_route.dependant.dependencies
+    )
+    assert any(
+        dep.call is get_current_user
+        for dep in acknowledge_route.dependant.dependencies
+    )
+
+
+def test_get_alerts_rejects_invalid_limit_and_delivery_status():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: object()
+
+    response = TestClient(app).get(
+        "/api/alerts",
+        params={"limit": 0, "delivery_status": "queued", "acknowledged": "invalid"},
+    )
+
+    assert response.status_code == 422

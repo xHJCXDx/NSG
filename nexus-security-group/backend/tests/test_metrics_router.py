@@ -3,14 +3,21 @@ from types import SimpleNamespace
 import sys
 import types
 
-from fastapi import APIRouter
+from fastapi import APIRouter, FastAPI
+from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
 auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
-from routers.metrics import get_metrics_summary, get_recent_mentions
+from routers.metrics import (
+    get_current_user,
+    get_metrics_summary,
+    get_recent_mentions,
+    router,
+)
+from schemas.metrics import MetricsSummaryEndpointResponse, RecentMentionResponse
 
 
 class FakeQuery:
@@ -114,3 +121,25 @@ def test_recent_mentions_maps_orm_rows_to_frontend_shape():
         }
     ]
     assert mentions_query.limit_value == 10
+
+
+def test_metrics_routes_declare_response_models_and_auth_dependency():
+    routes_by_path = {route.path: route for route in router.routes}
+
+    summary_route = routes_by_path["/api/metrics/summary"]
+    mentions_route = routes_by_path["/api/metrics/mentions"]
+
+    assert summary_route.response_model is MetricsSummaryEndpointResponse
+    assert mentions_route.response_model == list[RecentMentionResponse]
+    assert any(dep.call is get_current_user for dep in summary_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in mentions_route.dependant.dependencies)
+
+
+def test_recent_mentions_rejects_invalid_limit_before_querying_db():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: object()
+
+    response = TestClient(app).get("/api/metrics/mentions", params={"limit": 0})
+
+    assert response.status_code == 422

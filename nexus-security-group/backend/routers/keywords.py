@@ -2,10 +2,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from auth import get_current_user
 from database import get_db
 from models import KeywordMonitor
+from schemas.auth import TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
 
 
@@ -14,10 +16,10 @@ router = APIRouter(prefix="/api/keywords", tags=["keywords"])
 
 @router.get("", response_model=list[KeywordResponse])
 def get_keywords(
-    active_only: bool = False,
+    active_only: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     query = db.query(KeywordMonitor)
     if active_only:
@@ -26,16 +28,27 @@ def get_keywords(
     return query.order_by(KeywordMonitor.keyword_id.asc()).limit(limit).all()
 
 
-@router.post("", response_model=KeywordResponse)
+@router.post(
+    "",
+    response_model=KeywordResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 def create_keyword(
     request: KeywordCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     keyword = KeywordMonitor(**request.model_dump(exclude_unset=True))
 
     db.add(keyword)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Keyword already exists",
+        )
     db.refresh(keyword)
 
     return keyword
@@ -45,7 +58,7 @@ def create_keyword(
 def get_keyword(
     keyword_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     keyword = (
         db.query(KeywordMonitor)
@@ -53,7 +66,10 @@ def get_keyword(
         .first()
     )
     if keyword is None:
-        raise HTTPException(status_code=404, detail="Keyword not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Keyword not found",
+        )
 
     return keyword
 
@@ -63,7 +79,7 @@ def update_keyword(
     keyword_id: int,
     request: KeywordUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     keyword = (
         db.query(KeywordMonitor)
@@ -71,12 +87,22 @@ def update_keyword(
         .first()
     )
     if keyword is None:
-        raise HTTPException(status_code=404, detail="Keyword not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Keyword not found",
+        )
 
     for field, value in request.model_dump(exclude_unset=True).items():
         setattr(keyword, field, value)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Keyword already exists",
+        )
     db.refresh(keyword)
 
     return keyword
@@ -86,7 +112,7 @@ def update_keyword(
 def delete_keyword(
     keyword_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     keyword = (
         db.query(KeywordMonitor)
@@ -94,7 +120,10 @@ def delete_keyword(
         .first()
     )
     if keyword is None:
-        raise HTTPException(status_code=404, detail="Keyword not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Keyword not found",
+        )
 
     db.delete(keyword)
     db.commit()

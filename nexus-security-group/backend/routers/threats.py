@@ -1,13 +1,20 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
 from database import get_db
 from models import SocialMention, ThreatDetection
-from schemas.threat import ThreatDetail, ThreatListResponse, ThreatReviewRequest
+from schemas.auth import TokenData
+from schemas.threat import (
+    ThreatCriticalityLevel,
+    ThreatDetail,
+    ThreatListResponse,
+    ThreatReviewRequest,
+    ThreatReviewStatus,
+)
 
 
 router = APIRouter(prefix="/api/threats", tags=["threats"])
@@ -43,17 +50,26 @@ def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None
 @router.get("", response_model=list[ThreatListResponse])
 def get_threats(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    criticality_level: Annotated[ThreatCriticalityLevel | None, Query()] = None,
+    review_status: Annotated[ThreatReviewStatus | None, Query()] = None,
+    mention_id: Annotated[int | None, Query(ge=1)] = None,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
-    rows = (
+    query = (
         db.query(ThreatDetection)
         .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
         .add_entity(SocialMention)
-        .order_by(ThreatDetection.detected_at.desc())
-        .limit(limit)
-        .all()
     )
+
+    if criticality_level is not None:
+        query = query.filter(ThreatDetection.criticality_level == criticality_level)
+    if review_status is not None:
+        query = query.filter(ThreatDetection.review_status == review_status)
+    if mention_id is not None:
+        query = query.filter(ThreatDetection.mention_id == mention_id)
+
+    rows = query.order_by(ThreatDetection.detected_at.desc()).limit(limit).all()
     return [_map_threat_list_item(threat, mention) for threat, mention in rows]
 
 
@@ -61,7 +77,7 @@ def get_threats(
 def get_threat(
     threat_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     threat = (
         db.query(ThreatDetection)
@@ -69,7 +85,10 @@ def get_threat(
         .first()
     )
     if threat is None:
-        raise HTTPException(status_code=404, detail="Threat detection not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Threat detection not found",
+        )
 
     return threat
 
@@ -79,7 +98,7 @@ def review_threat(
     threat_id: int,
     request: ThreatReviewRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
 ):
     threat = (
         db.query(ThreatDetection)
@@ -87,7 +106,10 @@ def review_threat(
         .first()
     )
     if threat is None:
-        raise HTTPException(status_code=404, detail="Threat detection not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Threat detection not found",
+        )
 
     threat.review_status = request.review_status
     threat.review_notes = request.review_notes

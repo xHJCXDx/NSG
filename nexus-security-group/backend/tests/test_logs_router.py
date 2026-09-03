@@ -5,7 +5,8 @@ import types
 import uuid
 
 import pytest
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
@@ -13,7 +14,7 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
-from routers.logs import get_log, get_logs
+from routers.logs import get_current_user, get_log, get_logs, router
 from schemas.log import ExecutionLogResponse
 
 
@@ -23,7 +24,7 @@ class FakeQuery:
         self.first_result = first_result
         self.order_by_args = None
         self.limit_value = None
-        self.filter_args = None
+        self.filter_args = []
 
     def order_by(self, *args):
         self.order_by_args = args
@@ -34,7 +35,7 @@ class FakeQuery:
         return self
 
     def filter(self, *args):
-        self.filter_args = args
+        self.filter_args.append(args)
         return self
 
     def all(self):
@@ -76,7 +77,7 @@ def _log_row(**overrides):
 
 
 def test_main_registers_api_logs_routes():
-    route_paths = {route.path for route in app.routes}
+    route_paths = set(app.openapi()["paths"])
 
     assert "/api/logs" in route_paths
     assert "/api/logs/{log_id}" in route_paths
@@ -108,6 +109,24 @@ def test_get_logs_limit_defaults_to_fifty_when_called_directly():
     assert query.limit_value == 50
 
 
+def test_get_logs_applies_status_and_workflow_filters_before_limit():
+    query = FakeQuery(all_result=[])
+    fake_db = FakeDb(query)
+
+    result = get_logs(
+        db=fake_db,
+        limit=25,
+        log_status="error",
+        workflow_name="threat_detection",
+        current_user=object(),
+    )
+
+    assert result == []
+    assert len(query.filter_args) == 2
+    assert query.order_by_args is not None
+    assert query.limit_value == 25
+
+
 def test_get_log_returns_detail_by_log_id():
     log = _log_row(log_id=42, status="partial_success")
     query = FakeQuery(first_result=log)
@@ -117,7 +136,7 @@ def test_get_log_returns_detail_by_log_id():
 
     detail = ExecutionLogResponse.model_validate(result)
     assert result == log
-    assert query.filter_args is not None
+    assert query.filter_args
     assert detail.log_id == 42
     assert detail.status == "partial_success"
 
@@ -131,3 +150,28 @@ def test_get_log_raises_404_when_log_is_missing():
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Execution log not found"
+
+
+def test_log_routes_declare_response_models_and_auth_dependency():
+    routes_by_path = {route.path: route for route in router.routes}
+
+    list_route = routes_by_path["/api/logs"]
+    detail_route = routes_by_path["/api/logs/{log_id}"]
+
+    assert list_route.response_model == list[ExecutionLogResponse]
+    assert detail_route.response_model is ExecutionLogResponse
+    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+
+
+def test_get_logs_rejects_invalid_limit_status_and_workflow_name():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: object()
+
+    response = TestClient(app).get(
+        "/api/logs",
+        params={"limit": 0, "status": "queued", "workflow_name": ""},
+    )
+
+    assert response.status_code == 422

@@ -80,6 +80,27 @@ def test_keyword_create_happy_path():
     assert create.case_sensitive is True
 
 
+def test_keyword_create_trims_keyword_text_and_rejects_blank():
+    from schemas.keyword import KeywordCreate
+
+    create = KeywordCreate(keyword_text="  exploit  ")
+
+    assert create.keyword_text == "exploit"
+    with pytest.raises(ValidationError):
+        KeywordCreate(keyword_text="   ")
+
+
+def test_keyword_create_validates_weight_and_min_matches_ranges():
+    from schemas.keyword import KeywordCreate
+
+    with pytest.raises(ValidationError):
+        KeywordCreate(keyword_text="exploit", keyword_weight=0)
+    with pytest.raises(ValidationError):
+        KeywordCreate(keyword_text="exploit", keyword_weight=101)
+    with pytest.raises(ValidationError):
+        KeywordCreate(keyword_text="exploit", min_matches_for_alert=0)
+
+
 def test_keyword_update_all_none():
     """KeywordUpdate() with no args must succeed and all fields be None (R4-S2)."""
     from schemas.keyword import KeywordUpdate
@@ -93,6 +114,19 @@ def test_keyword_update_partial():
     update = KeywordUpdate(is_active=False)
     assert update.is_active is False
     assert update.keyword_text is None
+
+
+def test_keyword_update_trims_and_validates_mutable_fields():
+    from schemas.keyword import KeywordUpdate
+
+    update = KeywordUpdate(keyword_text="  malware  ", added_by=" analyst ")
+
+    assert update.keyword_text == "malware"
+    assert update.added_by == "analyst"
+    with pytest.raises(ValidationError):
+        KeywordUpdate(keyword_text="")
+    with pytest.raises(ValidationError):
+        KeywordUpdate(keyword_weight=101)
 
 
 def test_keyword_response_trigger_cols_present():

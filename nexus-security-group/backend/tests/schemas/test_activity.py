@@ -29,6 +29,39 @@ def test_user_activity_response_happy_path():
     assert resp.activity_type == "review_threat"
 
 
+def test_user_activity_response_strips_bounded_string_fields():
+    from schemas.activity import UserActivityResponse
+    fields = _base_activity_fields()
+    fields.update({
+        "username": " analyst ",
+        "user_role": " security ",
+        "activity_type": " review_threat ",
+        "activity_description": " Reviewed detection ",
+        "user_agent": " Mozilla/5.0 ",
+        "session_id": " sess-001 ",
+    })
+
+    resp = UserActivityResponse(**fields)
+
+    assert resp.username == "analyst"
+    assert resp.user_role == "security"
+    assert resp.activity_type == "review_threat"
+    assert resp.activity_description == "Reviewed detection"
+    assert resp.user_agent == "Mozilla/5.0"
+    assert resp.session_id == "sess-001"
+
+
+@pytest.mark.parametrize("field", ["username", "activity_type"])
+def test_user_activity_response_rejects_required_blank_strings(field):
+    from pydantic import ValidationError
+    from schemas.activity import UserActivityResponse
+    fields = _base_activity_fields()
+    fields[field] = "   "
+
+    with pytest.raises(ValidationError):
+        UserActivityResponse(**fields)
+
+
 def test_user_activity_response_nullable_fk_fields():
     """All three FK fields are nullable (ON DELETE SET NULL)."""
     from schemas.activity import UserActivityResponse

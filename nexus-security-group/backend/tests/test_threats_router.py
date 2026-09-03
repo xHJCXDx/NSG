@@ -5,7 +5,8 @@ import sys
 import types
 
 import pytest
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
@@ -13,7 +14,7 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
-from routers.threats import get_threat, get_threats, review_threat
+from routers.threats import get_current_user, get_threat, get_threats, review_threat, router
 from schemas.threat import ThreatDetail, ThreatListResponse, ThreatReviewRequest
 
 
@@ -23,7 +24,7 @@ class FakeQuery:
         self.first_result = first_result
         self.order_by_args = None
         self.limit_value = None
-        self.filter_args = None
+        self.filter_args = []
         self.outerjoin_args = None
         self.add_entity_args = None
 
@@ -44,7 +45,7 @@ class FakeQuery:
         return self
 
     def filter(self, *args):
-        self.filter_args = args
+        self.filter_args.append(args)
         return self
 
     def all(self):
@@ -118,14 +119,14 @@ def _mention_row(**overrides):
 
 
 def test_main_registers_api_threats_routes():
-    route_paths = {route.path for route in app.routes}
     route_methods_by_path = {
-        route.path: route.methods for route in app.routes if hasattr(route, "methods")
+        path: {method.upper() for method in operations}
+        for path, operations in app.openapi()["paths"].items()
     }
 
-    assert "/api/threats" in route_paths
-    assert "/api/threats/{threat_id}" in route_paths
-    assert "/api/threats/{threat_id}/review" in route_paths
+    assert "/api/threats" in route_methods_by_path
+    assert "/api/threats/{threat_id}" in route_methods_by_path
+    assert "/api/threats/{threat_id}/review" in route_methods_by_path
     assert "PATCH" in route_methods_by_path["/api/threats/{threat_id}/review"]
 
 
@@ -167,6 +168,25 @@ def test_get_threats_lists_recent_detections_with_limit():
     assert ThreatListResponse.model_validate(result[0]).confidence_score == 0.875
 
 
+def test_get_threats_applies_supported_filters_before_limit():
+    query = FakeQuery(all_result=[])
+    fake_db = FakeDb(query)
+
+    result = get_threats(
+        db=fake_db,
+        limit=25,
+        criticality_level="critical",
+        review_status="pending",
+        mention_id=20,
+        current_user=object(),
+    )
+
+    assert result == []
+    assert len(query.filter_args) == 3
+    assert query.order_by_args is not None
+    assert query.limit_value == 25
+
+
 def test_get_threats_limit_defaults_to_fifty_when_called_directly():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
@@ -187,7 +207,7 @@ def test_get_threat_returns_detail_by_detection_id():
     detail = ThreatDetail.model_validate(result)
 
     assert result == threat
-    assert query.filter_args is not None
+    assert query.filter_args
     assert detail.detection_id == 42
     assert detail.matched_keywords == ["password", "leak"]
 
@@ -230,7 +250,7 @@ def test_review_threat_updates_fields_commits_refreshes_and_returns_detail():
     assert threat.remediation_status == "in_progress"
     assert fake_db.committed is True
     assert fake_db.refreshed == [threat]
-    assert query.filter_args is not None
+    assert query.filter_args
     assert detail.detection_id == 42
     assert detail.review_status == "confirmed"
 
@@ -270,3 +290,31 @@ def test_review_threat_sets_timezone_aware_reviewed_at():
     assert threat.reviewed_at is not None
     assert threat.reviewed_at.tzinfo is not None
     assert threat.reviewed_at.utcoffset() == timezone.utc.utcoffset(threat.reviewed_at)
+
+
+def test_threat_routes_declare_response_models_and_auth_dependency():
+    routes_by_path = {route.path: route for route in router.routes}
+
+    list_route = routes_by_path["/api/threats"]
+    detail_route = routes_by_path["/api/threats/{threat_id}"]
+    review_route = routes_by_path["/api/threats/{threat_id}/review"]
+
+    assert list_route.response_model == list[ThreatListResponse]
+    assert detail_route.response_model is ThreatDetail
+    assert review_route.response_model is ThreatDetail
+    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(dep.call is get_current_user for dep in review_route.dependant.dependencies)
+
+
+def test_get_threats_rejects_invalid_limit_and_filters():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: object()
+
+    response = TestClient(app).get(
+        "/api/threats",
+        params={"limit": 0, "criticality_level": "extreme", "mention_id": 0},
+    )
+
+    assert response.status_code == 422
