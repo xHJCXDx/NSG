@@ -2,6 +2,7 @@ import sys
 import types
 
 from fastapi import APIRouter
+from fastapi.routing import APIRoute
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
@@ -37,9 +38,11 @@ class FakeDb:
 
 
 def test_main_registers_api_dashboard_summary_route():
-    route_paths = {route.path for route in app.routes}
+    from routers.dashboard import router as dashboard_router
+
+    route_paths = {route.path for route in dashboard_router.routes if isinstance(route, APIRoute)}
     route_methods_by_path = {
-        route.path: route.methods for route in app.routes if hasattr(route, "methods")
+        route.path: route.methods for route in dashboard_router.routes if isinstance(route, APIRoute)
     }
 
     assert "/api/dashboard/summary" in route_paths

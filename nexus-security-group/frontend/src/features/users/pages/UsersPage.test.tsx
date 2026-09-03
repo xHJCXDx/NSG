@@ -83,7 +83,8 @@ describe('UsersPage', () => {
     } as Response);
 
     expect(await screen.findByText('User created')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getAllByText('alice')).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByText('alice')).toHaveLength(1));
+    expect(screen.getByText(/Backend confirmed alice as admin/)).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toHaveValue('');
     expect(fetchMock).toHaveBeenCalledWith('/api/users', expect.objectContaining({ body: expect.stringContaining('"username":"alice"') }));
   });
