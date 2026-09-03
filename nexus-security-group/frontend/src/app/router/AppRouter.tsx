@@ -1,9 +1,12 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { LoginView } from '../../features/auth/LoginView';
-import { DashboardPage } from '../../features/dashboard/pages/DashboardPage';
-import { MentionsPage } from '../../features/mentions/pages/MentionsPage';
-import { ThreatsPage } from '../../features/threats/pages/ThreatsPage';
+import { LoginView } from '../../features/auth';
+import { DashboardPage } from '../../features/dashboard';
+import { MentionsPage } from '../../features/mentions';
+import { ThreatsPage } from '../../features/threats';
+import { UsersPage } from '../../features/users';
 import { DashboardLayout } from '../layouts/DashboardLayout';
+import { AnalyticsPage } from '../pages/AnalyticsPage';
+import { SettingsPage } from '../pages/SettingsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRouter() {
@@ -23,8 +26,9 @@ export function AppRouter() {
           <Route index element={<DashboardPage />} />
           <Route path="mentions" element={<MentionsPage />} />
           <Route path="threats" element={<ThreatsPage />} />
-          <Route path="analytics" element={<div className="text-gray-400">Analytics detailed view coming soon...</div>} />
-          <Route path="settings" element={<div className="text-gray-400">Settings coming soon...</div>} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

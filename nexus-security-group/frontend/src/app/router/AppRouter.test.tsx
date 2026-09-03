@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AuthProvider } from '../../features/auth/AuthContext';
+import { AuthProvider } from '../../features/auth';
 import { AppRouter } from './AppRouter';
 
 vi.mock('../layouts/DashboardLayout', async () => {
@@ -15,12 +15,20 @@ vi.mock('../layouts/DashboardLayout', async () => {
   };
 });
 
-vi.mock('../../features/dashboard/pages/DashboardPage', () => ({
+vi.mock('../../features/dashboard', () => ({
   DashboardPage: () => <div>Dashboard page</div>,
 }));
 
-vi.mock('../../features/mentions/pages/MentionsPage', () => ({
+vi.mock('../../features/mentions', () => ({
   MentionsPage: () => <div>Mentions page</div>,
+}));
+
+vi.mock('../../features/threats', () => ({
+  ThreatsPage: () => <div>Threats page</div>,
+}));
+
+vi.mock('../../features/users', () => ({
+  UsersPage: () => <div>Users page</div>,
 }));
 
 describe('AppRouter', () => {
@@ -56,5 +64,32 @@ describe('AppRouter', () => {
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
     expect(screen.getByText('Mentions page')).toBeInTheDocument();
+  });
+
+  it('keeps the users route inside the protected dashboard layout', () => {
+    localStorage.setItem('token', 'existing-jwt');
+    window.history.pushState({}, '', '/users');
+
+    render(
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(screen.getByText('Users page')).toBeInTheDocument();
+  });
+
+  it('redirects unauthenticated users away from the users route', () => {
+    window.history.pushState({}, '', '/users');
+
+    render(
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>,
+    );
+
+    expect(screen.queryByTestId('dashboard-layout')).not.toBeInTheDocument();
+    expect(screen.queryByText('Users page')).not.toBeInTheDocument();
   });
 });

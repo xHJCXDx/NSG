@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { decodeTokenClaims, type TokenClaims } from '../../shared/auth/decodeTokenClaims';
 import { getToken, removeToken, setToken as saveToken } from '../../shared/storage/tokenStorage';
 
 interface AuthContextType {
@@ -6,12 +7,17 @@ interface AuthContextType {
   login: (token: string) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  claims: TokenClaims;
+  role?: string;
+  authSource?: string;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(getToken());
+  const claims = decodeTokenClaims(token);
 
   const login = (newToken: string) => {
     saveToken(newToken);
@@ -24,7 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider
+      value={{
+        token,
+        login,
+        logout,
+        isAuthenticated: !!token,
+        claims,
+        role: claims.role,
+        authSource: claims.auth_source,
+        isAdmin: claims.role === 'admin',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

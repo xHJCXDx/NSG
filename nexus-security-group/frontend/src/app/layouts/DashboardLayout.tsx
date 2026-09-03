@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../features/auth/AuthContext';
-import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert } from 'lucide-react';
+import { useAuth } from '../../features/auth';
+import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert, Users } from 'lucide-react';
 
 export function DashboardLayout() {
   const { logout } = useAuth();
@@ -16,6 +16,7 @@ export function DashboardLayout() {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Mentions', path: '/mentions', icon: MessageSquare },
     { name: 'Threats', path: '/threats', icon: ShieldAlert },
+    { name: 'Users', path: '/users', icon: Users },
     { name: 'Analytics', path: '/analytics', icon: Activity },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];

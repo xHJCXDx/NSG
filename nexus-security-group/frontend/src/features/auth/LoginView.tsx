@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, User, Loader2 } from 'lucide-react';
+import { loginWithCredentials } from './api';
+import { useAuth } from './AuthContext';
 
 export function LoginView() {
   const [username, setUsername] = useState('');
@@ -17,24 +18,8 @@ export function LoginView() {
     setLoading(true);
 
     try {
-      const formData = new URLSearchParams();
-      formData.append('username', username);
-      formData.append('password', password);
-
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const data = await response.json();
-      login(data.access_token);
+      const accessToken = await loginWithCredentials(username, password);
+      login(accessToken);
       navigate('/');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
