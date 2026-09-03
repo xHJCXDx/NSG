@@ -119,6 +119,23 @@
     },
     {
       "parameters": {
+        "path": "osint-trigger",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wh-osint-trigger-0001",
+      "name": "Manual OSINT Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -4100,
+        550
+      ],
+      "webhookId": "osint-trigger"
+    },
+    {
+      "parameters": {
         "url": "https://hn.algolia.com/api/v1/search?query=security&hitsPerPage=50",
         "sendHeaders": true,
         "headerParameters": {
@@ -613,6 +630,27 @@
         ]
       ]
     },
+    "Manual OSINT Trigger": {
+      "main": [
+        [
+          {
+            "node": "Hacker News API Search",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Exploit-DB RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch GitHub Security Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Hacker News API Search": {
       "main": [
         [
@@ -906,7 +944,7 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
