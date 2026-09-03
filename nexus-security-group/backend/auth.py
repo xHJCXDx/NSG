@@ -29,6 +29,27 @@ PASSWORD_HASH_ITERATIONS = 600_000
 ADMIN_USER = settings.ADMIN_USER
 ADMIN_PASSWORD = settings.ADMIN_PASSWORD
 
+ADMIN_PERMISSION_CLAIMS = [
+    "alerts:read",
+    "alerts:write",
+    "dashboard:read",
+    "keywords:delete",
+    "keywords:read",
+    "keywords:write",
+    "logs:read",
+    "mentions:read",
+    "metrics:read",
+    "permissions:read",
+    "permissions:write",
+    "threats:read",
+    "threats:write",
+    "users:delete",
+    "users:read",
+    "users:write",
+    "workflows:execute",
+    "workflows:read",
+]
+
 
 def hash_password(password: str) -> str:
     salt = secrets.token_urlsafe(16)
@@ -81,6 +102,43 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+def _normalize_permission(resource: str, action: str) -> str:
+    return f"{resource.strip().lower()}:{action.strip().lower()}"
+
+
+def _serialize_permissions(permissions) -> list[str]:
+    serialized_permissions = set()
+    try:
+        permission_items = iter(permissions or [])
+    except TypeError:
+        return []
+
+    for permission in permission_items:
+        resource = getattr(permission, "resource", None)
+        action = getattr(permission, "action", None)
+        if not isinstance(resource, str) or not isinstance(action, str):
+            continue
+        normalized_permission = _normalize_permission(resource, action)
+        if normalized_permission != ":":
+            serialized_permissions.add(normalized_permission)
+    return sorted(serialized_permissions)
+
+
+def _permissions_from_user(db_user: SystemUser) -> list[str]:
+    try:
+        return _serialize_permissions(getattr(db_user, "permissions", []))
+    except SQLAlchemyError:
+        return []
+
+
+def _permissions_from_payload(payload: dict) -> list[str]:
+    permissions = payload.get("permissions")
+    if not isinstance(permissions, list):
+        return []
+    return [permission for permission in permissions if isinstance(permission, str)]
+
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -97,6 +155,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             user_id=payload.get("user_id"),
             role=payload.get("role"),
             auth_source=payload.get("auth_source"),
+            permissions=_permissions_from_payload(payload),
         )
     except JWTError:
         raise credentials_exception
@@ -108,12 +167,29 @@ def require_admin_user(current_user: TokenData = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
     return current_user
 
+
+def require_permission(resource: str, action: str):
+    required_permission = _normalize_permission(resource, action)
+
+    def permission_dependency(current_user: TokenData = Depends(get_current_user)):
+        if required_permission not in current_user.permissions:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission required: {required_permission}",
+            )
+        return current_user
+
+    permission_dependency.required_permission = required_permission
+    return permission_dependency
+
+
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
     user_id = None
+    permissions = []
 
     try:
         has_db_users = db.query(SystemUser.user_id).first() is not None
@@ -136,6 +212,7 @@ async def login_for_access_token(
         role = db_user.role
         auth_source = "database"
         user_id = db_user.user_id
+        permissions = _permissions_from_user(db_user)
     else:
         if form_data.username != ADMIN_USER or form_data.password != ADMIN_PASSWORD:
             raise HTTPException(
@@ -145,8 +222,9 @@ async def login_for_access_token(
             )
         role = "admin"
         auth_source = "bootstrap"
+        permissions = ADMIN_PERMISSION_CLAIMS
 
-    token_data = {"sub": form_data.username, "role": role, "auth_source": auth_source}
+    token_data = {"sub": form_data.username, "role": role, "auth_source": auth_source, "permissions": permissions}
     if user_id is not None:
         token_data["user_id"] = user_id
 

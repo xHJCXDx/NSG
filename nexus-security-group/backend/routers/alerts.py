@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import get_current_user, require_permission
 from database import get_db
 from models import Alert
 from schemas.alert import AcknowledgeRequest, AlertDeliveryStatus, AlertResponse
@@ -20,7 +20,7 @@ def get_alerts(
     delivery_status: Annotated[AlertDeliveryStatus | None, Query()] = None,
     acknowledged: Annotated[bool | None, Query()] = None,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("alerts", "read")),
 ):
     query = db.query(Alert)
 
@@ -36,7 +36,7 @@ def get_alerts(
 def get_alert(
     alert_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("alerts", "read")),
 ):
     alert = db.query(Alert).filter(Alert.alert_id == alert_id).first()
     if alert is None:

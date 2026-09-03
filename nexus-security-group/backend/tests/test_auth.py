@@ -40,6 +40,12 @@ class FailingDb:
         raise SQLAlchemyError("database unavailable")
 
 
+class PermissionAccessError:
+    @property
+    def permissions(self):
+        raise SQLAlchemyError("permissions relationship unavailable")
+
+
 @pytest.fixture(autouse=True)
 def auth_env(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
@@ -93,6 +99,9 @@ async def test_login_success():
     claims = jwt.decode(body["access_token"], "test-jwt-secret", algorithms=["HS256"])
     assert claims["role"] == "admin"
     assert claims["auth_source"] == "bootstrap"
+    assert claims["permissions"] == auth.ADMIN_PERMISSION_CLAIMS
+    assert "users:write" in claims["permissions"]
+    assert "workflows:execute" in claims["permissions"]
     assert "user_id" not in claims
 
 
@@ -108,6 +117,12 @@ async def test_login_db_user_success():
         password_hash=password_hash,
         role="analyst",
         is_active=True,
+        permissions=[
+            SimpleNamespace(resource="workflows", action="execute"),
+            SimpleNamespace(resource="threats", action="read"),
+            SimpleNamespace(resource="threats", action="read"),
+            SimpleNamespace(resource=None, action="read"),
+        ],
     )
 
     def override_db():
@@ -127,6 +142,35 @@ async def test_login_db_user_success():
     assert claims["role"] == "analyst"
     assert claims["auth_source"] == "database"
     assert claims["user_id"] == 42
+    assert claims["permissions"] == ["threats:read", "workflows:execute"]
+
+
+@pytest.mark.anyio
+async def test_login_db_user_handles_unavailable_permissions_relation():
+    import auth
+    from main import app
+
+    user = PermissionAccessError()
+    user.username = "analyst1"
+    user.user_id = 42
+    user.password_hash = auth.hash_password("user-password")
+    user.role = "analyst"
+    user.is_active = True
+
+    def override_db():
+        yield FakeDb(first_result=user)
+
+    app.dependency_overrides[auth.get_db] = override_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/auth/login",
+            data={"username": "analyst1", "password": "user-password"},
+        )
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret", algorithms=["HS256"])
+    assert claims["permissions"] == []
 
 
 @pytest.mark.anyio
@@ -231,3 +275,61 @@ async def test_invalid_token_rejected():
         await get_current_user(token="not-a-jwt")
 
     assert exc_info.value.status_code == 401
+
+
+@pytest.mark.anyio
+async def test_get_current_user_decodes_permissions_from_token():
+    import auth
+
+    access_token = auth.create_access_token(
+        {
+            "sub": "analyst1",
+            "role": "analyst",
+            "auth_source": "database",
+            "permissions": ["threats:read", "workflows:execute"],
+        }
+    )
+
+    token_data = await auth.get_current_user(token=access_token)
+
+    assert token_data.permissions == ["threats:read", "workflows:execute"]
+
+
+def test_require_permission_allows_authenticated_user_with_required_permission():
+    from auth import require_permission
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="analyst1", permissions=["threats:read"])
+    dependency = require_permission("threats", "read")
+
+    assert dependency(current_user=current_user) == current_user
+
+
+def test_require_permission_denies_authenticated_user_without_required_permission():
+    from auth import require_permission
+    from fastapi import HTTPException
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="analyst1", permissions=["mentions:read"])
+    dependency = require_permission("threats", "read")
+
+    with pytest.raises(HTTPException) as exc_info:
+        dependency(current_user=current_user)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Permission required: threats:read"
+
+
+def test_require_permission_denies_by_default_without_token_permissions():
+    from auth import require_permission
+    from fastapi import HTTPException
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="admin", role="admin")
+    dependency = require_permission("users", "write")
+
+    with pytest.raises(HTTPException) as exc_info:
+        dependency(current_user=current_user)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Permission required: users:write"

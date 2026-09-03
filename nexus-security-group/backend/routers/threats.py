@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import get_current_user, require_permission
 from database import get_db
 from models import SocialMention, ThreatDetection
 from schemas.auth import TokenData
@@ -54,7 +54,7 @@ def get_threats(
     review_status: Annotated[ThreatReviewStatus | None, Query()] = None,
     mention_id: Annotated[int | None, Query(ge=1)] = None,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("threats", "read")),
 ):
     query = (
         db.query(ThreatDetection)
@@ -77,7 +77,7 @@ def get_threats(
 def get_threat(
     threat_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("threats", "read")),
 ):
     threat = (
         db.query(ThreatDetection)

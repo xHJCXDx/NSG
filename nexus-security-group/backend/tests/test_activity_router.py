@@ -9,11 +9,23 @@ from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
+
+
+def _stub_require_permission(resource, action):
+    auth_stub.get_current_user.required_permission = f"{resource}:{action}"
+    return auth_stub.get_current_user
+
+
+auth_stub.require_permission = _stub_require_permission
 auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
+import auth
+from auth import get_current_user
+from database import get_db
 from main import app
-from routers.activity import get_activities, get_activity, get_current_user, router
+from routers.activity import get_activities, get_activity, router
+from schemas.auth import TokenData
 from schemas.activity import UserActivityResponse
 
 
@@ -159,14 +171,95 @@ def test_activity_routes_declare_response_models_and_auth_dependency():
 
     assert list_route.response_model == list[UserActivityResponse]
     assert detail_route.response_model is UserActivityResponse
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in detail_route.dependant.dependencies
+    )
+
+
+def test_activity_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    list_response = client.get("/api/activity")
+    detail_response = client.get("/api/activity/42")
+
+    assert list_response.status_code == 401
+    assert list_response.json()["detail"] == "Not authenticated"
+    assert detail_response.status_code == 401
+    assert detail_response.json()["detail"] == "Not authenticated"
+
+
+def test_activity_routes_reject_authenticated_user_without_logs_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["dashboard:read"]}
+    )
+    client = TestClient(app)
+
+    list_response = client.get(
+        "/api/activity",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    detail_response = client.get(
+        "/api/activity/42",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert list_response.status_code == 403
+    assert list_response.json()["detail"] == "Permission required: logs:read"
+    assert detail_response.status_code == 403
+    assert detail_response.json()["detail"] == "Permission required: logs:read"
+
+
+def test_get_activities_allows_authenticated_user_with_logs_read_permission():
+    activity = _activity_row()
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(all_result=[activity]))
+    try:
+        response = TestClient(app).get(
+            "/api/activity?limit=7",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["activity_id"] == 10
+    assert response.json()[0]["activity_type"] == "review_threat"
+
+
+def test_get_activity_allows_authenticated_user_with_logs_read_permission():
+    activity = _activity_row(activity_id=42, activity_type="acknowledge_alert")
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(first_result=activity))
+    try:
+        response = TestClient(app).get(
+            "/api/activity/42",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["activity_id"] == 42
+    assert response.json()["activity_type"] == "acknowledge_alert"
 
 
 def test_get_activities_rejects_invalid_limit_username_and_activity_type():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        permissions=["logs:read"],
+    )
 
     response = TestClient(app).get(
         "/api/activity",

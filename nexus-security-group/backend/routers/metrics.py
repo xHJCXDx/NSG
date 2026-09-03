@@ -4,9 +4,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from database import get_db
-from auth import get_current_user
+from auth import require_permission
 from models import Alert, SentimentAnalysis, SocialMention
-from schemas.auth import TokenData
 from schemas.metrics import MetricsSummaryEndpointResponse, RecentMentionResponse
 
 router = APIRouter(prefix="/api/metrics", tags=["metrics"])
@@ -19,7 +18,7 @@ router = APIRouter(prefix="/api/metrics", tags=["metrics"])
 )
 def get_metrics_summary(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user=Depends(require_permission("metrics", "read")),
 ):
     # Total mentions
     total_mentions = db.query(func.count(SocialMention.mention_id)).scalar() or 0
@@ -49,7 +48,7 @@ def get_metrics_summary(
 def get_recent_mentions(
     db: Session = Depends(get_db),
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    current_user: TokenData = Depends(get_current_user),
+    current_user=Depends(require_permission("mentions", "read")),
 ):
     mentions = (
         db.query(

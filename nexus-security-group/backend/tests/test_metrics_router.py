@@ -1,22 +1,20 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
-import sys
-import types
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-auth_stub = types.ModuleType("auth")
-auth_stub.get_current_user = lambda: None
-auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
-sys.modules.setdefault("auth", auth_stub)
+import auth
+from auth import get_current_user
+from database import get_db
+from main import app
 
 from routers.metrics import (
-    get_current_user,
     get_metrics_summary,
     get_recent_mentions,
     router,
 )
+from schemas.auth import TokenData
 from schemas.metrics import MetricsSummaryEndpointResponse, RecentMentionResponse
 
 
@@ -131,14 +129,142 @@ def test_metrics_routes_declare_response_models_and_auth_dependency():
 
     assert summary_route.response_model is MetricsSummaryEndpointResponse
     assert mentions_route.response_model == list[RecentMentionResponse]
-    assert any(dep.call is get_current_user for dep in summary_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in mentions_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "metrics:read"
+        for dep in summary_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "mentions:read"
+        for dep in mentions_route.dependant.dependencies
+    )
+
+
+def test_metrics_routes_reject_missing_bearer_token():
+    app.dependency_overrides[get_db] = lambda: FakeDb(
+        [
+            FakeQuery(scalar_result=0),
+            FakeQuery(all_result=[]),
+            FakeQuery(scalar_result=0),
+        ]
+    )
+    try:
+        client = TestClient(app)
+        summary_response = client.get("/api/metrics/summary")
+        mentions_response = client.get("/api/metrics/mentions")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert summary_response.status_code == 401
+    assert summary_response.json()["detail"] == "Not authenticated"
+    assert mentions_response.status_code == 401
+    assert mentions_response.json()["detail"] == "Not authenticated"
+
+
+def test_metrics_routes_reject_authenticated_user_without_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["dashboard:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(
+        [
+            FakeQuery(scalar_result=0),
+            FakeQuery(all_result=[]),
+            FakeQuery(scalar_result=0),
+        ]
+    )
+    try:
+        client = TestClient(app)
+        summary_response = client.get(
+            "/api/metrics/summary",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        mentions_response = client.get(
+            "/api/metrics/mentions",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert summary_response.status_code == 403
+    assert summary_response.json()["detail"] == "Permission required: metrics:read"
+    assert mentions_response.status_code == 403
+    assert mentions_response.json()["detail"] == "Permission required: mentions:read"
+
+
+def test_metrics_summary_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(
+        [
+            FakeQuery(scalar_result=None),
+            FakeQuery(all_result=[]),
+            FakeQuery(scalar_result=None),
+        ]
+    )
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/summary",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "total_mentions": 0,
+        "sentiment_distribution": {},
+        "alerts_count": 0,
+    }
+
+
+def test_metrics_mentions_allows_authenticated_user_with_mentions_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["mentions:read"]}
+    )
+    created_at = datetime(2026, 7, 5, 10, 30, 0, tzinfo=timezone.utc)
+    app.dependency_overrides[get_db] = lambda: FakeDb(
+        [
+            FakeQuery(
+                all_result=[
+                    SimpleNamespace(
+                        mention_id=42,
+                        platform="github",
+                        text_content="Potential secret leaked in issue",
+                        created_at=created_at,
+                        author_username="security-researcher",
+                    )
+                ]
+            )
+        ]
+    )
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/mentions?limit=10",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": 42,
+            "platform": "github",
+            "text": "Potential secret leaked in issue",
+            "created_at": "2026-07-05T10:30:00Z",
+            "author": "security-researcher",
+        }
+    ]
 
 
 def test_recent_mentions_rejects_invalid_limit_before_querying_db():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        permissions=["mentions:read"],
+    )
 
     response = TestClient(app).get("/api/metrics/mentions", params={"limit": 0})
 

@@ -14,7 +14,10 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
-from routers.threats import get_current_user, get_threat, get_threats, review_threat, router
+from auth import get_current_user, require_permission
+from database import get_db
+from routers.threats import get_threat, get_threats, review_threat, router
+from schemas.auth import TokenData
 from schemas.threat import ThreatDetail, ThreatListResponse, ThreatReviewRequest
 
 
@@ -302,19 +305,79 @@ def test_threat_routes_declare_response_models_and_auth_dependency():
     assert list_route.response_model == list[ThreatListResponse]
     assert detail_route.response_model is ThreatDetail
     assert review_route.response_model is ThreatDetail
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "threats:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "threats:read"
+        for dep in detail_route.dependant.dependencies
+    )
     assert any(dep.call is get_current_user for dep in review_route.dependant.dependencies)
 
 
 def test_get_threats_rejects_invalid_limit_and_filters():
-    app = FastAPI()
-    app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    test_app = FastAPI()
+    test_app.include_router(router)
+    test_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["threats:read"],
+    )
 
-    response = TestClient(app).get(
+    response = TestClient(test_app).get(
         "/api/threats",
         params={"limit": 0, "criticality_level": "extreme", "mention_id": 0},
     )
 
     assert response.status_code == 422
+
+
+def test_threats_read_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    for path in ["/api/threats", "/api/threats/1"]:
+        response = client.get(path)
+        assert response.status_code == 401, f"{path} should reject without token"
+        assert response.json()["detail"] == "Not authenticated"
+
+
+def test_threats_read_routes_reject_user_without_threats_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
+    client = TestClient(authz_app)
+
+    for path in ["/api/threats", "/api/threats/1"]:
+        response = client.get(path)
+        assert response.status_code == 403, f"{path} should reject without threats:read"
+        assert "threats:read" in response.json()["detail"]
+
+
+def test_threats_read_routes_allow_user_with_threats_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    threat = _threat_row(detection_id=1)
+    mention = _mention_row()
+    fake_query = FakeQuery(all_result=[(threat, mention)], first_result=threat)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["threats:read"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.get("/api/threats").status_code == 200
+    assert client.get("/api/threats/1").status_code == 200

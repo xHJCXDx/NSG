@@ -15,25 +15,28 @@ PUBLIC_ROUTE_EXCEPTIONS = {
 }
 
 AUTHENTICATED_PRIVATE_ROUTES = {
-    ("/api/activity", "GET"),
-    ("/api/activity/{activity_id}", "GET"),
-    ("/api/alerts", "GET"),
-    ("/api/alerts/{alert_id}", "GET"),
     ("/api/alerts/{alert_id}/acknowledge", "PATCH"),
-    ("/api/dashboard/summary", "GET"),
-    ("/api/keywords", "GET"),
     ("/api/keywords", "POST"),
-    ("/api/keywords/{keyword_id}", "GET"),
     ("/api/keywords/{keyword_id}", "PATCH"),
     ("/api/keywords/{keyword_id}", "DELETE"),
-    ("/api/logs", "GET"),
-    ("/api/logs/{log_id}", "GET"),
-    ("/api/metrics/mentions", "GET"),
-    ("/api/metrics/summary", "GET"),
     ("/api/n8n/webhook/{webhook_id}", "POST"),
-    ("/api/threats", "GET"),
-    ("/api/threats/{threat_id}", "GET"),
     ("/api/threats/{threat_id}/review", "PATCH"),
+}
+
+PERMISSION_PROTECTED_ROUTES = {
+    ("/api/alerts", "GET"): "alerts:read",
+    ("/api/alerts/{alert_id}", "GET"): "alerts:read",
+    ("/api/activity", "GET"): "logs:read",
+    ("/api/activity/{activity_id}", "GET"): "logs:read",
+    ("/api/dashboard/summary", "GET"): "dashboard:read",
+    ("/api/logs", "GET"): "logs:read",
+    ("/api/logs/{log_id}", "GET"): "logs:read",
+    ("/api/metrics/mentions", "GET"): "mentions:read",
+    ("/api/metrics/summary", "GET"): "metrics:read",
+    ("/api/keywords", "GET"): "keywords:read",
+    ("/api/keywords/{keyword_id}", "GET"): "keywords:read",
+    ("/api/threats", "GET"): "threats:read",
+    ("/api/threats/{threat_id}", "GET"): "threats:read",
 }
 
 ADMIN_ONLY_ROUTES = {
@@ -80,6 +83,7 @@ def test_backend_api_routes_have_explicit_auth_contracts():
         set(PUBLIC_ROUTE_EXCEPTIONS)
         | AUTHENTICATED_PRIVATE_ROUTES
         | ADMIN_ONLY_ROUTES
+        | set(PERMISSION_PROTECTED_ROUTES)
     )
     actual_routes = {(route.path, method) for route, method in _api_routes()}
 
@@ -88,6 +92,7 @@ def test_backend_api_routes_have_explicit_auth_contracts():
     undocumented_routes = []
     missing_user_auth = []
     missing_admin_auth = []
+    missing_permission_auth = []
 
     for route, method in _api_routes():
         contract_key = (route.path, method)
@@ -105,11 +110,21 @@ def test_backend_api_routes_have_explicit_auth_contracts():
                 missing_user_auth.append(f"{method} {route.path}")
             continue
 
+        if contract_key in PERMISSION_PROTECTED_ROUTES:
+            expected_permission = PERMISSION_PROTECTED_ROUTES[contract_key]
+            if not any(
+                getattr(dep.call, "required_permission", None) == expected_permission
+                for dep in route.dependant.dependencies
+            ):
+                missing_permission_auth.append(f"{method} {route.path} ({expected_permission})")
+            continue
+
         undocumented_routes.append(f"{method} {route.path}")
 
     assert undocumented_routes == []
     assert missing_user_auth == []
     assert missing_admin_auth == []
+    assert missing_permission_auth == []
 
 
 def test_public_health_route_remains_intentionally_public():
@@ -123,6 +138,7 @@ def test_private_routes_reject_missing_bearer_token_before_handler_logic():
     client = TestClient(app)
 
     representative_private_requests = [
+        ("GET", "/api/dashboard/summary", None),
         ("GET", "/api/metrics/summary", None),
         ("POST", "/api/n8n/webhook/test-id", {"trigger": "scan"}),
         ("GET", "/api/users", None),

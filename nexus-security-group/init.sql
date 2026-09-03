@@ -572,6 +572,46 @@ GRANT ALL PRIVILEGES ON SEQUENCE system_users_user_id_seq TO osint_admin;
 GRANT SELECT ON TABLE system_users TO osint_analyst;
 GRANT SELECT ON TABLE system_users TO osint_readonly;
 
+-- ============================================
+-- TABLAS: permissions / role_permissions
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS permissions (
+    permission_id BIGSERIAL PRIMARY KEY,
+    resource VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_permission_resource_action UNIQUE (resource, action)
+);
+
+CREATE INDEX idx_permissions_resource ON permissions(resource);
+CREATE INDEX idx_permissions_action ON permissions(action);
+
+CREATE TRIGGER update_permissions_updated_at
+    BEFORE UPDATE ON permissions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role VARCHAR(20) NOT NULL CONSTRAINT check_role_permissions_role CHECK (role IN ('admin', 'analyst')),
+    permission_id BIGINT NOT NULL REFERENCES permissions(permission_id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (role, permission_id)
+);
+
+CREATE INDEX idx_role_permissions_role ON role_permissions(role);
+CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
+
+GRANT ALL PRIVILEGES ON TABLE permissions TO osint_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE permissions_permission_id_seq TO osint_admin;
+GRANT ALL PRIVILEGES ON TABLE role_permissions TO osint_admin;
+GRANT SELECT ON TABLE permissions TO osint_analyst;
+GRANT SELECT ON TABLE role_permissions TO osint_analyst;
+GRANT SELECT ON TABLE permissions TO osint_readonly;
+GRANT SELECT ON TABLE role_permissions TO osint_readonly;
+
 -- Existing Postgres volumes are not migrated by this init script automatically.
 -- Operators must apply equivalent DDL manually before relying on DB-backed users.
 
@@ -593,6 +633,68 @@ VALUES
     ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)')
 ON CONFLICT (keyword_text) DO NOTHING;
 
+INSERT INTO permissions (resource, action, description)
+VALUES
+    ('dashboard', 'read', 'Ver resumen operacional, métricas agregadas y panel principal'),
+    ('metrics', 'read', 'Consultar métricas agregadas del sistema'),
+    ('mentions', 'read', 'Listar y consultar menciones OSINT recolectadas'),
+    ('threats', 'read', 'Listar y consultar amenazas detectadas'),
+    ('threats', 'write', 'Revisar amenazas, cambiar estado, notas o resolución'),
+    ('alerts', 'read', 'Listar y consultar alertas generadas'),
+    ('alerts', 'write', 'Confirmar o actualizar estado operativo de alertas'),
+    ('keywords', 'read', 'Consultar keywords monitoreadas'),
+    ('keywords', 'write', 'Crear o modificar keywords monitoreadas'),
+    ('keywords', 'delete', 'Eliminar keywords monitoreadas'),
+    ('workflows', 'read', 'Ver estado y configuración operacional de automatizaciones'),
+    ('workflows', 'execute', 'Ejecutar manualmente workflows OSINT'),
+    ('logs', 'read', 'Consultar logs de ejecución y auditoría'),
+    ('users', 'read', 'Listar usuarios del sistema'),
+    ('users', 'write', 'Crear o actualizar usuarios, roles y estado activo'),
+    ('users', 'delete', 'Eliminar usuarios del sistema'),
+    ('permissions', 'read', 'Consultar matriz y asignaciones de permisos'),
+    ('permissions', 'write', 'Asignar permisos a roles')
+ON CONFLICT (resource, action) DO UPDATE
+SET description = EXCLUDED.description;
+
+INSERT INTO role_permissions (role, permission_id)
+SELECT role_permission.role, permissions.permission_id
+FROM (
+    VALUES
+        ('admin', 'dashboard', 'read'),
+        ('admin', 'metrics', 'read'),
+        ('admin', 'mentions', 'read'),
+        ('admin', 'threats', 'read'),
+        ('admin', 'threats', 'write'),
+        ('admin', 'alerts', 'read'),
+        ('admin', 'alerts', 'write'),
+        ('admin', 'keywords', 'read'),
+        ('admin', 'keywords', 'write'),
+        ('admin', 'keywords', 'delete'),
+        ('admin', 'workflows', 'read'),
+        ('admin', 'workflows', 'execute'),
+        ('admin', 'logs', 'read'),
+        ('admin', 'users', 'read'),
+        ('admin', 'users', 'write'),
+        ('admin', 'users', 'delete'),
+        ('admin', 'permissions', 'read'),
+        ('admin', 'permissions', 'write'),
+        ('analyst', 'dashboard', 'read'),
+        ('analyst', 'metrics', 'read'),
+        ('analyst', 'mentions', 'read'),
+        ('analyst', 'threats', 'read'),
+        ('analyst', 'threats', 'write'),
+        ('analyst', 'alerts', 'read'),
+        ('analyst', 'alerts', 'write'),
+        ('analyst', 'keywords', 'read'),
+        ('analyst', 'workflows', 'read'),
+        ('analyst', 'workflows', 'execute'),
+        ('analyst', 'logs', 'read')
+) AS role_permission(role, resource, action)
+JOIN permissions
+  ON permissions.resource = role_permission.resource
+ AND permissions.action = role_permission.action
+ON CONFLICT (role, permission_id) DO NOTHING;
+
 -- ============================================
 -- COMENTARIOS
 -- ============================================
@@ -605,3 +707,5 @@ COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
 COMMENT ON TABLE system_users IS 'Usuarios autenticables del sistema; user_activity permanece solo como auditoría';
+COMMENT ON TABLE permissions IS 'Catálogo normalizado de permisos recurso/acción para RBAC granular';
+COMMENT ON TABLE role_permissions IS 'Asignación de permisos a roles compatibles admin/analyst';

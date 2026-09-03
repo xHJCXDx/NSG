@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from auth import get_current_user
+from auth import get_current_user, require_permission
 from database import get_db
 from models import KeywordMonitor
 from schemas.auth import TokenData
@@ -19,7 +19,7 @@ def get_keywords(
     active_only: Annotated[bool, Query()] = False,
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("keywords", "read")),
 ):
     query = db.query(KeywordMonitor)
     if active_only:
@@ -58,7 +58,7 @@ def create_keyword(
 def get_keyword(
     keyword_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("keywords", "read")),
 ):
     keyword = (
         db.query(KeywordMonitor)

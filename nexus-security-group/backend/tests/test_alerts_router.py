@@ -14,14 +14,16 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
+from auth import get_current_user, require_permission
 from routers.alerts import (
     acknowledge_alert,
     get_alert,
     get_alerts,
-    get_current_user,
     router,
 )
+from database import get_db
 from schemas.alert import AcknowledgeRequest, AlertResponse
+from schemas.auth import TokenData
 
 
 class FakeQuery:
@@ -250,9 +252,13 @@ def test_alert_routes_declare_response_models_and_auth_dependency():
     assert list_route.response_model == list[AlertResponse]
     assert detail_route.response_model is AlertResponse
     assert acknowledge_route.response_model is AlertResponse
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
     assert any(
-        dep.call is get_current_user for dep in detail_route.dependant.dependencies
+        getattr(dep.call, "required_permission", None) == "alerts:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "alerts:read"
+        for dep in detail_route.dependant.dependencies
     )
     assert any(
         dep.call is get_current_user
@@ -263,7 +269,12 @@ def test_alert_routes_declare_response_models_and_auth_dependency():
 def test_get_alerts_rejects_invalid_limit_and_delivery_status():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["alerts:read"],
+    )
 
     response = TestClient(app).get(
         "/api/alerts",
@@ -271,3 +282,51 @@ def test_get_alerts_rejects_invalid_limit_and_delivery_status():
     )
 
     assert response.status_code == 422
+
+
+def test_alerts_read_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    for path in ["/api/alerts", "/api/alerts/1"]:
+        response = client.get(path)
+        assert response.status_code == 401, f"{path} should reject without token"
+        assert response.json()["detail"] == "Not authenticated"
+
+
+def test_alerts_read_routes_reject_user_without_alerts_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
+    client = TestClient(authz_app)
+
+    for path in ["/api/alerts", "/api/alerts/1"]:
+        response = client.get(path)
+        assert response.status_code == 403, f"{path} should reject without alerts:read"
+        assert "alerts:read" in response.json()["detail"]
+
+
+def test_alerts_read_routes_allow_user_with_alerts_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    alert = _alert_row(alert_id=1)
+    fake_query = FakeQuery(all_result=[alert], first_result=alert)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["alerts:read"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.get("/api/alerts").status_code == 200
+    assert client.get("/api/alerts/1").status_code == 200

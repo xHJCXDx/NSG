@@ -22,7 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import RelationshipProperty
 
-# R4.S1 — all 7 models must be importable from models
+# R4.S1 — all models must be importable from models
 from models import (
     SocialMention,
     SentimentAnalysis,
@@ -30,6 +30,8 @@ from models import (
     Alert,
     KeywordMonitor,
     ExecutionLog,
+    Permission,
+    RolePermission,
     SystemUser,
     UserActivity,
 )
@@ -50,6 +52,7 @@ class TestTableMapping:
         (Alert,              "alerts",              "alert_id",      BigInteger),
         (KeywordMonitor,     "keywords_monitor",    "keyword_id",    Integer),
         (ExecutionLog,       "execution_logs",      "log_id",        BigInteger),
+        (Permission,         "permissions",         "permission_id", BigInteger),
         (SystemUser,         "system_users",        "user_id",       BigInteger),
         (UserActivity,       "user_activity",       "activity_id",   BigInteger),
     ]
@@ -170,6 +173,15 @@ class TestColumnCompleteness:
         "created_by", "created_at", "updated_at",
     ]
 
+    PERMISSION_COLS = [
+        "permission_id", "resource", "action", "description",
+        "created_at", "updated_at",
+    ]
+
+    ROLE_PERMISSION_COLS = [
+        "role", "permission_id", "created_at",
+    ]
+
     def _assert_columns(self, model, expected_cols):
         mapper = inspect(model)
         mapped = {c.key for c in mapper.columns}
@@ -203,6 +215,12 @@ class TestColumnCompleteness:
     def test_system_user_columns(self):
         self._assert_columns(SystemUser, self.SYSTEM_USER_COLS)
 
+    def test_permission_columns(self):
+        self._assert_columns(Permission, self.PERMISSION_COLS)
+
+    def test_role_permission_columns(self):
+        self._assert_columns(RolePermission, self.ROLE_PERMISSION_COLS)
+
 
 class TestServerDefaults:
     """R2.S2 — columns with DEFAULT NOW() must use server_default (not client default)."""
@@ -219,6 +237,9 @@ class TestServerDefaults:
         (ExecutionLog,      "last_updated"),
         (SystemUser,        "created_at"),
         (SystemUser,        "updated_at"),
+        (Permission,        "created_at"),
+        (Permission,        "updated_at"),
+        (RolePermission,    "created_at"),
         (UserActivity,      "activity_timestamp"),
     ]
 
@@ -277,6 +298,7 @@ class TestForeignKeys:
         (UserActivity,       "related_mention_id",  "social_mentions.mention_id"),
         (UserActivity,       "related_detection_id","threat_detections.detection_id"),
         (UserActivity,       "related_alert_id",    "alerts.alert_id"),
+        (RolePermission,     "permission_id",       "permissions.permission_id"),
     ]
 
     def test_fk_references(self):
@@ -340,6 +362,15 @@ class TestForeignKeys:
                 f"UserActivity.{col_name} must have ON DELETE SET NULL, got '{fk.ondelete}'"
             )
 
+    def test_on_delete_cascade_role_permission_permission(self):
+        """RolePermission.permission_id → permissions ON DELETE CASCADE."""
+        mapper = inspect(RolePermission)
+        col = mapper.columns["permission_id"]
+        fk = next(iter(col.foreign_keys))
+        assert fk.ondelete == "CASCADE", (
+            f"RolePermission.permission_id must have ON DELETE CASCADE, got '{fk.ondelete}'"
+        )
+
 
 class TestRelationshipStringTargets:
     """R3.S2 — all relationship() declarations must use string class name targets."""
@@ -349,6 +380,9 @@ class TestRelationshipStringTargets:
         ThreatDetection,
         Alert,
         UserActivity,
+        Permission,
+        RolePermission,
+        SystemUser,
     ]
 
     def test_all_relationship_targets_are_strings(self):
@@ -379,6 +413,8 @@ class TestModelRegistry:
         "alerts",
         "keywords_monitor",
         "execution_logs",
+        "permissions",
+        "role_permissions",
         "system_users",
         "user_activity",
     }
@@ -389,14 +425,14 @@ class TestModelRegistry:
         # This test additionally asserts the classes are valid SQLAlchemy mappers.
         models = [
             SocialMention, SentimentAnalysis, ThreatDetection, Alert,
-            KeywordMonitor, ExecutionLog, SystemUser, UserActivity,
+            KeywordMonitor, ExecutionLog, Permission, RolePermission, SystemUser, UserActivity,
         ]
         for model in models:
             assert hasattr(model, "__tablename__"), (
                 f"{model.__name__} is missing __tablename__ — is it a proper ORM model?"
             )
 
-    def test_base_metadata_contains_all_7_tables(self):
+    def test_base_metadata_contains_all_tables(self):
         tables = set(Base.metadata.tables.keys())
         missing = self.EXPECTED_TABLES - tables
         assert not missing, (
@@ -407,7 +443,7 @@ class TestModelRegistry:
     def test_all_models_share_single_base(self):
         models = [
             SocialMention, SentimentAnalysis, ThreatDetection, Alert,
-            KeywordMonitor, ExecutionLog, SystemUser, UserActivity,
+            KeywordMonitor, ExecutionLog, Permission, RolePermission, SystemUser, UserActivity,
         ]
         for model in models:
             assert issubclass(model, Base), (
@@ -503,6 +539,11 @@ class TestCheckConstraints:
             "SystemUser missing CHECK constraint on 'role'"
         )
 
+    def test_role_permission_role_check(self):
+        assert self._has_check_for(RolePermission, "role"), (
+            "RolePermission missing CHECK constraint on 'role'"
+        )
+
 
 class TestUniqueConstraints:
     """R5.S2 — __table_args__ must include named UniqueConstraints."""
@@ -535,3 +576,8 @@ class TestUniqueConstraints:
     def test_system_user_username_unique(self):
         mapper = inspect(SystemUser)
         assert mapper.columns["username"].unique is True
+
+    def test_unique_permission_resource_action(self):
+        assert self._has_unique_named(Permission, "unique_permission_resource_action"), (
+            "Permission missing UniqueConstraint named 'unique_permission_resource_action'"
+        )

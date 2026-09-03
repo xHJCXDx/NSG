@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import require_permission
 from database import get_db
 from models import ExecutionLog
 from schemas.auth import TokenData
@@ -19,7 +19,7 @@ def get_logs(
     log_status: Annotated[ExecutionLogStatus | None, Query(alias="status")] = None,
     workflow_name: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("logs", "read")),
 ):
     query = db.query(ExecutionLog)
 
@@ -35,7 +35,7 @@ def get_logs(
 def get_log(
     log_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("logs", "read")),
 ):
     log = db.query(ExecutionLog).filter(ExecutionLog.log_id == log_id).first()
     if log is None:

@@ -14,15 +14,17 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
+from auth import get_current_user, require_permission
+from database import get_db
 from routers.keywords import (
     create_keyword,
     delete_keyword,
     get_keyword,
     get_keywords,
-    get_current_user,
     router,
     update_keyword,
 )
+from schemas.auth import TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
 
 
@@ -362,18 +364,77 @@ def test_keyword_routes_declare_response_models_and_auth_dependency():
     assert detail_route.response_model is KeywordResponse
     assert update_route.response_model is KeywordResponse
     assert delete_route.status_code == 204
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:read"
+        for dep in list_route.dependant.dependencies
+    )
     assert any(dep.call is get_current_user for dep in create_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:read"
+        for dep in detail_route.dependant.dependencies
+    )
     assert any(dep.call is get_current_user for dep in update_route.dependant.dependencies)
     assert any(dep.call is get_current_user for dep in delete_route.dependant.dependencies)
 
 
 def test_get_keywords_rejects_invalid_limit():
-    app = FastAPI()
-    app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    test_app = FastAPI()
+    test_app.include_router(router)
+    test_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
 
-    response = TestClient(app).get("/api/keywords", params={"limit": 0})
+    response = TestClient(test_app).get("/api/keywords", params={"limit": 0})
 
     assert response.status_code == 422
+
+
+def test_keywords_read_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    for path in ["/api/keywords", "/api/keywords/1"]:
+        response = client.get(path)
+        assert response.status_code == 401, f"{path} should reject without token"
+        assert response.json()["detail"] == "Not authenticated"
+
+
+def test_keywords_read_routes_reject_user_without_keywords_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
+    client = TestClient(authz_app)
+
+    for path in ["/api/keywords", "/api/keywords/1"]:
+        response = client.get(path)
+        assert response.status_code == 403, f"{path} should reject without keywords:read"
+        assert "keywords:read" in response.json()["detail"]
+
+
+def test_keywords_read_routes_allow_user_with_keywords_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    keyword = _keyword_row(keyword_id=1)
+    fake_query = FakeQuery(all_result=[keyword], first_result=keyword)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.get("/api/keywords").status_code == 200
+    assert client.get("/api/keywords/1").status_code == 200

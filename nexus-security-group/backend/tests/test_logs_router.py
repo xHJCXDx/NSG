@@ -10,11 +10,23 @@ from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
+
+
+def _stub_require_permission(resource, action):
+    auth_stub.get_current_user.required_permission = f"{resource}:{action}"
+    return auth_stub.get_current_user
+
+
+auth_stub.require_permission = _stub_require_permission
 auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
+import auth
+from auth import get_current_user
+from database import get_db
 from main import app
-from routers.logs import get_current_user, get_log, get_logs, router
+from routers.logs import get_log, get_logs, router
+from schemas.auth import TokenData
 from schemas.log import ExecutionLogResponse
 
 
@@ -160,14 +172,95 @@ def test_log_routes_declare_response_models_and_auth_dependency():
 
     assert list_route.response_model == list[ExecutionLogResponse]
     assert detail_route.response_model is ExecutionLogResponse
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in detail_route.dependant.dependencies
+    )
+
+
+def test_log_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    list_response = client.get("/api/logs")
+    detail_response = client.get("/api/logs/42")
+
+    assert list_response.status_code == 401
+    assert list_response.json()["detail"] == "Not authenticated"
+    assert detail_response.status_code == 401
+    assert detail_response.json()["detail"] == "Not authenticated"
+
+
+def test_log_routes_reject_authenticated_user_without_logs_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["dashboard:read"]}
+    )
+    client = TestClient(app)
+
+    list_response = client.get(
+        "/api/logs",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    detail_response = client.get(
+        "/api/logs/42",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert list_response.status_code == 403
+    assert list_response.json()["detail"] == "Permission required: logs:read"
+    assert detail_response.status_code == 403
+    assert detail_response.json()["detail"] == "Permission required: logs:read"
+
+
+def test_get_logs_allows_authenticated_user_with_logs_read_permission():
+    log = _log_row()
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(all_result=[log]))
+    try:
+        response = TestClient(app).get(
+            "/api/logs?limit=7",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["log_id"] == 10
+    assert response.json()[0]["workflow_name"] == "threat_detection"
+
+
+def test_get_log_allows_authenticated_user_with_logs_read_permission():
+    log = _log_row(log_id=42, status="partial_success")
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(first_result=log))
+    try:
+        response = TestClient(app).get(
+            "/api/logs/42",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["log_id"] == 42
+    assert response.json()["status"] == "partial_success"
 
 
 def test_get_logs_rejects_invalid_limit_status_and_workflow_name():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        permissions=["logs:read"],
+    )
 
     response = TestClient(app).get(
         "/api/logs",
