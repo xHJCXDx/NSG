@@ -211,10 +211,10 @@ Estas exclusiones no son olvido: son control de alcance. Si metemos todo junto, 
 **Progreso de verificación Fase 6:**
 
 - [x] Tests existentes revisados y faltante crítico cubierto: se agregó cobertura enfocada para `loginWithCredentials` y `LoginView`, incluyendo envío URL-encoded a `/api/auth/login`, persistencia del token al autenticar, navegación posterior al login y mensaje accesible ante credenciales inválidas. Verificación enfocada ejecutada: `npm test -- src/features/auth/api.test.ts src/features/auth/LoginView.test.tsx`.
-- [ ] Ejecutar verificación estática y/o tests finales según el flujo acordado.
-- [ ] Revisar rutas protegidas manualmente o por tests.
-- [ ] Confirmar que no queden secretos reales versionados.
-- [ ] Confirmar que los workflows n8n siguen pasando por backend/proxy cuando aplica.
+- [x] Ejecutar verificación estática y/o tests finales según el flujo acordado: TypeScript typecheck, ESLint y Vitest (73/73) pasan en frontend; pytest (246/246) pasa en backend. Se corrigieron dos tests rotos: `UsersPage.test.tsx` (assertion de texto exacto vs. substring) y `test_dashboard_router.py` (iteración de `app.routes` incompatible con FastAPI actual).
+- [x] Revisar rutas protegidas manualmente o por tests: `test_route_auth_contract.py` cubre exhaustivamente todas las rutas `/api/*` — verifica que cada endpoint tiene `get_current_user` o `require_admin_user` como dependency, detecta rutas no documentadas, y confirma que solo `POST /api/auth/login` y `GET /api/health` son públicas intencionalmente. Tests de integración validan rechazo 401 sin token y 403 para no-admin en rutas admin-only.
+- [x] Confirmar que no queden secretos reales versionados: `.gitignore` excluye `.env*`; no hay archivos `.env` versionados; `config.py` lee `DATABASE_URL`, `JWT_SECRET_KEY` y `ADMIN_PASSWORD` desde entorno; `docker-compose.yml` usa interpolación `${...}`; no se encontraron tokens de API ni credenciales reales en el código; los tests usan valores dummy explícitos.
+- [x] Confirmar que los workflows n8n siguen pasando por backend/proxy cuando aplica: el frontend no realiza llamadas directas a n8n (no hay URLs `:5678` ni imports directos); la feature `automation` tiene el trigger manual deshabilitado por contrato hasta que exista un webhook dedicado; el backend expone `/api/n8n/webhook/{webhook_id}` como proxy protegido con auth obligatorio y normalización de errores (502); test arquitectural impide imports residuales al viejo path `features/n8n`.
 
 ## Orden de ejecución recomendado
 
