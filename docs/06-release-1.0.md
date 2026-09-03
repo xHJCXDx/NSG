@@ -219,7 +219,7 @@ Estas exclusiones no son olvido: son control de alcance. Si metemos todo junto, 
 
 ## Checklist Release 1.0
 
-- [ ] Diff actual clasificado y saneado.
+- [x] Diff actual clasificado y saneado.
 - [x] Auth backend validado.
 - [x] Usuario inicial documentado.
 - [x] Router de usuarios validado.
@@ -229,8 +229,8 @@ Estas exclusiones no son olvido: son control de alcance. Si metemos todo junto, 
 - [x] Tests críticos de auth/users/routing actualizados.
 - [x] Documentación backend actualizada.
 - [x] Documentación frontend actualizada.
-- [ ] README con índice de documentos actualizado.
-- [ ] Checklist final de despliegue revisado.
+- [x] README con índice de documentos actualizado.
+- [x] Checklist final de despliegue revisado.
 
 ## Riesgos a controlar
 

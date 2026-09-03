@@ -36,12 +36,12 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 
 ## Documentación técnica
 
-- [Base de datos](docs/01-database.md)
-- [Workflows n8n](docs/02-workflows-n8n.md)
-- [NLP y sentimiento](docs/03-nlp-sentiment.md)
-- [Backend API](docs/04-backend-api.md)
-- [Frontend UI](docs/05-frontend-ui.md)
-- [Plan de Modificación — Release 1.0](docs/06-release-1.0.md)
+- [Base de datos](docs/01-database.md): esquema PostgreSQL, tablas principales e inicialización.
+- [Workflows n8n](docs/02-workflows-n8n.md): importación, credenciales y operación de workflows OSINT.
+- [NLP y sentimiento](docs/03-nlp-sentiment.md): servicio de análisis de sentimiento y contrato esperado.
+- [Backend API](docs/04-backend-api.md): routers FastAPI, autenticación, modelos de respuesta y excepciones.
+- [Frontend UI](docs/05-frontend-ui.md): estructura React por features, rutas y límites arquitectónicos.
+- [Plan de Modificación — Release 1.0](docs/06-release-1.0.md): alcance, fases, checklist y riesgos de cierre.
 
 ## Mantenimiento y Configuración
 
@@ -58,11 +58,15 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
   - SSL: desactivado para el entorno local de Docker Compose
   Luego asigná esa credencial a todos los nodos PostgreSQL del workflow: `Check Existing IDs`, `Insert Social Mention`, `Insert Sentiment Analysis`, `Insert Threat Detection`, `Log Alert in DB` y `Log Execution`.
   Esto se mantiene manual a propósito: n8n exporta/importa credenciales por separado y las cifra con `N8N_ENCRYPTION_KEY`; versionarlas junto al workflow metería secretos o artefactos cifrados frágiles en Git.
-- **Refactor Pendiente**: El `dashboard-api` se está rediseñando para incorporar modelos Pydantic y una capa de repositorios, abandonando el SQL crudo para mayor escalabilidad.
+- **Contrato backend Release 1.0**: El `dashboard-api` usa routers FastAPI separados, schemas Pydantic y autenticación JWT. Las rutas privadas requieren usuario autenticado o administrador según corresponda; las únicas rutas públicas intencionales son login y health check.
 
 ## Checklist de despliegue
 
-- [ ] Verificar variables de entorno en el `.env`.
+- [ ] Copiar `nexus-security-group/.env.example` a `nexus-security-group/.env` y reemplazar todos los valores `change-me`.
+- [ ] Definir `JWT_SECRET_KEY`, `ADMIN_USER` y `ADMIN_PASSWORD` con valores fuertes antes del primer login.
+- [ ] Levantar servicios con `docker-compose up -d` desde `nexus-security-group/`.
+- [ ] Validar que los puertos `80`, `5678` y `8080` estén libres en el host.
 - [ ] Asegurarse de importar el `workflow.json` en n8n.
 - [ ] Crear/asignar la credencial PostgreSQL en los nodos n8n antes de activar el workflow.
-- [ ] Validar que los puertos `80`, `5678` y `8080` estén libres en el host.
+- [ ] Crear un usuario administrador persistido desde `/api/users` después del primer login bootstrap.
+- [ ] Confirmar que `/api/health` responde y que las rutas privadas rechazan requests sin JWT.
