@@ -5,7 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
-from auth import hash_password, require_admin_user
+from auth import get_current_user, hash_password, require_permission
+from database import get_db
 from main import app
 from routers.users import create_user, list_users, router, update_user
 from schemas.auth import TokenData
@@ -84,9 +85,18 @@ def test_user_routes_declare_response_models_and_admin_dependency():
     assert create_route.status_code == 201
     assert list_route.response_model == list[UserResponse]
     assert update_route.response_model is UserResponse
-    assert any(dep.call is require_admin_user for dep in create_route.dependant.dependencies)
-    assert any(dep.call is require_admin_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is require_admin_user for dep in update_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "users:write"
+        for dep in create_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "users:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "users:write"
+        for dep in update_route.dependant.dependencies
+    )
 
 
 def test_user_router_has_no_physical_delete_route():
@@ -112,11 +122,24 @@ def test_admin_creates_user_hashes_password_and_response_has_no_secret():
     assert "password_hash" not in response.model_dump()
 
 
-def test_non_admin_cannot_create_users():
-    with pytest.raises(HTTPException) as exc_info:
-        require_admin_user(TokenData(username="analyst1", role="analyst", auth_source="database"))
+def test_user_without_users_write_cannot_create_users():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
 
-    assert exc_info.value.status_code == 403
+    response = TestClient(authz_app).post(
+        "/api/users",
+        json={"username": "test", "password": "secret123"},
+    )
+
+    assert response.status_code == 403
+    assert "users:write" in response.json()["detail"]
 
 
 def test_duplicate_username_returns_409_and_does_not_commit():
@@ -207,10 +230,11 @@ def test_patch_missing_user_returns_404():
 def test_user_routes_reject_invalid_create_and_empty_patch_payloads():
     validation_app = FastAPI()
     validation_app.include_router(router)
-    validation_app.dependency_overrides[require_admin_user] = lambda: TokenData(
+    validation_app.dependency_overrides[get_current_user] = lambda: TokenData(
         username="root",
         role="admin",
         auth_source="bootstrap",
+        permissions=["users:read", "users:write"],
     )
     client = TestClient(validation_app)
 
@@ -226,3 +250,36 @@ def test_user_routes_reject_invalid_create_and_empty_patch_payloads():
 
     assert empty_patch.status_code == 422
     assert empty_patch.json()["detail"]
+
+
+def test_users_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    for method, path in [("GET", "/api/users"), ("POST", "/api/users"), ("PATCH", "/api/users/1")]:
+        response = client.request(method, path, json={"username": "x", "password": "x"} if method != "GET" else None)
+        assert response.status_code == 401, f"{method} {path} should reject without token"
+        assert response.json()["detail"] == "Not authenticated"
+
+
+def test_users_read_allows_user_with_users_read_permission():
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    users_list = [
+        type("User", (), {
+            "user_id": 1, "username": "analyst1", "role": "analyst",
+            "is_active": True, "created_at": now, "updated_at": now,
+        })()
+    ]
+    fake_db = FakeDb(all_result=users_list)
+
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="admin1",
+        role="admin",
+        auth_source="database",
+        permissions=["users:read"],
+    )
+
+    response = TestClient(authz_app).get("/api/users")
+    assert response.status_code == 200

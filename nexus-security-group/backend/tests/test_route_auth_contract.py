@@ -36,13 +36,12 @@ PERMISSION_PROTECTED_ROUTES = {
     ("/api/threats", "GET"): "threats:read",
     ("/api/threats/{threat_id}", "GET"): "threats:read",
     ("/api/threats/{threat_id}/review", "PATCH"): "threats:write",
+    ("/api/users", "GET"): "users:read",
+    ("/api/users", "POST"): "users:write",
+    ("/api/users/{user_id}", "PATCH"): "users:write",
 }
 
-ADMIN_ONLY_ROUTES = {
-    ("/api/users", "GET"),
-    ("/api/users", "POST"),
-    ("/api/users/{user_id}", "PATCH"),
-}
+ADMIN_ONLY_ROUTES = set()
 
 ROUTERS_UNDER_AUTH_CONTRACT = (
     auth_router,
@@ -150,7 +149,7 @@ def test_private_routes_reject_missing_bearer_token_before_handler_logic():
         assert response.json()["detail"] == "Not authenticated"
 
 
-def test_admin_routes_reject_authenticated_non_admin_users():
+def test_users_routes_reject_authenticated_user_without_permission():
     authz_app = FastAPI()
     authz_app.include_router(users.router)
     authz_app.dependency_overrides[get_db] = lambda: object()
@@ -158,9 +157,20 @@ def test_admin_routes_reject_authenticated_non_admin_users():
         username="analyst1",
         role="analyst",
         auth_source="database",
+        permissions=["dashboard:read"],
     )
+    client = TestClient(authz_app)
 
-    response = TestClient(authz_app).get("/api/users")
-
+    response = client.get("/api/users")
     assert response.status_code == 403
-    assert response.json()["detail"] == "Admin privileges required"
+    assert "users:read" in response.json()["detail"]
+
+    response = client.post("/api/users", json={
+        "username": "test", "password": "secret123",
+    })
+    assert response.status_code == 403
+    assert "users:write" in response.json()["detail"]
+
+    response = client.patch("/api/users/1", json={"role": "admin"})
+    assert response.status_code == 403
+    assert "users:write" in response.json()["detail"]

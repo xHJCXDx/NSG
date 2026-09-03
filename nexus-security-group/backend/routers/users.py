@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from auth import hash_password, require_admin_user
+from auth import hash_password, require_permission
 from database import get_db
 from models import SystemUser
 from schemas.auth import TokenData
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 def create_user(
     request: UserCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_admin_user),
+    current_user: TokenData = Depends(require_permission("users", "write")),
 ):
     existing = db.query(SystemUser).filter(SystemUser.username == request.username).first()
     if existing is not None:
@@ -42,7 +42,7 @@ def create_user(
 @router.get("", response_model=list[UserResponse])
 def list_users(
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_admin_user),
+    current_user: TokenData = Depends(require_permission("users", "read")),
 ):
     return db.query(SystemUser).order_by(SystemUser.username.asc()).all()
 
@@ -52,7 +52,7 @@ def update_user(
     user_id: int,
     request: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(require_admin_user),
+    current_user: TokenData = Depends(require_permission("users", "write")),
 ):
     user = db.query(SystemUser).filter(SystemUser.user_id == user_id).first()
     if user is None:
