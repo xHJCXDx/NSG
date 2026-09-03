@@ -3,7 +3,7 @@ uvicorn
 psycopg2-binary
 sqlalchemy
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt
 pydantic>=2.0
 python-multipart
 httpx

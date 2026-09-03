@@ -30,6 +30,7 @@ from models import (
     Alert,
     KeywordMonitor,
     ExecutionLog,
+    SystemUser,
     UserActivity,
 )
 from database import Base
@@ -49,6 +50,7 @@ class TestTableMapping:
         (Alert,              "alerts",              "alert_id",      BigInteger),
         (KeywordMonitor,     "keywords_monitor",    "keyword_id",    Integer),
         (ExecutionLog,       "execution_logs",      "log_id",        BigInteger),
+        (SystemUser,         "system_users",        "user_id",       BigInteger),
         (UserActivity,       "user_activity",       "activity_id",   BigInteger),
     ]
 
@@ -163,6 +165,11 @@ class TestColumnCompleteness:
         "activity_timestamp", "activity_data",
     ]
 
+    SYSTEM_USER_COLS = [
+        "user_id", "username", "password_hash", "role", "is_active",
+        "created_by", "created_at", "updated_at",
+    ]
+
     def _assert_columns(self, model, expected_cols):
         mapper = inspect(model)
         mapped = {c.key for c in mapper.columns}
@@ -193,6 +200,9 @@ class TestColumnCompleteness:
     def test_user_activity_columns(self):
         self._assert_columns(UserActivity, self.USER_ACTIVITY_COLS)
 
+    def test_system_user_columns(self):
+        self._assert_columns(SystemUser, self.SYSTEM_USER_COLS)
+
 
 class TestServerDefaults:
     """R2.S2 — columns with DEFAULT NOW() must use server_default (not client default)."""
@@ -207,6 +217,8 @@ class TestServerDefaults:
         (Alert,             "last_updated"),
         (KeywordMonitor,    "added_at"),
         (ExecutionLog,      "last_updated"),
+        (SystemUser,        "created_at"),
+        (SystemUser,        "updated_at"),
         (UserActivity,      "activity_timestamp"),
     ]
 
@@ -367,6 +379,7 @@ class TestModelRegistry:
         "alerts",
         "keywords_monitor",
         "execution_logs",
+        "system_users",
         "user_activity",
     }
 
@@ -376,7 +389,7 @@ class TestModelRegistry:
         # This test additionally asserts the classes are valid SQLAlchemy mappers.
         models = [
             SocialMention, SentimentAnalysis, ThreatDetection, Alert,
-            KeywordMonitor, ExecutionLog, UserActivity,
+            KeywordMonitor, ExecutionLog, SystemUser, UserActivity,
         ]
         for model in models:
             assert hasattr(model, "__tablename__"), (
@@ -394,7 +407,7 @@ class TestModelRegistry:
     def test_all_models_share_single_base(self):
         models = [
             SocialMention, SentimentAnalysis, ThreatDetection, Alert,
-            KeywordMonitor, ExecutionLog, UserActivity,
+            KeywordMonitor, ExecutionLog, SystemUser, UserActivity,
         ]
         for model in models:
             assert issubclass(model, Base), (
@@ -485,6 +498,11 @@ class TestCheckConstraints:
             "KeywordMonitor missing CHECK constraint on 'keyword_weight'"
         )
 
+    def test_system_user_role_check(self):
+        assert self._has_check_for(SystemUser, "role"), (
+            "SystemUser missing CHECK constraint on 'role'"
+        )
+
 
 class TestUniqueConstraints:
     """R5.S2 — __table_args__ must include named UniqueConstraints."""
@@ -513,3 +531,7 @@ class TestUniqueConstraints:
         assert self._has_unique_named(ThreatDetection, "unique_detection_per_mention"), (
             "ThreatDetection missing UniqueConstraint named 'unique_detection_per_mention'"
         )
+
+    def test_system_user_username_unique(self):
+        mapper = inspect(SystemUser)
+        assert mapper.columns["username"].unique is True

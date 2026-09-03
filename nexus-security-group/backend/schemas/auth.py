@@ -19,3 +19,10 @@ class TokenData(BaseModel):
     """Decoded token payload."""
 
     username: Optional[str] = None
+    user_id: Optional[int] = None
+    role: Optional[str] = None
+    auth_source: Optional[str] = None
+
+    @property
+    def is_admin(self) -> bool:
+        return self.role == "admin"

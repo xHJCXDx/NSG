@@ -34,5 +34,17 @@ def test_token_data_username_optional():
 
 def test_token_data_with_username():
     from schemas.auth import TokenData
-    td = TokenData(username="admin")
+    td = TokenData(username="admin", user_id=1)
     assert td.username == "admin"
+    assert td.user_id == 1
+
+
+def test_token_data_carries_role_and_auth_source():
+    from schemas.auth import TokenData
+
+    admin = TokenData(username="admin", role="admin", auth_source="database")
+    analyst = TokenData(username="analyst", role="analyst", auth_source="bootstrap")
+
+    assert admin.is_admin is True
+    assert analyst.is_admin is False
+    assert admin.auth_source == "database"

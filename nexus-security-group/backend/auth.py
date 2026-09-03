@@ -1,10 +1,19 @@
+import base64
+import hashlib
+import hmac
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from config import settings
 
+from database import get_db
+from models import SystemUser
 from schemas.auth import Token, TokenData
 
 SECRET_KEY = settings.JWT_SECRET_KEY
@@ -14,9 +23,53 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+PASSWORD_HASH_SCHEME = "pbkdf2_sha256"
+PASSWORD_HASH_ITERATIONS = 600_000
 
 ADMIN_USER = settings.ADMIN_USER
 ADMIN_PASSWORD = settings.ADMIN_PASSWORD
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_urlsafe(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        PASSWORD_HASH_ITERATIONS,
+    )
+    encoded_digest = base64.b64encode(digest).decode("ascii")
+    return f"{PASSWORD_HASH_SCHEME}${PASSWORD_HASH_ITERATIONS}${salt}${encoded_digest}"
+
+
+def verify_password(plain_password: str, password_hash: str) -> bool:
+    if password_hash.startswith(("$2a$", "$2b$", "$2y$")):
+        try:
+            return bcrypt.checkpw(plain_password.encode("utf-8"), password_hash.encode("utf-8"))
+        except ValueError:
+            return False
+
+    try:
+        scheme, iterations, salt, encoded_digest = password_hash.split("$", 3)
+    except ValueError:
+        return False
+
+    if scheme != PASSWORD_HASH_SCHEME:
+        return False
+
+    try:
+        iterations_value = int(iterations)
+    except ValueError:
+        return False
+
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        plain_password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations_value,
+    )
+    candidate_digest = base64.b64encode(digest).decode("ascii")
+    return hmac.compare_digest(candidate_digest, encoded_digest)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -39,21 +92,67 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(
+            username=username,
+            user_id=payload.get("user_id"),
+            role=payload.get("role"),
+            auth_source=payload.get("auth_source"),
+        )
     except JWTError:
         raise credentials_exception
     return token_data
 
+
+def require_admin_user(current_user: TokenData = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+    return current_user
+
 @router.post("/login", response_model=Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    if form_data.username != ADMIN_USER or form_data.password != ADMIN_PASSWORD:
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    user_id = None
+
+    try:
+        has_db_users = db.query(SystemUser.user_id).first() is not None
+        db_user = None
+        if has_db_users:
+            db_user = db.query(SystemUser).filter(SystemUser.username == form_data.username).first()
+    except SQLAlchemyError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service unavailable",
         )
+
+    if has_db_users:
+        if not db_user or not db_user.is_active or not verify_password(form_data.password, db_user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        role = db_user.role
+        auth_source = "database"
+        user_id = db_user.user_id
+    else:
+        if form_data.username != ADMIN_USER or form_data.password != ADMIN_PASSWORD:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        role = "admin"
+        auth_source = "bootstrap"
+
+    token_data = {"sub": form_data.username, "role": role, "auth_source": auth_source}
+    if user_id is not None:
+        token_data["user_id"] = user_id
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": form_data.username}, expires_delta=access_token_expires
+        data=token_data,
+        expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "token_type": "bearer"}

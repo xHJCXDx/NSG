@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from auth import router as auth_router
-from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, threats
+from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, threats, users
 
 app = FastAPI(title="Dashboard API")
 
@@ -22,6 +22,7 @@ app.include_router(dashboard.router)
 app.include_router(keywords.router)
 app.include_router(logs.router)
 app.include_router(activity.router)
+app.include_router(users.router)
 
 @app.get("/api/health")
 def health_check():

@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS "btree_gin";
 
 CREATE TABLE IF NOT EXISTS social_mentions (
     mention_id BIGSERIAL PRIMARY KEY,
-    platform VARCHAR(50) NOT NULL CHECK (platform IN ('twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'other')),
+    platform VARCHAR(50) NOT NULL CHECK (platform IN ('twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'hackernews', 'other')),
     external_id VARCHAR(255) NOT NULL,
 
     text_content TEXT NOT NULL,
@@ -63,7 +63,8 @@ CREATE INDEX idx_mentions_author_username ON social_mentions(author_username);
 CREATE INDEX idx_mentions_author_id ON social_mentions(author_id);
 CREATE INDEX idx_mentions_processing_status ON social_mentions(processing_status);
 CREATE INDEX idx_mentions_conversation_id ON social_mentions(conversation_id) WHERE conversation_id IS NOT NULL;
-CREATE INDEX idx_mentions_text_content_gin ON social_mentions USING gin(to_tsvector('spanish', text_content));
+-- 'english' stemmer: OSINT sources (Twitter/X, Reddit, HackerNews) are predominantly English.
+CREATE INDEX idx_mentions_text_content_gin ON social_mentions USING gin(to_tsvector('english', text_content));
 CREATE INDEX idx_mentions_urls_gin ON social_mentions USING gin(urls);
 CREATE INDEX idx_mentions_hashtags_gin ON social_mentions USING gin(hashtags);
 CREATE INDEX idx_mentions_author_username_trgm ON social_mentions USING gin(author_username gin_trgm_ops);
@@ -295,6 +296,14 @@ CREATE OR REPLACE FUNCTION update_last_updated_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.last_updated = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -535,6 +544,38 @@ CREATE POLICY user_isolation_policy ON threat_detections
     USING (reviewed_by = current_user OR reviewed_by IS NULL);
 
 -- ============================================
+-- TABLA: system_users
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS system_users (
+    user_id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'analyst' CONSTRAINT check_system_users_role CHECK (role IN ('admin', 'analyst')),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_by VARCHAR(100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_system_users_username ON system_users(username);
+CREATE INDEX idx_system_users_role ON system_users(role);
+CREATE INDEX idx_system_users_is_active ON system_users(is_active);
+
+CREATE TRIGGER update_system_users_updated_at
+    BEFORE UPDATE ON system_users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+GRANT ALL PRIVILEGES ON TABLE system_users TO osint_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE system_users_user_id_seq TO osint_admin;
+GRANT SELECT ON TABLE system_users TO osint_analyst;
+GRANT SELECT ON TABLE system_users TO osint_readonly;
+
+-- Existing Postgres volumes are not migrated by this init script automatically.
+-- Operators must apply equivalent DDL manually before relying on DB-backed users.
+
+-- ============================================
 -- DATOS INICIALES
 -- ============================================
 
@@ -563,3 +604,4 @@ COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas';
 COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
+COMMENT ON TABLE system_users IS 'Usuarios autenticables del sistema; user_activity permanece solo como auditoría';
