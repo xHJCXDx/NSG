@@ -34,6 +34,15 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 | **Database** | PostgreSQL 15 | Almacena métricas, logs y detecciones (esquema en `init.sql`). |
 | **Gateway** | Traefik | Proxy reverso que rutea todo el tráfico. |
 
+## Documentación técnica
+
+- [Base de datos](docs/01-database.md)
+- [Workflows n8n](docs/02-workflows-n8n.md)
+- [NLP y sentimiento](docs/03-nlp-sentiment.md)
+- [Backend API](docs/04-backend-api.md)
+- [Frontend UI](docs/05-frontend-ui.md)
+- [Plan de Modificación — Release 1.0](docs/06-release-1.0.md)
+
 ## Mantenimiento y Configuración
 
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
