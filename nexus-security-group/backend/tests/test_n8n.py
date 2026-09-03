@@ -8,7 +8,9 @@ from fastapi.testclient import TestClient
 from httpx import AsyncClient, ASGITransport, ConnectError, Response
 import pytest
 
-from routers.n8n import get_current_user, router
+from auth import get_current_user
+from routers.n8n import router
+from schemas.auth import TokenData
 
 
 N8N_PATH = Path(__file__).parent.parent / "routers" / "n8n.py"
@@ -50,7 +52,10 @@ async def test_proxy_webhook_uses_settings_url():
 
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
 
     # Patch the AsyncClient that the n8n router creates internally.
     # We patch the __aenter__ return value so context-manager usage is intercepted.
@@ -93,7 +98,10 @@ def test_proxy_webhook_declares_auth_dependency_and_passthrough_contract():
     webhook_route = routes_by_path["/api/n8n/webhook/{webhook_id}"]
 
     assert webhook_route.response_model is None
-    assert any(dep.call is get_current_user for dep in webhook_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "workflows:execute"
+        for dep in webhook_route.dependant.dependencies
+    )
 
 
 def test_proxy_webhook_rejects_missing_auth_token():
@@ -110,7 +118,10 @@ def test_proxy_webhook_rejects_missing_auth_token():
 async def test_proxy_webhook_propagates_workflow_error_status_and_payload():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(
@@ -136,7 +147,10 @@ async def test_proxy_webhook_propagates_workflow_error_status_and_payload():
 async def test_proxy_webhook_normalizes_transport_errors_as_bad_gateway():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(side_effect=ConnectError("connection refused"))
@@ -156,7 +170,10 @@ async def test_proxy_webhook_normalizes_transport_errors_as_bad_gateway():
 async def test_proxy_webhook_passes_through_non_json_workflow_response():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(
@@ -176,3 +193,19 @@ async def test_proxy_webhook_passes_through_non_json_workflow_response():
 
     assert response.status_code == 202
     assert response.text == "accepted"
+
+
+def test_proxy_webhook_rejects_user_without_workflows_execute_permission():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
+
+    response = TestClient(app).post("/api/n8n/webhook/test-id", json={"trigger": "scan"})
+
+    assert response.status_code == 403
+    assert "workflows:execute" in response.json()["detail"]

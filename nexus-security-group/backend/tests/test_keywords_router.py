@@ -368,13 +368,22 @@ def test_keyword_routes_declare_response_models_and_auth_dependency():
         getattr(dep.call, "required_permission", None) == "keywords:read"
         for dep in list_route.dependant.dependencies
     )
-    assert any(dep.call is get_current_user for dep in create_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:write"
+        for dep in create_route.dependant.dependencies
+    )
     assert any(
         getattr(dep.call, "required_permission", None) == "keywords:read"
         for dep in detail_route.dependant.dependencies
     )
-    assert any(dep.call is get_current_user for dep in update_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in delete_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:write"
+        for dep in update_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:delete"
+        for dep in delete_route.dependant.dependencies
+    )
 
 
 def test_get_keywords_rejects_invalid_limit():
@@ -438,3 +447,70 @@ def test_keywords_read_routes_allow_user_with_keywords_read_permission():
 
     assert client.get("/api/keywords").status_code == 200
     assert client.get("/api/keywords/1").status_code == 200
+
+
+def test_keywords_write_routes_reject_user_without_keywords_write_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
+    client = TestClient(authz_app)
+
+    response = client.post("/api/keywords", json={"keyword_text": "test"})
+    assert response.status_code == 403
+    assert "keywords:write" in response.json()["detail"]
+
+    response = client.patch("/api/keywords/1", json={"is_active": False})
+    assert response.status_code == 403
+    assert "keywords:write" in response.json()["detail"]
+
+
+def test_keywords_delete_rejects_user_without_keywords_delete_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read", "keywords:write"],
+    )
+
+    response = TestClient(authz_app).delete("/api/keywords/1")
+    assert response.status_code == 403
+    assert "keywords:delete" in response.json()["detail"]
+
+
+def test_keywords_write_allows_user_with_correct_permissions():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    keyword = _keyword_row(keyword_id=1)
+    fake_query = FakeQuery(all_result=[keyword], first_result=keyword)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="admin1",
+        role="admin",
+        auth_source="database",
+        permissions=["keywords:write", "keywords:delete"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.post("/api/keywords", json={
+        "keyword_text": "test",
+        "keyword_type": "threat",
+        "keyword_weight": 50,
+        "is_active": True,
+        "is_regex": False,
+        "case_sensitive": False,
+        "trigger_immediate_alert": False,
+    }).status_code == 201
+    assert client.patch("/api/keywords/1", json={"is_active": False}).status_code == 200
+    assert client.delete("/api/keywords/1").status_code == 204

@@ -14,18 +14,12 @@ PUBLIC_ROUTE_EXCEPTIONS = {
     ("/api/health", "GET"): "Operational health probe: intentionally public.",
 }
 
-AUTHENTICATED_PRIVATE_ROUTES = {
-    ("/api/alerts/{alert_id}/acknowledge", "PATCH"),
-    ("/api/keywords", "POST"),
-    ("/api/keywords/{keyword_id}", "PATCH"),
-    ("/api/keywords/{keyword_id}", "DELETE"),
-    ("/api/n8n/webhook/{webhook_id}", "POST"),
-    ("/api/threats/{threat_id}/review", "PATCH"),
-}
+AUTHENTICATED_PRIVATE_ROUTES = set()
 
 PERMISSION_PROTECTED_ROUTES = {
     ("/api/alerts", "GET"): "alerts:read",
     ("/api/alerts/{alert_id}", "GET"): "alerts:read",
+    ("/api/alerts/{alert_id}/acknowledge", "PATCH"): "alerts:write",
     ("/api/activity", "GET"): "logs:read",
     ("/api/activity/{activity_id}", "GET"): "logs:read",
     ("/api/dashboard/summary", "GET"): "dashboard:read",
@@ -35,8 +29,13 @@ PERMISSION_PROTECTED_ROUTES = {
     ("/api/metrics/summary", "GET"): "metrics:read",
     ("/api/keywords", "GET"): "keywords:read",
     ("/api/keywords/{keyword_id}", "GET"): "keywords:read",
+    ("/api/keywords", "POST"): "keywords:write",
+    ("/api/keywords/{keyword_id}", "PATCH"): "keywords:write",
+    ("/api/keywords/{keyword_id}", "DELETE"): "keywords:delete",
+    ("/api/n8n/webhook/{webhook_id}", "POST"): "workflows:execute",
     ("/api/threats", "GET"): "threats:read",
     ("/api/threats/{threat_id}", "GET"): "threats:read",
+    ("/api/threats/{threat_id}/review", "PATCH"): "threats:write",
 }
 
 ADMIN_ONLY_ROUTES = {

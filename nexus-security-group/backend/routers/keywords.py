@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from auth import get_current_user, require_permission
+from auth import require_permission
 from database import get_db
 from models import KeywordMonitor
 from schemas.auth import TokenData
@@ -36,7 +36,7 @@ def get_keywords(
 def create_keyword(
     request: KeywordCreate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("keywords", "write")),
 ):
     keyword = KeywordMonitor(**request.model_dump(exclude_unset=True))
 
@@ -79,7 +79,7 @@ def update_keyword(
     keyword_id: int,
     request: KeywordUpdate,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("keywords", "write")),
 ):
     keyword = (
         db.query(KeywordMonitor)
@@ -112,7 +112,7 @@ def update_keyword(
 def delete_keyword(
     keyword_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("keywords", "delete")),
 ):
     keyword = (
         db.query(KeywordMonitor)

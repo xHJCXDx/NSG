@@ -2,7 +2,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 
-from auth import get_current_user
+from auth import require_permission
 from config import settings
 from schemas.auth import TokenData
 
@@ -22,7 +22,7 @@ N8N_URL = settings.N8N_INTERNAL_URL
 async def proxy_webhook(
     webhook_id: str,
     request: Request,
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("workflows", "execute")),
 ):
     """Protected passthrough proxy for n8n webhooks.
 

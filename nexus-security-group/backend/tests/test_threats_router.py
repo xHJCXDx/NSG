@@ -313,7 +313,10 @@ def test_threat_routes_declare_response_models_and_auth_dependency():
         getattr(dep.call, "required_permission", None) == "threats:read"
         for dep in detail_route.dependant.dependencies
     )
-    assert any(dep.call is get_current_user for dep in review_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "threats:write"
+        for dep in review_route.dependant.dependencies
+    )
 
 
 def test_get_threats_rejects_invalid_limit_and_filters():
@@ -381,3 +384,47 @@ def test_threats_read_routes_allow_user_with_threats_read_permission():
 
     assert client.get("/api/threats").status_code == 200
     assert client.get("/api/threats/1").status_code == 200
+
+
+def test_review_threat_rejects_user_without_threats_write_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["threats:read"],
+    )
+
+    response = TestClient(authz_app).patch(
+        "/api/threats/1/review",
+        json={"review_status": "confirmed"},
+    )
+
+    assert response.status_code == 403
+    assert "threats:write" in response.json()["detail"]
+
+
+def test_review_threat_allows_user_with_threats_write_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    threat = _threat_row(detection_id=1)
+    fake_query = FakeQuery(first_result=threat)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["threats:write"],
+    )
+
+    response = TestClient(authz_app).patch(
+        "/api/threats/1/review",
+        json={"review_status": "confirmed"},
+    )
+
+    assert response.status_code == 200
