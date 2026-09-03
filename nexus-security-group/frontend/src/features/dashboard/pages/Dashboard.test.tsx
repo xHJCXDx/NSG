@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -15,13 +16,18 @@ vi.mock('recharts', () => ({
   Bar: ({ dataKey }: { dataKey: string }) => <span data-testid="bar-series">{dataKey}</span>,
 }));
 
+const createTestQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
 const renderDashboard = () => {
   localStorage.setItem('token', 'fake-jwt');
 
   return render(
-    <AuthProvider>
-      <Dashboard />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <Dashboard />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 };
 

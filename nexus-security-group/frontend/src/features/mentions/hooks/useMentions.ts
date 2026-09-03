@@ -1,47 +1,28 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchMentions } from '../api';
-import { MENTIONS_COPY } from '../contract';
-import type { Mention, MentionFilters, MentionLoadStatus } from '../types';
+import type { MentionFilters, MentionLoadStatus } from '../types';
 
 const initialFilters: MentionFilters = { search: '', platform: '' };
 
 export type MentionEmptyReason = 'initial-empty' | 'no-results';
 
 export function useMentions(token: string | null) {
-  const [mentions, setMentions] = useState<Mention[]>([]);
-  const [status, setStatus] = useState<MentionLoadStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
 
-  useEffect(() => {
-    let active = true;
+  const { data: mentions = [], isLoading, isError } = useQuery({
+    queryKey: ['mentions'],
+    queryFn: () => fetchMentions(token),
+    enabled: !!token,
+  });
 
-    setStatus('loading');
-    setError(null);
-
-    fetchMentions(token)
-      .then((loadedMentions) => {
-        if (!active) {
-          return;
-        }
-
-        setMentions(loadedMentions);
-        setStatus(loadedMentions.length > 0 ? 'success' : 'empty');
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setMentions([]);
-        setError(MENTIONS_COPY.error.title);
-        setStatus('error');
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [token]);
+  const baseStatus: MentionLoadStatus = isLoading
+    ? 'loading'
+    : isError
+      ? 'error'
+      : mentions.length > 0
+        ? 'success'
+        : 'empty';
 
   const filteredMentions = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
@@ -62,13 +43,13 @@ export function useMentions(token: string | null) {
   const hasActiveFilters = filters.search.trim().length > 0 || filters.platform.trim().length > 0;
   const emptyReason: MentionEmptyReason = mentions.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: MentionLoadStatus =
-    status === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : status;
+    baseStatus === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : baseStatus;
 
   return {
     mentions,
     filteredMentions,
     status: derivedStatus,
-    error,
+    error: isError ? 'Failed to load mentions' : null,
     filters,
     setFilters,
     emptyReason,

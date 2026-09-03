@@ -1,30 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../auth';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Activity, Bell, KeyRound, ListChecks, ShieldAlert, Zap } from 'lucide-react';
-import { fetchDashboardSummary, type DashboardSummaryResponse } from '../api';
 import { DASHBOARD_COPY } from '../contract';
+import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 export function Dashboard() {
-  const { token } = useAuth();
-  const [data, setData] = useState<DashboardSummaryResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const json = await fetchDashboardSummary(token);
-        if (json) {
-          setData(json);
-        }
-      } catch (err) {
-        console.error('Failed to fetch metrics', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchMetrics();
-  }, [token]);
+  const { data, isLoading } = useDashboardSummary();
 
   const chartData = data ? [
     { name: 'Threats', value: data.total_threats, fill: '#f87171' },
@@ -46,7 +26,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalThreats}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.total_threats ?? 0)}
+              {isLoading ? '-' : (data?.total_threats ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-brand-500/20 flex items-center justify-center border border-brand-500/30 group-hover:scale-110 transition-transform">
@@ -58,7 +38,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.pendingThreats}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.pending_threats ?? 0)}
+              {isLoading ? '-' : (data?.pending_threats ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 group-hover:scale-110 transition-transform">
@@ -70,7 +50,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalAlerts}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.total_alerts ?? 0)}
+              {isLoading ? '-' : (data?.total_alerts ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
@@ -82,7 +62,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.unacknowledgedAlerts}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.unacknowledged_alerts ?? 0)}
+              {isLoading ? '-' : (data?.unacknowledged_alerts ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30 group-hover:scale-110 transition-transform">
@@ -94,7 +74,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activeKeywords}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.active_keywords ?? 0)}
+              {isLoading ? '-' : (data?.active_keywords ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform">
@@ -106,7 +86,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.executionLogs}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.execution_logs_count ?? 0)}
+              {isLoading ? '-' : (data?.execution_logs_count ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:scale-110 transition-transform">
@@ -118,7 +98,7 @@ export function Dashboard() {
           <div>
             <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activityCount}</p>
             <h3 className="text-3xl font-bold text-white">
-              {loading ? '-' : (data?.activity_count ?? 0)}
+              {isLoading ? '-' : (data?.activity_count ?? 0)}
             </h3>
           </div>
           <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
@@ -130,7 +110,7 @@ export function Dashboard() {
       {/* Charts Area */}
       <div className="glass-card p-6 min-h-[400px]">
         <h2 className="text-xl font-bold text-white mb-6">{DASHBOARD_COPY.chart.title}</h2>
-        {loading ? (
+        {isLoading ? (
           <div className="flex items-center justify-center h-[300px]">
             <div className="w-8 h-8 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
           </div>
@@ -141,7 +121,7 @@ export function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                 <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                   contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
                 />

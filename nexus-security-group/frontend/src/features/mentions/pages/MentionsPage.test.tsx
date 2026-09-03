@@ -1,15 +1,19 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { MentionsPage } from './MentionsPage';
 
 const renderMentionsPage = () => {
   localStorage.setItem('token', 'fake-jwt');
   return render(
-    <AuthProvider>
-      <MentionsPage />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <MentionsPage />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -57,9 +61,11 @@ describe('MentionsPage', () => {
 
     fetchMock.mockResolvedValueOnce({ ok: false } as Response);
     rerender(
-      <AuthProvider>
-        <MentionsPage />
-      </AuthProvider>,
+      <QueryClientProvider client={createTestQueryClient()}>
+        <AuthProvider>
+          <MentionsPage />
+        </AuthProvider>
+      </QueryClientProvider>,
     );
 
     cleanup();

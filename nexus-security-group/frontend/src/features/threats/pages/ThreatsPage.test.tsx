@@ -1,15 +1,19 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { ThreatsPage } from './ThreatsPage';
 
 const renderThreatsPage = () => {
   localStorage.setItem('token', 'fake-jwt');
   return render(
-    <AuthProvider>
-      <ThreatsPage />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <ThreatsPage />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 };
 

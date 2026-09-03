@@ -1,25 +1,15 @@
-import { useState } from 'react';
 import { AlertTriangle, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
-import { useAuth } from '../auth';
-import { getAutomationStatus, triggerWorkflow } from './api';
-import type { TriggerState } from './types';
+import { getAutomationStatus } from './api';
+import { useTriggerWorkflow } from './hooks/useTriggerWorkflow';
 
 export function AutomationTriggers() {
   const status = getAutomationStatus();
-  const { token } = useAuth();
-  const [triggerState, setTriggerState] = useState<TriggerState>('idle');
-  const [message, setMessage] = useState<string | undefined>();
+  const trigger = useTriggerWorkflow();
 
-  const handleTrigger = async () => {
-    setTriggerState('running');
-    setMessage(undefined);
+  const handleTrigger = () => { trigger.mutate(); };
 
-    const result = await triggerWorkflow(token);
-    setTriggerState(result.state);
-    setMessage(result.message);
-  };
-
-  const isRunning = triggerState === 'running';
+  const isRunning = trigger.isPending;
+  const result = trigger.data;
   const buttonDisabled = !status.manualTriggerEnabled || isRunning;
 
   return (
@@ -50,17 +40,17 @@ export function AutomationTriggers() {
         </div>
       </div>
 
-      {triggerState === 'success' && message && (
+      {result?.state === 'success' && result.message && (
         <div className="mt-4 flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-3 rounded-lg border border-emerald-500/20" role="status">
           <CheckCircle className="w-5 h-5 shrink-0" />
-          <span className="text-sm font-medium">{message}</span>
+          <span className="text-sm font-medium">{result.message}</span>
         </div>
       )}
 
-      {triggerState === 'error' && message && (
+      {result?.state === 'error' && result.message && (
         <div className="mt-4 flex items-center gap-2 text-red-400 bg-red-500/10 px-4 py-3 rounded-lg border border-red-500/20" role="alert">
           <AlertTriangle className="w-5 h-5 shrink-0" />
-          <span className="text-sm font-medium">{message}</span>
+          <span className="text-sm font-medium">{result.message}</span>
         </div>
       )}
     </div>

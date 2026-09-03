@@ -1,6 +1,8 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { UsersPage } from './UsersPage';
 
@@ -12,9 +14,11 @@ const adminToken = `header.${encodePayload({ role: 'admin', auth_source: 'databa
 const renderUsersPage = (token = adminToken) => {
   localStorage.setItem('token', token);
   return render(
-    <AuthProvider>
-      <UsersPage />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <UsersPage />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -54,9 +58,20 @@ describe('UsersPage', () => {
   it('disables submit until valid fields exist and shows success confirmation while clearing password', async () => {
     const user = userEvent.setup();
     let resolveResponse: (response: Response) => void = () => undefined;
-    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => [] } as Response).mockReturnValueOnce(new Promise<Response>((resolve) => {
+    const aliceUser = {
+      user_id: 7,
+      username: 'alice',
+      role: 'admin',
+      is_active: true,
+      created_at: '2026-07-15T10:00:00Z',
+      updated_at: '2026-07-15T10:00:00Z',
+    };
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
+      .mockReturnValueOnce(new Promise<Response>((resolve) => {
         resolveResponse = resolve;
-      }));
+      }))
+      .mockResolvedValueOnce({ ok: true, json: async () => [aliceUser] } as Response);
 
     renderUsersPage();
 

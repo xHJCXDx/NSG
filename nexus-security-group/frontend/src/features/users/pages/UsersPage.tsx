@@ -1,78 +1,48 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useAuth } from '../../auth';
-import { createUser, CreateUserError, listUsers, ListUsersError } from '../api';
+import { CreateUserError } from '../api';
 import { USER_ROLE_OPTIONS, USERS_COPY } from '../contract';
+import { useCreateUserMutation } from '../hooks/useCreateUserMutation';
+import { useUsersQuery } from '../hooks/useUsersQuery';
 import type { UserResponse, UserRole } from '../types';
 
 export function UsersPage() {
-  const { token, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const { data: users = [], isLoading: isLoadingUsers, error: listError } = useUsersQuery();
+  const createUserMutation = useCreateUserMutation();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('analyst');
   const [isActive, setIsActive] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [listError, setListError] = useState<string | null>(null);
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
-  const [users, setUsers] = useState<UserResponse[]>([]);
 
+  const isSubmitting = createUserMutation.isPending;
   const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting;
-
-  useEffect(() => {
-    let isMounted = true;
-
-    setIsLoadingUsers(true);
-    setListError(null);
-
-    listUsers(token)
-      .then((responseUsers) => {
-        if (isMounted) {
-          setUsers(responseUsers);
-        }
-      })
-      .catch((caughtError) => {
-        if (isMounted) {
-          setListError(caughtError instanceof ListUsersError ? caughtError.message : USERS_COPY.errors.listFallback);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setIsLoadingUsers(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setCreatedUser(null);
-    setIsSubmitting(true);
 
     try {
-      const user = await createUser(token, {
+      const user = await createUserMutation.mutateAsync({
         username: username.trim(),
         password,
         role,
         is_active: isActive,
       });
       setCreatedUser(user);
-      setUsers((currentUsers) =>
-        [...currentUsers.filter((currentUser) => currentUser.user_id !== user.user_id), user].sort((a, b) =>
-          a.username.localeCompare(b.username),
-        ),
-      );
       setPassword('');
     } catch (caughtError) {
       setError(caughtError instanceof CreateUserError ? caughtError.message : USERS_COPY.errors.createFallback);
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  const listErrorMessage = listError
+    ? (listError instanceof Error ? listError.message : USERS_COPY.errors.listFallback)
+    : null;
 
   return (
     <section className="space-y-6">
@@ -183,13 +153,13 @@ export function UsersPage() {
           {isLoadingUsers && <span className="text-sm text-gray-400">{USERS_COPY.directory.loading}</span>}
         </div>
 
-        {listError && (
+        {listErrorMessage && (
           <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-100" role="alert">
-            {listError}
+            {listErrorMessage}
           </div>
         )}
 
-        {!isLoadingUsers && !listError && users.length === 0 && (
+        {!isLoadingUsers && !listErrorMessage && users.length === 0 && (
           <p className="mt-4 text-sm text-gray-400">{USERS_COPY.directory.empty}</p>
         )}
 

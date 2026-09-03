@@ -80,12 +80,10 @@ Release 1.0 (`v1.0.0`) entrega:
 - Migrar feature por feature (una por vez, no todas juntas):
   1. `dashboard` — primer candidato por ser la vista principal.
   2. `threats` — queries con filtros.
-  3. `mentions` — queries con paginación/límite.
-  4. `metrics` — queries simples.
-  5. `alerts` — queries + mutations (acknowledge).
-  6. `keywords` — CRUD completo (queries + mutations).
-  7. `users` — queries + mutations admin-only.
-  8. `automation` — mutation de trigger.
+  3. `mentions` — queries con filtros.
+  4. `users` — queries + mutations admin-only.
+  5. `automation` — mutation de trigger.
+  - Nota: `metrics`, `alerts` y `keywords` no aplican — metrics es API pura consumida por dashboard, alerts y keywords no existen como features frontend.
 - Establecer convención de hooks: `useXQuery` para queries, `useXMutation` para mutations, ubicados en `hooks/` dentro de cada feature.
 - Configurar `staleTime` y `refetchOnWindowFocus` según la naturaleza de cada dato.
 - Actualizar tests existentes para trabajar con el wrapper de QueryClient.
@@ -95,17 +93,17 @@ Release 1.0 (`v1.0.0`) entrega:
 
 **Progreso Fase 2:**
 
-- [ ] Instalar React Query y configurar provider.
-- [ ] Migrar `dashboard`.
-- [ ] Migrar `threats`.
-- [ ] Migrar `mentions`.
-- [ ] Migrar `metrics`.
-- [ ] Migrar `alerts`.
-- [ ] Migrar `keywords`.
-- [ ] Migrar `users`.
-- [ ] Migrar `automation`.
-- [ ] Establecer convención de hooks y documentar.
-- [ ] Eliminar fetches manuales residuales.
+- [x] Instalar React Query y configurar provider: `@tanstack/react-query` instalado, `QueryClientProvider` en `AppProviders.tsx` con `staleTime: 60s`, `refetchOnWindowFocus: false`, `retry: 1`.
+- [x] Migrar `dashboard`: `useDashboardSummary` hook con `useQuery`, `Dashboard.tsx` consume hook directo.
+- [x] Migrar `threats`: `useThreats` migrado a `useQuery`, filtros y sort preservados como `useMemo`, `reload` via `refetch()`.
+- [x] Migrar `mentions`: `useMentions` migrado a `useQuery`, filtros preservados.
+- [x] Migrar `metrics`: no aplica — feature solo expone `fetchMetricsSummary` (API pura sin hook/componente). Dashboard ya consume via `useDashboardSummary`.
+- [x] Migrar `alerts`: no aplica — feature no existe en frontend (excluida de scope en Release 1.0).
+- [x] Migrar `keywords`: no aplica — feature no existe en frontend (excluida de scope en Release 1.0).
+- [x] Migrar `users`: `useUsersQuery` (list) + `useCreateUserMutation` (create con invalidación de cache `['users']`). `UsersPage` consume ambos hooks.
+- [x] Migrar `automation`: `useTriggerWorkflow` con `useMutation`. `AutomationTriggers` consume hook, estados derivados de `isPending`/`data`.
+- [x] Establecer convención de hooks: `useXQuery` para queries, `useXMutation` para mutations, en `hooks/` por feature. Test utility `createTestQueryClient()` en `shared/test/`.
+- [x] Eliminar fetches manuales residuales: verificado con grep — cero `useEffect+fetch` patterns en features. Todos los tests actualizados con `QueryClientProvider` wrapper.
 
 ### Fase 3 — RBAC con permisos granulares
 

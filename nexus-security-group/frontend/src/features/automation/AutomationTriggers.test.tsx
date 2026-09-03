@@ -1,6 +1,8 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTestQueryClient } from '../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../auth';
 import { AUTOMATION_COPY } from './contract';
 import { getAutomationStatus } from './api';
@@ -9,9 +11,11 @@ import { AutomationTriggers } from './AutomationTriggers';
 const renderWithAuth = (token = 'valid-jwt-token') => {
   localStorage.setItem('token', token);
   return render(
-    <AuthProvider>
-      <AutomationTriggers />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <AuthProvider>
+        <AutomationTriggers />
+      </AuthProvider>
+    </QueryClientProvider>,
   );
 };
 

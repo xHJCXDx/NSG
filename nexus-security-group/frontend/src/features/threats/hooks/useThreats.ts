@@ -1,50 +1,30 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchThreats } from '../api';
-import { THREATS_COPY } from '../contract';
-import type { Threat, ThreatFilters, ThreatLoadStatus } from '../types';
+import type { ThreatFilters, ThreatLoadStatus } from '../types';
 
 const initialFilters: ThreatFilters = { search: '', severity: '', classification: '' };
 
 export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 
 export function useThreats(token: string | null) {
-  const [threats, setThreats] = useState<Threat[]>([]);
-  const [status, setStatus] = useState<ThreatLoadStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
-  const [reloadKey, setReloadKey] = useState(0);
 
-  const reload = useCallback(() => setReloadKey((current) => current + 1), []);
+  const { data: threats = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['threats'],
+    queryFn: () => fetchThreats(token),
+    enabled: !!token,
+  });
 
-  useEffect(() => {
-    let active = true;
+  const reload = () => { refetch(); };
 
-    setStatus('loading');
-    setError(null);
-
-    fetchThreats(token)
-      .then((loadedThreats) => {
-        if (!active) {
-          return;
-        }
-
-        setThreats(loadedThreats);
-        setStatus(loadedThreats.length > 0 ? 'success' : 'empty');
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setThreats([]);
-        setError(THREATS_COPY.error.title);
-        setStatus('error');
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [reloadKey, token]);
+  const baseStatus: ThreatLoadStatus = isLoading
+    ? 'loading'
+    : isError
+      ? 'error'
+      : threats.length > 0
+        ? 'success'
+        : 'empty';
 
   const availableFilters = useMemo(
     () => ({
@@ -100,13 +80,13 @@ export function useThreats(token: string | null) {
     filters.search.trim().length > 0 || filters.severity.trim().length > 0 || filters.classification.trim().length > 0;
   const emptyReason: ThreatEmptyReason = threats.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: ThreatLoadStatus =
-    status === 'success' && hasActiveFilters && filteredThreats.length === 0 ? 'empty' : status;
+    baseStatus === 'success' && hasActiveFilters && filteredThreats.length === 0 ? 'empty' : baseStatus;
 
   return {
     threats,
     filteredThreats,
     status: derivedStatus,
-    error,
+    error: isError ? 'Failed to load threats' : null,
     filters,
     setFilters,
     availableFilters,
