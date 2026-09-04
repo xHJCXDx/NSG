@@ -5,7 +5,7 @@ import { getToken, removeToken, setToken } from '../../shared/storage/tokenStora
 import { AuthProvider, useAuth } from './AuthContext';
 
 function AuthProbe() {
-  const { authSource, claims, isAdmin, isAuthenticated, login, logout, role, token } = useAuth();
+  const { authSource, claims, hasPermission, isAdmin, isAuthenticated, login, logout, permissions, role, token } = useAuth();
 
   return (
     <div>
@@ -14,6 +14,8 @@ function AuthProbe() {
       <p>role: {role ?? 'none'}</p>
       <p>auth source: {authSource ?? 'none'}</p>
       <p>user id: {claims.user_id ?? 'none'}</p>
+      <p>permissions: {permissions.join(',') || 'none'}</p>
+      <p>can read users: {hasPermission('users', 'read') ? 'yes' : 'no'}</p>
       <p>admin: {isAdmin ? 'yes' : 'no'}</p>
       <button onClick={() => login('fake-jwt')}>Log in</button>
       <button onClick={logout}>Log out</button>
@@ -60,7 +62,7 @@ describe('AuthProvider behavior', () => {
   });
 
   it('exposes decoded claims for UX while preserving token-based auth semantics', () => {
-    setToken(makeToken({ role: 'admin', auth_source: 'database', user_id: 42 }));
+    setToken(makeToken({ role: 'admin', auth_source: 'database', user_id: 42, permissions: ['users:read'] }));
 
     render(
       <AuthProvider>
@@ -72,6 +74,8 @@ describe('AuthProvider behavior', () => {
     expect(screen.getByText('role: admin')).toBeInTheDocument();
     expect(screen.getByText('auth source: database')).toBeInTheDocument();
     expect(screen.getByText('user id: 42')).toBeInTheDocument();
+    expect(screen.getByText('permissions: users:read')).toBeInTheDocument();
+    expect(screen.getByText('can read users: yes')).toBeInTheDocument();
     expect(screen.getByText('admin: yes')).toBeInTheDocument();
   });
 

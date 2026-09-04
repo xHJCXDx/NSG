@@ -1,16 +1,19 @@
 import { AlertTriangle, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
+import { useAuth } from '../auth';
 import { getAutomationStatus } from './api';
 import { useTriggerWorkflow } from './hooks/useTriggerWorkflow';
 
 export function AutomationTriggers() {
+  const { hasPermission } = useAuth();
   const status = getAutomationStatus();
   const trigger = useTriggerWorkflow();
+  const canExecuteWorkflow = hasPermission('workflows', 'execute');
 
   const handleTrigger = () => { trigger.mutate(); };
 
   const isRunning = trigger.isPending;
   const result = trigger.data;
-  const buttonDisabled = !status.manualTriggerEnabled || isRunning;
+  const buttonDisabled = !status.manualTriggerEnabled || !canExecuteWorkflow || isRunning;
 
   return (
     <div className="glass-card p-6 mt-8">
@@ -39,6 +42,12 @@ export function AutomationTriggers() {
           <span className="text-sm font-medium">{status.scheduleLabel}</span>
         </div>
       </div>
+
+      {!canExecuteWorkflow && (
+        <p className="mt-3 text-sm text-amber-200" role="note">
+          Manual execution is hidden behind the workflows:execute permission. The backend remains authoritative.
+        </p>
+      )}
 
       {result?.state === 'success' && result.message && (
         <div className="mt-4 flex items-center gap-2 text-emerald-400 bg-emerald-500/10 px-4 py-3 rounded-lg border border-emerald-500/20" role="status">

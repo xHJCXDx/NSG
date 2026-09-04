@@ -13,7 +13,7 @@ export const USERS_COPY = {
   },
   authNotice: {
     nonAdmin:
-      'Admin visibility here is presentation-only. The backend remains the authority and may reject this request with 401 or 403.',
+      'User creation requires users:write in the JWT. This is presentation-only; the backend remains the authority and may reject this request with 401 or 403.',
   },
   form: {
     usernameLabel: 'Username',

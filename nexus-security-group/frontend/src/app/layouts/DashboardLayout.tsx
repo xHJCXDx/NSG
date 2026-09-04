@@ -3,7 +3,7 @@ import { useAuth } from '../../features/auth';
 import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert, Users } from 'lucide-react';
 
 export function DashboardLayout() {
-  const { logout } = useAuth();
+  const { hasPermission, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -13,13 +13,13 @@ export function DashboardLayout() {
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Mentions', path: '/mentions', icon: MessageSquare },
-    { name: 'Threats', path: '/threats', icon: ShieldAlert },
-    { name: 'Users', path: '/users', icon: Users },
-    { name: 'Analytics', path: '/analytics', icon: Activity },
-    { name: 'Settings', path: '/settings', icon: Settings },
-  ];
+    { name: 'Dashboard', path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
+    { name: 'Mentions', path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
+    { name: 'Threats', path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
+    { name: 'Users', path: '/users', icon: Users, permission: ['users', 'read'] },
+    { name: 'Analytics', path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
+    { name: 'Settings', path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
+  ].filter((item) => hasPermission(item.permission[0], item.permission[1]));
 
   return (
     <div className="min-h-screen bg-dark-900 flex text-gray-100 selection:bg-brand-500 selection:text-white">

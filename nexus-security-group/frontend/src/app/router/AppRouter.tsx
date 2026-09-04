@@ -23,12 +23,12 @@ export function AppRouter() {
             </ProtectedRoute>
           }
           >
-          <Route index element={<DashboardPage />} />
-          <Route path="mentions" element={<MentionsPage />} />
-          <Route path="threats" element={<ThreatsPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route index element={<ProtectedRoute requiredPermission="dashboard:read"><DashboardPage /></ProtectedRoute>} />
+          <Route path="mentions" element={<ProtectedRoute requiredPermission="mentions:read"><MentionsPage /></ProtectedRoute>} />
+          <Route path="threats" element={<ProtectedRoute requiredPermission="threats:read"><ThreatsPage /></ProtectedRoute>} />
+          <Route path="users" element={<ProtectedRoute requiredPermission="users:read"><UsersPage /></ProtectedRoute>} />
+          <Route path="analytics" element={<ProtectedRoute requiredPermission="metrics:read"><AnalyticsPage /></ProtectedRoute>} />
+          <Route path="settings" element={<ProtectedRoute requiredPermission="permissions:read"><SettingsPage /></ProtectedRoute>} />
         </Route>
       </Routes>
     </BrowserRouter>

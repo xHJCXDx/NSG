@@ -8,7 +8,12 @@ import { AUTOMATION_COPY } from './contract';
 import { getAutomationStatus } from './api';
 import { AutomationTriggers } from './AutomationTriggers';
 
-const renderWithAuth = (token = 'valid-jwt-token') => {
+const encodePayload = (payload: unknown) =>
+  btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+const makeToken = (permissions: string[]) => `header.${encodePayload({ permissions })}.signature`;
+
+const renderWithAuth = (token = makeToken(['workflows:execute'])) => {
   localStorage.setItem('token', token);
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
@@ -41,6 +46,13 @@ describe('AutomationTriggers', () => {
 
     const button = screen.getByRole('button', { name: /Run OSINT scan/i });
     expect(button).toBeEnabled();
+  });
+
+  it('disables the manual trigger button when workflows:execute is missing', () => {
+    renderWithAuth(makeToken(['workflows:read']));
+
+    expect(screen.getByRole('button', { name: /Run OSINT scan/i })).toBeDisabled();
+    expect(screen.getByRole('note')).toHaveTextContent('workflows:execute');
   });
 
   it('shows loading state while scan is running', async () => {
@@ -107,7 +119,8 @@ describe('AutomationTriggers', () => {
       json: async () => ({ status: 'ok' }),
     } as Response);
 
-    renderWithAuth('my-jwt-token');
+    const token = makeToken(['workflows:execute']);
+    renderWithAuth(token);
 
     await user.click(screen.getByRole('button', { name: /Run OSINT scan/i }));
 
@@ -116,7 +129,7 @@ describe('AutomationTriggers', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          Authorization: 'Bearer my-jwt-token',
+          Authorization: `Bearer ${token}`,
         }),
       }),
     ));

@@ -9,7 +9,7 @@ import { UsersPage } from './UsersPage';
 const encodePayload = (payload: unknown) =>
   btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
-const adminToken = `header.${encodePayload({ role: 'admin', auth_source: 'database' })}.signature`;
+const adminToken = `header.${encodePayload({ role: 'admin', auth_source: 'database', permissions: ['users:read', 'users:write'] })}.signature`;
 
 const renderUsersPage = (token = adminToken) => {
   localStorage.setItem('token', token);
@@ -126,22 +126,15 @@ describe('UsersPage', () => {
     expect(screen.queryByText('User created')).not.toBeInTheDocument();
   });
 
-  it('labels non-admin frontend claims as UX-only while still allowing backend to answer', async () => {
-    const user = userEvent.setup();
-    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => [] } as Response).mockResolvedValueOnce({
-      ok: false,
-      status: 403,
-      json: async () => ({ detail: 'Admins only' }),
-    } as Response);
+  it('labels missing users:write claims as UX-only and disables create action', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
 
-    renderUsersPage('header.invalid.signature');
+    renderUsersPage(`header.${encodePayload({ permissions: ['users:read'] })}.signature`);
 
-    expect(screen.getByRole('note')).toHaveTextContent('presentation-only');
-    await user.type(screen.getByLabelText('Username'), 'alice');
-    await user.type(screen.getByLabelText('Password'), 'secret');
-    await user.click(screen.getByRole('button', { name: 'Create user' }));
-
-    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Admins only'));
+    expect(screen.getByRole('note')).toHaveTextContent('users:write');
+    await userEvent.type(screen.getByLabelText('Username'), 'alice');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    expect(screen.getByRole('button', { name: 'Create user' })).toBeDisabled();
   });
 
   it('surfaces list errors separately from the create-user form', async () => {

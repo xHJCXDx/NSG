@@ -49,7 +49,7 @@ Las contraseñas de usuarios en base de datos se almacenan usando PBKDF2-SHA256 
 |-------|-------------|-------------|
 | **Pública** | Sin autenticación requerida | — |
 | **Autenticada** | Requiere token JWT válido (`get_current_user`) | Cualquier rol |
-| **Solo Admin** | Requiere token JWT con `role = "admin"` (`require_admin_user`) | Rol `admin` |
+| **Permiso granular** | Requiere token JWT con permiso explícito (`require_permission`) | Permiso `recurso:acción` |
 
 ---
 

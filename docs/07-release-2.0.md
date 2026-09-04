@@ -115,7 +115,7 @@ Release 1.0 (`v1.0.0`) entrega:
 - Crear tabla `permissions` y tabla pivot `role_permissions` en la base de datos.
 - Extender el modelo `SystemUser` con relación a permisos.
 - Crear middleware/dependency `require_permission(resource, action)` en backend.
-- Migrar rutas existentes de `require_admin_user` a permisos granulares donde corresponda.
+- Migrar rutas existentes desde el helper legacy admin-only a permisos granulares donde corresponda.
 - Reflejar permisos en el JWT payload para que el frontend pueda renderizar condicionalmente.
 - Actualizar el frontend para ocultar/deshabilitar acciones según permisos del token.
 - Agregar endpoint admin para asignar permisos a roles.
@@ -160,7 +160,7 @@ Los permisos se expresan como `recurso:acción`. La validación backend debe hac
 2. **Compatibilidad controlada:** durante la primera migración, `admin` debe mapear a todos los permisos y `analyst` a la matriz anterior para no romper usuarios existentes.
 3. **Permisos en JWT:** el payload debe incluir `permissions: string[]` además de `role`; el backend sigue siendo autoridad final.
 4. **Permisos normalizados en base:** crear catálogo `permissions(resource, action, description)` y pivot `role_permissions(role, permission_id)`, con `UNIQUE(resource, action)`.
-5. **No mezclar roles con permisos en rutas:** las rutas nuevas/migradas deben depender de permisos; `require_admin_user` queda solo como compatibilidad temporal o wrapper de `require_permission("users", "write")` donde aplique.
+5. **No mezclar roles con permisos en rutas:** las rutas nuevas/migradas deben depender de permisos; el helper legacy admin-only fue eliminado después de migrar todas las rutas a `require_permission`.
 6. **Migración incremental:** primero autenticación + JWT + dependency; después rutas de solo lectura; finalmente rutas write/delete/execute. No migrar todo en un big bang.
 7. **Frontend no decide seguridad:** ocultar/deshabilitar botones mejora UX, pero toda acción sensible debe estar bloqueada por backend.
 8. **Tests de regresión obligatorios:** cada ruta migrada necesita caso 401 sin token, 403 sin permiso y éxito con permiso correcto.
@@ -171,17 +171,17 @@ Los permisos se expresan como `recurso:acción`. La validación backend debe hac
 - [x] Crear tablas `permissions` y `role_permissions`: DDL agregada en `init.sql` con catálogo `permissions(resource, action, description)`, `UNIQUE(resource, action)`, pivot `role_permissions(role, permission_id)`, seeds iniciales admin/analyst según matriz y modelos ORM/export correspondientes.
 - [x] Extender `SystemUser` con relación a permisos: relación ORM `permissions` agregada como `viewonly=True` a través de `role_permissions`, preservando el campo `role` existente para compatibilidad.
 - [x] Crear dependency `require_permission(resource, action)`: dependency backend agregada en `auth.py`, con permisos normalizados `recurso:acción`, denegación 403 estable, parsing seguro de `permissions` desde JWT y tests aislados de éxito/403/deny-by-default.
-- [x] Migrar rutas existentes al nuevo modelo: **todas las rutas migradas a `require_permission`**. Se eliminaron los mecanismos legacy `get_current_user` (autenticación sin autorización) y `require_admin_user` (autorización por rol hardcodeado) de todos los routers. `AUTHENTICATED_PRIVATE_ROUTES` y `ADMIN_ONLY_ROUTES` están vacíos — todas las rutas no públicas usan permisos granulares.
+- [x] Migrar rutas existentes al nuevo modelo: **todas las rutas migradas a `require_permission`**. Se eliminaron los mecanismos legacy de autenticación sin autorización y autorización por rol hardcodeado de todos los routers. `AUTHENTICATED_PRIVATE_ROUTES` y `ADMIN_ONLY_ROUTES` están vacíos — todas las rutas no públicas usan permisos granulares.
   - **Read-only (Fase 3a):** `dashboard:read`, `metrics:read`, `mentions:read`, `logs:read` (logs + activity), `alerts:read`, `threats:read`, `keywords:read`.
   - **Write/Execute (Fase 3b):** `alerts:write` (acknowledge), `threats:write` (review), `keywords:write` (create/update), `keywords:delete`, `workflows:execute` (n8n webhook proxy).
-  - **Admin (Fase 3c):** `users:read` (list), `users:write` (create/update) — reemplaza `require_admin_user` con permisos granulares; cualquier rol con `users:read`/`users:write` puede operar, no solo `admin`.
+  - **Admin (Fase 3c):** `users:read` (list), `users:write` (create/update) — reemplaza autorización admin-only hardcodeada con permisos granulares; cualquier rol con `users:read`/`users:write` puede operar, no solo `admin`.
   - Cada ruta migrada tiene cobertura de tests: 401 sin token, 403 sin permiso, éxito con permiso correcto.
-  - Contrato global actualizado: `test_route_auth_contract.py` clasifica las 22 rutas API en `PUBLIC_ROUTE_EXCEPTIONS` (2), `PERMISSION_PROTECTED_ROUTES` (19) o vacías (`AUTHENTICATED_PRIVATE_ROUTES`, `ADMIN_ONLY_ROUTES`).
+  - Contrato global actualizado: `test_route_auth_contract.py` clasifica las rutas API en `PUBLIC_ROUTE_EXCEPTIONS` (2), `PERMISSION_PROTECTED_ROUTES` (24) o vacías (`AUTHENTICATED_PRIVATE_ROUTES`, `ADMIN_ONLY_ROUTES`), y rechaza volver a introducir rutas admin-only legacy.
 - [x] Incluir permisos en JWT payload: login DB-backed serializa `db_user.permissions` como claims estables `recurso:acción`; bootstrap admin emite fallback explícito con la matriz admin completa; `get_current_user` mantiene decoding defensivo de `permissions`.
 - [x] Actualizar tests de contrato: contrato global verifica que todas las rutas API tienen clasificación explícita y que las dependencias de autenticación/autorización coinciden con la clasificación declarada.
 - [x] Documentar matriz de permisos: matriz completa documentada arriba con recursos, acciones, roles y rutas iniciales.
-- [ ] Actualizar frontend para renderizado condicional por permisos.
-- [ ] Endpoint admin para gestión de permisos.
+- [x] Actualizar frontend para renderizado condicional por permisos: claims `permissions` decodificados desde JWT y expuestos en `AuthProvider`; navegación y rutas protegidas por permisos (`dashboard:read`, `mentions:read`, `threats:read`, `users:read`, `metrics:read`, `permissions:read`); acciones sensibles deshabilitadas por permisos (`users:write`, `workflows:execute`). Frontend usado solo para UX; backend sigue siendo autoridad final.
+- [x] Endpoint admin para gestión de permisos: `GET /api/permissions` protegido por `permissions:read` devuelve catálogo y matriz por rol; `PUT /api/permissions/roles/{role}` protegido por `permissions:write` reemplaza asignaciones usando claves `recurso:acción` y evita quitar `permissions:write` al rol `admin`. Incluye tests 401/403/éxito y contrato global actualizado.
 
 ### Fase 4 — Notificaciones reales ante amenazas
 

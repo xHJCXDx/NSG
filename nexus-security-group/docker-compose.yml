@@ -76,6 +76,15 @@ services:
   sentiment-api:
     build: ./sentiment-api
     container_name: osint-sentiment-api
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=3)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     networks:
       - nexus-net
@@ -113,6 +122,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     networks:
       - nexus-net
@@ -125,7 +144,18 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`localhost`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=5173"
     depends_on:
-      - dashboard-api
+      dashboard-api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://127.0.0.1:5173/ || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
     networks:
       - nexus-net

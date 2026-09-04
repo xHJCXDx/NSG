@@ -12,10 +12,12 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
    # Editar .env y reemplazar todos los valores change-me antes de levantar servicios
    ```
 
-2. **Levantar los servicios**
+2. **Levantar todo el stack con Docker Compose**
    ```bash
-   docker-compose up -d
+   docker-compose up -d --build
    ```
+   Si usás el plugin moderno de Compose, el equivalente es `docker compose up -d --build`.
+   Este comando levanta PostgreSQL, n8n, Sentiment API, Dashboard API, Frontend y Traefik en la red interna `nexus-net`.
 
 3. **Verificación**
    - **Frontend (Dashboard)**: [http://localhost](http://localhost)
@@ -48,6 +50,8 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
 - **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio. Si querés consultar GitHub con mayor margen de rate limit, configurá `GITHUB_TOKEN` como variable de n8n.
 - **Import manual del workflow**: Para importar o actualizar el workflow versionado sin ejecutarlo en cada arranque, usá `docker compose --profile tools run --rm n8n-import`.
+- **Arranque completo por Docker**: Ejecutá `docker-compose up -d --build` desde `nexus-security-group/` (`docker compose up -d --build` si tu instalación usa el plugin). No expongas PostgreSQL, Dashboard API ni Sentiment API directamente al host; el acceso esperado es vía Traefik (`http://localhost`) y n8n queda disponible en `http://localhost:5678` para operación local.
+- **Estado de servicios**: Después del arranque, verificá salud y estado con `docker-compose ps` (`docker compose ps` con el plugin). El backend expone health check interno en `/api/health`; el frontend y los microservicios locales tienen healthchecks de Compose para ordenar dependencias sin publicar puertos extra.
 - **Permisos de configuración n8n**: `N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` se define desde `.env` para controlar la validación de permisos del archivo de configuración de n8n en entornos Docker.
 - **Credencial PostgreSQL en n8n**: El `workflow.json` versionado no incluye credenciales. Después de importar el workflow, creá una credencial PostgreSQL en n8n con estos datos del entorno Docker:
   - Host: `postgres`
@@ -64,7 +68,7 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 
 - [ ] Copiar `nexus-security-group/.env.example` a `nexus-security-group/.env` y reemplazar todos los valores `change-me`.
 - [ ] Definir `JWT_SECRET_KEY`, `ADMIN_USER` y `ADMIN_PASSWORD` con valores fuertes antes del primer login.
-- [ ] Levantar servicios con `docker-compose up -d` desde `nexus-security-group/`.
+- [ ] Levantar servicios con `docker-compose up -d --build` desde `nexus-security-group/`.
 - [ ] Validar que los puertos `80`, `5678` y `8080` estén libres en el host.
 - [ ] Asegurarse de importar el `workflow.json` en n8n.
 - [ ] Crear/asignar la credencial PostgreSQL en los nodos n8n antes de activar el workflow.

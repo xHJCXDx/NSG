@@ -8,6 +8,8 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   claims: TokenClaims;
+  permissions: string[];
+  hasPermission: (resource: string, action: string) => boolean;
   role?: string;
   authSource?: string;
   isAdmin: boolean;
@@ -18,6 +20,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(getToken());
   const claims = decodeTokenClaims(token);
+  const permissions = claims.permissions ?? [];
+  const hasPermission = (resource: string, action: string) => permissions.includes(`${resource}:${action}`);
 
   const login = (newToken: string) => {
     saveToken(newToken);
@@ -37,6 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAuthenticated: !!token,
         claims,
+        permissions,
+        hasPermission,
         role: claims.role,
         authSource: claims.auth_source,
         isAdmin: claims.role === 'admin',

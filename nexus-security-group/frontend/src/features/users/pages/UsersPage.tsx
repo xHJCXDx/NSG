@@ -7,9 +7,10 @@ import { useUsersQuery } from '../hooks/useUsersQuery';
 import type { UserResponse, UserRole } from '../types';
 
 export function UsersPage() {
-  const { isAdmin } = useAuth();
+  const { hasPermission } = useAuth();
   const { data: users = [], isLoading: isLoadingUsers, error: listError } = useUsersQuery();
   const createUserMutation = useCreateUserMutation();
+  const canCreateUsers = hasPermission('users', 'write');
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +20,7 @@ export function UsersPage() {
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
 
   const isSubmitting = createUserMutation.isPending;
-  const canSubmit = username.trim().length > 0 && password.length > 0 && !isSubmitting;
+  const canSubmit = canCreateUsers && username.trim().length > 0 && password.length > 0 && !isSubmitting;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,7 +53,7 @@ export function UsersPage() {
         <p className="mt-2 max-w-3xl text-gray-400">{USERS_COPY.page.description}</p>
       </div>
 
-      {!isAdmin && (
+      {!canCreateUsers && (
         <div className="glass-card border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-100" role="note">
           {USERS_COPY.authNotice.nonAdmin}
         </div>

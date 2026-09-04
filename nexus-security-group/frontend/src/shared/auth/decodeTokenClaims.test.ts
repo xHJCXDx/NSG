@@ -7,11 +7,12 @@ const encodePayload = (payload: unknown) =>
 const makeToken = (payload: unknown) => `header.${encodePayload(payload)}.signature`;
 
 describe('decodeTokenClaims', () => {
-  it('reads valid role and auth source claims from the JWT payload only', () => {
-    expect(decodeTokenClaims(makeToken({ sub: 'alice', role: 'admin', auth_source: 'database' }))).toEqual({
+  it('reads valid role, auth source, and permissions claims from the JWT payload only', () => {
+    expect(decodeTokenClaims(makeToken({ sub: 'alice', role: 'admin', auth_source: 'database', permissions: ['users:read', 'users:write', 1] }))).toEqual({
       sub: 'alice',
       role: 'admin',
       auth_source: 'database',
+      permissions: ['users:read', 'users:write'],
     });
   });
 

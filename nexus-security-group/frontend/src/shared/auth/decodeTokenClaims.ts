@@ -3,6 +3,7 @@ export interface TokenClaims {
   role?: string;
   auth_source?: string;
   user_id?: number;
+  permissions?: string[];
 }
 
 const decodeBase64Url = (value: string): string => {
@@ -33,6 +34,9 @@ export function decodeTokenClaims(token: string | null): TokenClaims {
       role: typeof parsed.role === 'string' ? parsed.role : undefined,
       auth_source: typeof parsed.auth_source === 'string' ? parsed.auth_source : undefined,
       user_id: typeof parsed.user_id === 'number' ? parsed.user_id : undefined,
+      permissions: Array.isArray(parsed.permissions)
+        ? parsed.permissions.filter((permission): permission is string => typeof permission === 'string')
+        : undefined,
     };
   } catch {
     return {};

@@ -31,6 +31,11 @@ vi.mock('../../features/users', () => ({
   UsersPage: () => <div>Users page</div>,
 }));
 
+const encodePayload = (payload: unknown) =>
+  btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+
+const makeToken = (permissions: string[]) => `header.${encodePayload({ permissions })}.signature`;
+
 describe('AppRouter', () => {
   afterEach(() => {
     cleanup();
@@ -39,7 +44,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the protected index route mounted under the dashboard layout', () => {
-    localStorage.setItem('token', 'existing-jwt');
+    localStorage.setItem('token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/');
 
     render(
@@ -53,7 +58,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the mentions route inside the protected dashboard layout', () => {
-    localStorage.setItem('token', 'existing-jwt');
+    localStorage.setItem('token', makeToken(['mentions:read']));
     window.history.pushState({}, '', '/mentions');
 
     render(
@@ -67,7 +72,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the users route inside the protected dashboard layout', () => {
-    localStorage.setItem('token', 'existing-jwt');
+    localStorage.setItem('token', makeToken(['users:read']));
     window.history.pushState({}, '', '/users');
 
     render(
@@ -90,6 +95,20 @@ describe('AppRouter', () => {
     );
 
     expect(screen.queryByTestId('dashboard-layout')).not.toBeInTheDocument();
+    expect(screen.queryByText('Users page')).not.toBeInTheDocument();
+  });
+
+  it('blocks authenticated users from feature routes when the JWT permission is missing', () => {
+    localStorage.setItem('token', makeToken(['dashboard:read']));
+    window.history.pushState({}, '', '/users');
+
+    render(
+      <AuthProvider>
+        <AppRouter />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('users:read');
     expect(screen.queryByText('Users page')).not.toBeInTheDocument();
   });
 });
