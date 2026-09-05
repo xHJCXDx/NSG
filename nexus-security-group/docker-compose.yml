@@ -21,6 +21,18 @@ services:
   n8n:
     image: n8nio/n8n:latest
     container_name: osint-n8n
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    dns_search: []
+    dns_opt:
+      - timeout:2
+      - attempts:5
+    extra_hosts:
+      # Bypass intermittent Docker DNS EAI_AGAIN errors for critical OSINT sources.
+      # If either provider changes CDN IPs, refresh these values from the host resolver.
+      - "hn.algolia.com:34.160.168.181"
+      - "www.exploit-db.com:192.124.249.13"
     ports:
       - "5678:5678"
     environment:
@@ -29,6 +41,7 @@ services:
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      - SENTIMENT_API_TOKEN=${SENTIMENT_API_TOKEN}
       - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
@@ -53,10 +66,11 @@ services:
     image: n8nio/n8n:latest
     profiles:
       - tools
-    command: ["n8n", "import:workflow", "--input=/workflows/workflow.json"]
+    command: ["import:workflow", "--input=/workflows/workflow.json"]
     environment:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      - SENTIMENT_API_TOKEN=${SENTIMENT_API_TOKEN}
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
@@ -76,6 +90,8 @@ services:
   sentiment-api:
     build: ./sentiment-api
     container_name: osint-sentiment-api
+    environment:
+      - API_TOKEN=${SENTIMENT_API_TOKEN}
     healthcheck:
       test:
         [

@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "# \ud83d\udd0d NSG \u2014 OSINT Security Monitor\n\n**Frecuencia:** cada 15 minutos\n**Fuentes:** Hacker News (Algolia API), Exploit-DB (RSS), GitHub Security Issues\n**Stack:** n8n + PostgreSQL (RLS) + Sentiment API (VADER + TextBlob)\n\n**Pipeline:** Ingestion \u2192 Analysis \u2192 Storage \u2192 Alerting \u2192 Logging\n\n**Flujo:** Las 3 fuentes se consultan en paralelo, se normalizan a un schema comun,\nse analizan (sentimiento + amenaza), se persisten en 3 tablas (mentions, sentiment, threats),\ny si la criticidad es high/critical se despachan alertas por Slack y Email.",
+        "content": "# 🔍 NSG — OSINT Security Monitor\n\n**Frecuencia:** cada 15 minutos\n**Fuentes:** Hacker News (Algolia API), Exploit-DB (RSS), GitHub Security Issues\n**Stack:** n8n + PostgreSQL (RLS) + Sentiment API (VADER + TextBlob)\n\n**Pipeline:** Ingestion → Analysis → Storage → Alerting → Logging\n\n**Flujo:** Las 3 fuentes se consultan en paralelo, se normalizan a un schema comun,\nse analizan (sentimiento + amenaza), se persisten en 3 tablas (mentions, sentiment, threats),\ny si la criticidad es high/critical se despachan alertas por Slack y Email.",
         "height": 280,
         "width": 900,
         "color": 7
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udce5 Stage 1: Ingestion\n- Fetch from 3 OSINT sources (parallel)\n- Parse & normalize to common schema\n- Deduplicate within execution batch",
+        "content": "## 📥 Stage 1: Ingestion\n- Fetch from 3 OSINT sources (parallel)\n- Parse & normalize to common schema\n- Deduplicate within execution batch",
         "height": 650,
         "width": 1100,
         "color": 4
@@ -35,7 +35,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83e\udde0 Stage 2: Analysis\n- Sentiment via ensemble API (VADER + TextBlob)\n- Threat classification by keyword heuristics",
+        "content": "## 🧠 Stage 2: Analysis\n- Sentiment via ensemble API (VADER + TextBlob)\n- Threat classification by keyword heuristics",
         "height": 250,
         "width": 500,
         "color": 5
@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\uddc4\ufe0f Stage 3: Storage\n- INSERT social_mentions (ON CONFLICT upsert)\n- INSERT sentiment_analysis\n- INSERT threat_detections\n- Enrich pipeline: Prep \u2192 Insert \u2192 Enrich (carry _original)",
+        "content": "## 🗄️ Stage 3: Storage\n- INSERT social_mentions (ON CONFLICT upsert)\n- INSERT sentiment_analysis\n- INSERT threat_detections\n- Enrich pipeline: Prep → Insert → Enrich (carry _original)",
         "height": 250,
         "width": 1450,
         "color": 3
@@ -67,7 +67,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udea8 Stage 4: Alerting\n- IF critical/high \u2192 build alert content\n- Dispatch: Slack + Email (parallel)\n- Log alert in DB with severity mapping",
+        "content": "## 🚨 Stage 4: Alerting\n- IF critical/high → build alert content\n- Dispatch: Slack + Email (parallel)\n- Log alert in DB with severity mapping",
         "height": 650,
         "width": 900,
         "color": 2
@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "content": "## \ud83d\udcdd Stage 5: Logging\n- Aggregate pipeline counters\n- Log execution to DB (success/failure)",
+        "content": "## 📝 Stage 5: Logging\n- Aggregate pipeline counters\n- Log execution to DB (success/failure)",
         "height": 250,
         "width": 500,
         "color": 1
@@ -121,7 +121,7 @@
       "parameters": {
         "path": "osint-trigger",
         "httpMethod": "POST",
-        "responseMode": "lastNode",
+        "responseMode": "onReceived",
         "options": {}
       },
       "id": "wh-osint-trigger-0001",
@@ -158,6 +158,9 @@
         -3700,
         100
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "continueOnFail": true
     },
     {
@@ -189,6 +192,9 @@
         -3700,
         300
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "continueOnFail": true
     },
     {
@@ -200,10 +206,6 @@
             {
               "name": "User-Agent",
               "value": "NSG-OSINT-Monitor/1.0"
-            },
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $vars.GITHUB_TOKEN || '' }}"
             }
           ]
         },
@@ -219,6 +221,9 @@
         -3700,
         500
       ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
       "continueOnFail": true
     },
     {
@@ -275,7 +280,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Existing Check\n// Builds a query to check which external_ids\n// already exist in social_mentions.\n// Uses unnest(ARRAY[...]) for efficient batch lookup.\n// =============================================\n\nconst items = $input.all();\nif (!items || items.length === 0) return [{ json: { query: 'SELECT NULL AS platform, NULL AS external_id WHERE FALSE', _items: [] } }];\n\nconst esc = (val) => val == null ? '' : String(val).replace(/\\0/g, '').replace(/'/g, \"''\");\n\nconst pairs = items.map(i => \"('\" + esc(i.json.platform) + \"','\" + esc(i.json.external_id) + \"')\").join(',');\n\nconst query = 'SELECT platform, external_id FROM social_mentions WHERE (platform, external_id) IN (' + pairs + ')';\n\nreturn [{ json: { query: query } }];"
+        "functionCode": "// =============================================\n// Prep Existing Check\n// Prepares platform/external_id arrays for a parameterized\n// lookup in social_mentions. Do NOT build SQL literals here.\n// =============================================\n\nconst items = $input.all();\nif (!items || items.length === 0) {\n  return [{ json: { platforms: [], external_ids: [], _items: [] } }];\n}\n\nconst platforms = [];\nconst externalIds = [];\n\nfor (const item of items) {\n  platforms.push(item.json.platform || 'other');\n  externalIds.push(String(item.json.external_id || 'unknown'));\n}\n\nreturn [{ json: { platforms: platforms, external_ids: externalIds, _items: items.map(i => i.json) } }];"
       },
       "id": "a1b2c3d4-0010-4000-8000-000000000010",
       "name": "Prep Existing Check",
@@ -289,8 +294,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json.query }}",
-        "options": {}
+        "query": "SELECT sm.platform, sm.external_id\nFROM social_mentions sm\nJOIN unnest($1::text[], $2::text[]) AS incoming(platform, external_id)\n  ON sm.platform = incoming.platform\n AND sm.external_id = incoming.external_id;",
+        "options": {
+          "queryReplacement": "{{ $json.platforms }}, {{ $json.external_ids }}"
+        }
       },
       "id": "a1b2c3d4-0011-4000-8000-000000000011",
       "name": "Check Existing IDs",
@@ -319,6 +326,15 @@
       "parameters": {
         "method": "POST",
         "url": "http://sentiment-api:5000/analyze",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SENTIMENT_API_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -374,8 +390,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO social_mentions (\n  platform, external_id, text_content, language, created_at,\n  author_username, author_id, author_verified, author_followers_count, author_description,\n  likes_count, shares_count, replies_count, views_count,\n  urls, hashtags, mentions,\n  has_media, is_reply, is_quote, reply_to_id, conversation_id,\n  raw_data, processing_status\n) VALUES (\n  '{{ $json.p_platform }}',\n  '{{ $json.p_external_id }}',\n  '{{ $json.p_text_content }}',\n  '{{ $json.p_language }}',\n  '{{ $json.p_created_at }}',\n  '{{ $json.p_author_username }}',\n  '{{ $json.p_author_id }}',\n  {{ $json.p_author_verified }},\n  {{ $json.p_author_followers_count }},\n  {{ $json.p_author_description ? \"'\" + $json.p_author_description + \"'\" : 'NULL' }},\n  {{ $json.p_likes_count }},\n  {{ $json.p_shares_count }},\n  {{ $json.p_replies_count }},\n  {{ $json.p_views_count }},\n  {{ $json.p_urls_literal }},\n  {{ $json.p_hashtags_literal }},\n  {{ $json.p_mentions_literal }},\n  {{ $json.p_has_media }},\n  {{ $json.p_is_reply }},\n  {{ $json.p_is_quote }},\n  {{ $json.p_reply_to_id ? \"'\" + $json.p_reply_to_id + \"'\" : 'NULL' }},\n  {{ $json.p_conversation_id ? \"'\" + $json.p_conversation_id + \"'\" : 'NULL' }},\n  '{{ $json.p_raw_data }}'::jsonb,\n  'processed'\n)\nON CONFLICT (platform, external_id) DO UPDATE SET\n  likes_count = EXCLUDED.likes_count,\n  shares_count = EXCLUDED.shares_count,\n  replies_count = EXCLUDED.replies_count,\n  views_count = EXCLUDED.views_count,\n  processing_status = 'processed',\n  last_updated = NOW()\nRETURNING mention_id;",
-        "options": {}
+        "query": "INSERT INTO social_mentions (\n  platform, external_id, text_content, language, created_at,\n  author_username, author_id, author_verified, author_followers_count, author_description,\n  likes_count, shares_count, replies_count, views_count,\n  urls, hashtags, mentions,\n  has_media, is_reply, is_quote, reply_to_id, conversation_id,\n  raw_data, processing_status\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  $10,\n  $11,\n  $12,\n  $13,\n  $14,\n  $15::text[],\n  $16::text[],\n  $17::text[],\n  $18,\n  $19,\n  $20,\n  $21,\n  $22,\n  $23::jsonb,\n  'processed'\n)\nON CONFLICT (platform, external_id) DO UPDATE SET\n  likes_count = EXCLUDED.likes_count,\n  shares_count = EXCLUDED.shares_count,\n  replies_count = EXCLUDED.replies_count,\n  views_count = EXCLUDED.views_count,\n  processing_status = 'processed',\n  last_updated = NOW()\nRETURNING mention_id;",
+        "options": {
+          "queryReplacement": "{{ $json._original.platform || 'other' }}, {{ $json._original.external_id || 'unknown' }}, {{ $json._original.text_content || '' }}, {{ $json._original.language || 'en' }}, {{ $json._original.created_at || new Date().toISOString() }}, {{ $json._original.author_username || 'unknown' }}, {{ $json._original.author_id || 'unknown' }}, {{ $json._original.author_verified === true }}, {{ Number($json._original.author_followers_count) || 0 }}, {{ $json._original.author_description || null }}, {{ Number($json._original.likes_count) || 0 }}, {{ Number($json._original.shares_count) || 0 }}, {{ Number($json._original.replies_count) || 0 }}, {{ Number($json._original.views_count) || 0 }}, {{ ($json._original.urls && $json._original.urls.length > 0) ? $json._original.urls : null }}, {{ ($json._original.hashtags && $json._original.hashtags.length > 0) ? $json._original.hashtags : null }}, {{ ($json._original.mentions && $json._original.mentions.length > 0) ? $json._original.mentions : null }}, {{ $json._original.has_media === true }}, {{ $json._original.is_reply === true }}, {{ $json._original.is_quote === true }}, {{ $json._original.reply_to_id || null }}, {{ $json._original.conversation_id || null }}, {{ JSON.stringify($json._original.raw_data || {}) }}"
+        }
       },
       "id": "8934b8b7-b1af-4a20-b46e-f3a9100b8e42",
       "name": "Insert Social Mention",
@@ -403,8 +421,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO sentiment_analysis (\n  mention_id, vader_compound, vader_pos, vader_neu, vader_neg,\n  textblob_polarity, textblob_subjectivity,\n  final_sentiment_score, sentiment_label, confidence_score,\n  analysis_method\n) VALUES (\n  {{ $json.p_mention_id }},\n  {{ $json.p_vader_compound }},\n  {{ $json.p_vader_pos }},\n  {{ $json.p_vader_neu }},\n  {{ $json.p_vader_neg }},\n  {{ $json.p_textblob_polarity }},\n  {{ $json.p_textblob_subjectivity }},\n  {{ $json.p_final_sentiment_score }},\n  '{{ $json.p_sentiment_label }}',\n  {{ $json.p_confidence_score }},\n  'ensemble'\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  vader_compound = EXCLUDED.vader_compound,\n  vader_pos = EXCLUDED.vader_pos,\n  vader_neu = EXCLUDED.vader_neu,\n  vader_neg = EXCLUDED.vader_neg,\n  final_sentiment_score = EXCLUDED.final_sentiment_score,\n  sentiment_label = EXCLUDED.sentiment_label,\n  confidence_score = EXCLUDED.confidence_score\nRETURNING sentiment_id;",
-        "options": {}
+        "query": "INSERT INTO sentiment_analysis (\n  mention_id, vader_compound, vader_pos, vader_neu, vader_neg,\n  textblob_polarity, textblob_subjectivity,\n  final_sentiment_score, sentiment_label, confidence_score,\n  analysis_method\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  $10,\n  'ensemble'\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  vader_compound = EXCLUDED.vader_compound,\n  vader_pos = EXCLUDED.vader_pos,\n  vader_neu = EXCLUDED.vader_neu,\n  vader_neg = EXCLUDED.vader_neg,\n  final_sentiment_score = EXCLUDED.final_sentiment_score,\n  sentiment_label = EXCLUDED.sentiment_label,\n  confidence_score = EXCLUDED.confidence_score\nRETURNING sentiment_id;",
+        "options": {
+          "queryReplacement": "{{ $json.p_mention_id }}, {{ $json.p_vader_compound }}, {{ $json.p_vader_pos }}, {{ $json.p_vader_neu }}, {{ $json.p_vader_neg }}, {{ $json.p_textblob_polarity }}, {{ $json.p_textblob_subjectivity }}, {{ $json.p_final_sentiment_score }}, {{ $json.p_sentiment_label }}, {{ $json.p_confidence_score }}"
+        }
       },
       "id": "26b046cf-e748-4ba9-8dd5-a08c6d0dbe10",
       "name": "Insert Sentiment Analysis",
@@ -432,8 +452,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO threat_detections (\n  mention_id, sentiment_id, threat_type, threat_category,\n  criticality_level, confidence_score, matched_keywords,\n  detection_method, risk_score\n) VALUES (\n  {{ $json.p_mention_id }},\n  {{ $json.p_sentiment_id }},\n  '{{ $json.p_threat_type }}',\n  '{{ $json.p_threat_category }}',\n  '{{ $json.p_criticality_level }}',\n  {{ $json.p_confidence_score }},\n  {{ $json.p_matched_keywords_literal }},\n  'heuristic',\n  {{ $json.p_risk_score }}\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  threat_type = EXCLUDED.threat_type,\n  threat_category = EXCLUDED.threat_category,\n  criticality_level = EXCLUDED.criticality_level,\n  confidence_score = EXCLUDED.confidence_score,\n  matched_keywords = EXCLUDED.matched_keywords,\n  risk_score = EXCLUDED.risk_score,\n  sentiment_id = EXCLUDED.sentiment_id,\n  last_updated = NOW()\nRETURNING detection_id;",
-        "options": {}
+        "query": "INSERT INTO threat_detections (\n  mention_id, sentiment_id, threat_type, threat_category,\n  criticality_level, confidence_score, matched_keywords,\n  detection_method, risk_score\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7::text[],\n  'heuristic',\n  $8\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  threat_type = EXCLUDED.threat_type,\n  threat_category = EXCLUDED.threat_category,\n  criticality_level = EXCLUDED.criticality_level,\n  confidence_score = EXCLUDED.confidence_score,\n  matched_keywords = EXCLUDED.matched_keywords,\n  risk_score = EXCLUDED.risk_score,\n  sentiment_id = EXCLUDED.sentiment_id,\n  last_updated = NOW()\nRETURNING detection_id;",
+        "options": {
+          "queryReplacement": "{{ $json.p_mention_id }}, {{ $json.p_sentiment_id }}, {{ ($json._original.threat || {}).threat_type || 'informational' }}, {{ ($json._original.threat || {}).threat_category || 'general' }}, {{ $json.p_criticality_level }}, {{ $json.p_confidence_score }}, {{ (($json._original.threat || {}).matched_keywords || []).length > 0 ? ($json._original.threat || {}).matched_keywords : null }}, {{ $json.p_risk_score }}"
+        }
       },
       "id": "58d9213d-ffce-4b73-8d3b-1addc09929ef",
       "name": "Insert Threat Detection",
@@ -515,7 +537,7 @@
         "functionCode": "// MOCK: Replace with real Slack node in production.\n// Currently logs to console and passes data through.\nconsole.log('[MOCK SLACK]', $json.alert_message);\nreturn [{json: $json}];"
       },
       "id": "db76c78b-272c-42fd-b13c-8549c7ab699c",
-      "name": "\u26a0\ufe0f MOCK - Send Slack Alert",
+      "name": "⚠️ MOCK - Send Slack Alert",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
@@ -528,7 +550,7 @@
         "functionCode": "// MOCK: Replace with real SMTP/SendGrid node in production.\n// Currently logs to console and passes data through.\nconsole.log('[MOCK EMAIL]', $json.email_subject);\nreturn [{json: $json}];"
       },
       "id": "579bf678-3214-43cf-8ddb-85b776b3415a",
-      "name": "\u26a0\ufe0f MOCK - Send Email Alert",
+      "name": "⚠️ MOCK - Send Email Alert",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
@@ -552,8 +574,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO alerts (\n  detection_id, alert_title, alert_message, alert_severity,\n  channels_sent, slack_channel, sent_at, delivery_status\n) VALUES (\n  {{ $json.p_detection_id }},\n  '{{ $json.p_alert_title }}',\n  '{{ $json.p_alert_message }}',\n  '{{ $json.p_alert_severity }}',\n  ARRAY['slack', 'email'],\n  '#security-alerts',\n  NOW(),\n  'sent'\n)\nRETURNING alert_id;",
-        "options": {}
+        "query": "INSERT INTO alerts (\n  detection_id, alert_title, alert_message, alert_severity,\n  channels_sent, slack_channel, sent_at, delivery_status\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  ARRAY['slack', 'email'],\n  '#security-alerts',\n  NOW(),\n  'sent'\n)\nRETURNING alert_id;",
+        "options": {
+          "queryReplacement": "{{ $json.p_detection_id }}, {{ 'Amenaza ' + $json.p_alert_severity + ' detectada' }}, {{ ($json._original && $json._original.alert_message) || '' }}, {{ $json.p_alert_severity }}"
+        }
       },
       "id": "bec42c76-902f-4bd9-9c9a-b9ac722bb448",
       "name": "Log Alert in DB",
@@ -579,7 +603,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Log Execution\n// Aggregates pipeline counters from upstream nodes.\n// =============================================\n\nlet mentionsCollected = 0;\nlet mentionsProcessed = 0;\nlet sentimentInserted = 0;\nlet detectionsGenerated = 0;\nlet alertsGenerated = 0;\n\ntry { mentionsCollected = $('Deduplicate').all().length; } catch(e) {}\ntry { mentionsProcessed = $('Insert Social Mention').all().length; } catch(e) {}\ntry { sentimentInserted = $('Insert Sentiment Analysis').all().length; } catch(e) {}\ntry { detectionsGenerated = $('Insert Threat Detection').all().length; } catch(e) {}\ntry { alertsGenerated = $('Log Alert in DB').all().length; } catch(e) {}\n\n// Count errors: items that entered an INSERT but failed (had error or missing ID)\nlet mentionErrors = 0;\nlet sentimentErrors = 0;\nlet threatErrors = 0;\ntry {\n  const mentionResults = $('Insert Social Mention').all();\n  mentionErrors = mentionResults.filter(i => i.json.error || !i.json.mention_id).length;\n} catch(e) {}\ntry {\n  const sentimentResults = $('Insert Sentiment Analysis').all();\n  sentimentErrors = sentimentResults.filter(i => i.json.error || !i.json.sentiment_id).length;\n} catch(e) {}\ntry {\n  const threatResults = $('Insert Threat Detection').all();\n  threatErrors = threatResults.filter(i => i.json.error || !i.json.detection_id).length;\n} catch(e) {}\n\nconst totalErrors = mentionErrors + sentimentErrors + threatErrors;\n\n// Get skipped items summary from Summarize Skipped Items node\nlet skippedSummary = '';\ntry {\n  const skipped = $('Summarize Skipped Items').all();\n  if (skipped.length > 0 && skipped[0].json.summary) {\n    skippedSummary = skipped[0].json.summary;\n  }\n} catch(e) {}\n\nconst status = totalErrors > 0 ? (mentionsProcessed === 0 ? 'error' : 'partial_success') : 'success';\n\nif (totalErrors > 0) {\n  console.warn('Execution errors — mention_insert: ' + mentionErrors + ', sentiment_insert: ' + sentimentErrors + ', threat_insert: ' + threatErrors);\n}\nif (skippedSummary) {\n  console.log('Skipped items: ' + skippedSummary);\n}\n\nreturn [{\n  json: {\n    p_workflow_name: 'OSINT Monitor Multi-Platform',\n    p_execution_id: $execution.id,\n    p_status: status,\n    p_mentions_collected: mentionsCollected,\n    p_mentions_processed: mentionsProcessed - mentionErrors,\n    p_detections_generated: detectionsGenerated - threatErrors,\n    p_alerts_generated: alertsGenerated\n  }\n}];"
+        "functionCode": "// =============================================\n// Prep Log Execution\n// Aggregates pipeline counters from canonical upstream nodes.\n// Robustness rule: execution logging must NOT depend on an IF\n// branch helper like Summarize Skipped Items having run.\n// =============================================\n\nconst getNodeItems = (nodeName) => {\n  try {\n    return $(nodeName).all() || [];\n  } catch (e) {\n    console.warn('Prep Log Execution: node unavailable: ' + nodeName + ' — ' + e.message);\n    return [];\n  }\n};\n\nconst safeJson = (item) => (item && item.json) ? item.json : {};\nconst hasError = (item) => {\n  const j = safeJson(item);\n  return !!(j.error || j.errorMessage);\n};\nconst countSuccessful = (items, idField) =>\n  items.filter(item => !hasError(item) && safeJson(item)[idField]).length;\n\nconst deduplicatedItems = getNodeItems('Deduplicate');\nconst mentionResults = getNodeItems('Insert Social Mention');\nconst sentimentResults = getNodeItems('Insert Sentiment Analysis');\nconst threatResults = getNodeItems('Insert Threat Detection');\nconst enrichedThreatItems = getNodeItems('Enrich After Threat');\nconst alertResults = getNodeItems('Log Alert in DB');\n\nconst mentionsCollected = deduplicatedItems.length;\nconst mentionErrors = mentionResults.filter(i => hasError(i) || !safeJson(i).mention_id).length;\nconst sentimentErrors = sentimentResults.filter(i => hasError(i) || !safeJson(i).sentiment_id).length;\nconst threatErrors = threatResults.filter(i => hasError(i) || !safeJson(i).detection_id).length;\nconst totalErrors = mentionErrors + sentimentErrors + threatErrors;\n\nconst mentionsProcessed = countSuccessful(mentionResults, 'mention_id');\nconst sentimentInserted = countSuccessful(sentimentResults, 'sentiment_id');\nconst detectionsGenerated = countSuccessful(threatResults, 'detection_id');\n\nconst levels = { low: 0, medium: 0, high: 0, critical: 0, unknown: 0 };\nfor (const item of enrichedThreatItems) {\n  const j = safeJson(item);\n  const rawLevel = String(j.criticality_level || (j.threat || {}).criticality_level || 'unknown').toLowerCase();\n  const level = Object.prototype.hasOwnProperty.call(levels, rawLevel) ? rawLevel : 'unknown';\n  levels[level]++;\n}\n\nconst skippedTotal = levels.low + levels.medium + levels.unknown;\nconst alertCandidates = levels.high + levels.critical;\nconst skippedSummary = Object.entries({ low: levels.low, medium: levels.medium, unknown: levels.unknown })\n  .filter(([_, count]) => count > 0)\n  .map(([level, count]) => count + ' ' + level)\n  .join(', ');\n\n// If alert logging already ran in this execution, prefer actual successful DB inserts.\n// Otherwise fall back to deterministic high/critical candidates so the execution log\n// remains independent from IF branch timing and n8n branch execution quirks.\nconst successfulAlertInserts = alertResults.filter(item => !hasError(item) && safeJson(item).alert_id).length;\nconst alertsGenerated = successfulAlertInserts > 0 ? successfulAlertInserts : alertCandidates;\n\nconst status = totalErrors > 0 ? (mentionsProcessed === 0 ? 'error' : 'partial_success') : 'success';\n\nconsole.log(\n  'Execution summary — collected: ' + mentionsCollected +\n  ', mentions: ' + mentionsProcessed +\n  ', sentiments: ' + sentimentInserted +\n  ', detections: ' + detectionsGenerated +\n  ', alert_candidates: ' + alertCandidates +\n  ', skipped: ' + skippedTotal + (skippedSummary ? ' (' + skippedSummary + ')' : '')\n);\n\nif (totalErrors > 0) {\n  console.warn('Execution errors — mention_insert: ' + mentionErrors + ', sentiment_insert: ' + sentimentErrors + ', threat_insert: ' + threatErrors);\n}\n\nreturn [{\n  json: {\n    p_workflow_name: 'OSINT Monitor Multi-Platform',\n    p_execution_id: $execution.id,\n    p_status: status,\n    p_mentions_collected: mentionsCollected,\n    p_mentions_processed: mentionsProcessed,\n    p_detections_generated: detectionsGenerated,\n    p_alerts_generated: alertsGenerated,\n    skipped_total: skippedTotal,\n    skipped_by_level: levels,\n    skipped_summary: skippedSummary || 'none',\n    sentiment_inserted: sentimentInserted\n  }\n}];"
       },
       "id": "9b09ed22-prep-log-exec-000000000001",
       "name": "Prep Log Execution",
@@ -593,8 +617,10 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO execution_logs (\n  workflow_name, execution_id, status,\n  mentions_collected, mentions_processed,\n  detections_generated, alerts_generated,\n  started_at, completed_at\n) VALUES (\n  '{{ $json.p_workflow_name }}',\n  '{{ $json.p_execution_id }}',\n  '{{ $json.p_status }}',\n  {{ $json.p_mentions_collected }},\n  {{ $json.p_mentions_processed }},\n  {{ $json.p_detections_generated }},\n  {{ $json.p_alerts_generated }},\n  NOW(),\n  NOW()\n);",
-        "options": {}
+        "query": "INSERT INTO execution_logs (\n  workflow_name, execution_id, status,\n  mentions_collected, mentions_processed,\n  detections_generated, alerts_generated,\n  started_at, completed_at\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  NOW(),\n  NOW()\n);",
+        "options": {
+          "queryReplacement": "{{ $json.p_workflow_name }}, {{ $json.p_execution_id }}, {{ $json.p_status }}, {{ $json.p_mentions_collected }}, {{ $json.p_mentions_processed }}, {{ $json.p_detections_generated }}, {{ $json.p_alerts_generated }}"
+        }
       },
       "id": "9b09ed22-ad64-4844-93cc-0a3ad9bd0477",
       "name": "Log Execution",
@@ -856,6 +882,11 @@
             "node": "IF Critical or High",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Prep Log Execution",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -880,25 +911,19 @@
     },
     "Summarize Skipped Items": {
       "main": [
-        [
-          {
-            "node": "Prep Log Execution",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Build Alert Content": {
       "main": [
         [
           {
-            "node": "\u26a0\ufe0f MOCK - Send Slack Alert",
+            "node": "⚠️ MOCK - Send Slack Alert",
             "type": "main",
             "index": 0
           },
           {
-            "node": "\u26a0\ufe0f MOCK - Send Email Alert",
+            "node": "⚠️ MOCK - Send Email Alert",
             "type": "main",
             "index": 0
           },
@@ -923,13 +948,7 @@
     },
     "Log Alert in DB": {
       "main": [
-        [
-          {
-            "node": "Prep Log Execution",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Prep Log Execution": {
