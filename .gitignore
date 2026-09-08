@@ -1,2 +1,55 @@
-#Archivos
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+*.env*
+!.env.example
+
+# Runtime data and generated artifacts
+data/
+dist/
+build/
+coverage/
+.cache/
+.vite/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Documentation policy: root README.md and curated docs/*.md belong in the repo
+*.md
+!/README.md
+!/docs/
+!/docs/*.md
+*.mdx
+*.markdown
+*.docx
+*.pdf
+*.pptx
+Informes/
+nsg-docs-exploration/
+**/openspec/
+.atl/
+CLAUDE.md
 GEMINI.md
+nexus-security-group/diagrama.jpg
+*.backup
+credentials.json
+**/credentials.json
+secrets/
+**/secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# OS/editor noise
+.obsidian/
+.obsidian/**
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
