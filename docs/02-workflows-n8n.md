@@ -17,7 +17,7 @@ El sistema actual es un pipeline automatizado implementado en n8n que sirve como
   - Exploit-DB (Análisis del Feed RSS en formato XML).
   - GitHub Security Issues (Búsqueda de issues con etiquetas de seguridad).
 - **Parsers (Function Nodes)**: Cada fuente tiene un nodo en JavaScript para normalizar los objetos dispares (JSON/XML) a un esquema estandarizado (ID, texto, autor, engagement).
-- **Deduplicación**: Un script personalizado en JavaScript que retira duplicados intra-lote basados en el campo `external_id` (la deduplicación inter-ejecución la resuelve PostgreSQL vía ON CONFLICT).
+- **Deduplicación**: Un script personalizado en JavaScript que retira duplicados intra-lote usando la identidad canónica `(platform, external_id)`. Esta lógica está alineada con el constraint `UNIQUE (platform, external_id)` de PostgreSQL; deduplicar sólo por `external_id` es incorrecto porque dos plataformas distintas pueden emitir el mismo identificador.
 
 #### 2. Análisis (Analysis)
 - **Sentiment Analysis (HTTP Request)**: Envía una petición `POST` al endpoint interno `http://sentiment-api:5000/analyze` (ensamble de VADER y TextBlob) pasando el `text_content`.
@@ -25,6 +25,7 @@ El sistema actual es un pipeline automatizado implementado en n8n que sirve como
 
 #### 3. Almacenamiento Secuencial (Storage)
 Esta etapa utiliza un patrón de preparación y ejecución (Prep -> Insert -> Enrich) para garantizar la integridad referencial:
+- **Prep Existing Check -> Check Existing IDs -> Filter Already Processed**: Antes de insertar, el workflow consulta `social_mentions` para detectar menciones ya persistidas por `(platform, external_id)`. `Prep Existing Check` genera una consulta compacta a partir de claves normalizadas, sin arrastrar el payload completo `_items`, y `Check Existing IDs` ejecuta esa consulta para que `Filter Already Processed` sólo deje pasar menciones nuevas.
 - **Prep Mention Insert -> Insert Social Mention**: Aplana los objetos para insertarlos (ON CONFLICT DO UPDATE) en `social_mentions` y obtiene el `mention_id`.
 - **Enrich Mention + Prep Sentiment -> Insert Sentiment Analysis**: Recupera el estado original combinándolo con el `mention_id` recién creado. Prepara el nodo para persistir las métricas en `sentiment_analysis` devolviendo el `sentiment_id`.
 - **Enrich Sentiment + Prep Threat -> Insert Threat Detection**: Intercala el `sentiment_id` y prepara la entidad para la inserción en `threat_detections` de donde se obtiene el `detection_id`.
@@ -37,13 +38,34 @@ Esta etapa utiliza un patrón de preparación y ejecución (Prep -> Insert -> En
 - **Postgres Alerts Logging**: Inserta los detalles del mensaje de alerta y su estado en la tabla `alerts`.
 
 #### 5. Registro de Ejecución (Logging)
-- **Prep Log Execution**: Recolecta métricas de la ejecución global evaluando los tamaños de los lotes procesados por nodos anteriores (usando `$('Node').all().length`).
+- **Prep Log Execution**: Recolecta métricas de la ejecución global evaluando los tamaños de los lotes procesados por nodos anteriores (usando `$('Node').all().length`). Este nodo ahora contempla dos caminos:
+  - Camino normal desde `Enrich After Threat`, usado cuando existen menciones nuevas procesadas.
+  - Camino de seguridad desde `Check Existing IDs`, usado cuando todas las menciones recolectadas ya existían y `Filter Already Processed` no emite nuevos items.
+- **Prevención de logs duplicados**: Si `Check Existing IDs` dispara el logging pero todavía hay menciones nuevas por procesar, `Prep Log Execution` devuelve `[]` y espera al camino normal desde `Enrich After Threat`.
+- **Contadores relevantes**: Además de menciones recolectadas/procesadas, detecciones y alertas, el logging expone `skipped_existing`, `skipped_below_alert_total`, `skipped_total`, `skipped_by_level`, `skipped_summary`, `new_items_to_process` y `sentiment_inserted`.
 - **Log Execution**: Persiste el recuento (recolección, procesamiento, alertas) en la tabla `execution_logs`.
+
+### Cambios Recientes Aplicados
+- **Deduplicación corregida**: `Deduplicate` dejó de usar sólo `external_id` y ahora normaliza/deduplica por `(platform, external_id)`.
+- **Chequeo de existentes endurecido**: `Prep Existing Check` ya no usa arrays con `queryReplacement`; genera una consulta compacta basada en claves únicas y evita mover `_items` completos por el workflow.
+- **Ejecuciones all-existing logueadas**: `Check Existing IDs` tiene `alwaysOutputData: true` y una conexión adicional hacia `Prep Log Execution`, para que `execution_logs` registre ejecuciones aunque todas las menciones ya estén en base.
+- **HTML de alertas escapado**: `Build Alert Content` escapa contenido externo antes de interpolarlo en el HTML de email (`text_content`, autor, URL, `detection_id` y timestamp), reduciendo riesgo de inyección/XSS en clientes de correo.
+- **Logging de alertas endurecido**: `Prep Alert Insert` valida `detection_id` y `alert_severity`, construye una consulta SQL acotada/escapada para `alerts`, y `Log Alert in DB` dejó de usar `queryReplacement` con texto externo de alerta.
+- **Validación realizada**: Los cambios fueron validados sintácticamente con `python3 -m json.tool nexus-security-group/workflow.json`. Falta validación runtime en n8n.
+
+### Pendientes Técnicos
+1. **Probar runtime del logging all-existing**: ejecutar un caso donde todas las menciones recolectadas ya existan y confirmar inserción en `execution_logs`.
+2. **Credenciales PostgreSQL en n8n**: asegurar en runtime que todos los nodos Postgres tengan la credencial asignada después de importar el workflow; el JSON exportado no debe versionar secretos.
+3. **Endurecer `queryReplacement` restante**: `Check Existing IDs` y `Log Alert in DB` ya fueron corregidos; todavía quedan inserts de menciones, sentimiento, amenazas y execution logs que dependen de bindings de n8n. Priorizar contratos determinísticos y valores preparados explícitamente.
+4. **Limpiar contrato `p_*` vs `_original`**: algunos prep/enrich calculan campos `p_*` o arrastran `_original` más grande de lo necesario. Conviene reducir payload y estandarizar qué dato viaja entre nodos.
+5. **Evitar sobreconteo de alertas**: revisar que `alertsGenerated` refleje alertas realmente insertadas cuando `Log Alert in DB` corra, y sólo use candidatos high/critical como fallback controlado.
+6. **Evaluar Merge explícito antes de `Deduplicate`**: hoy varias fuentes llegan al nodo de deduplicación; un Merge explícito puede hacer más legible y robusto el contrato del pipeline.
+7. **Revisar escape en Slack Blocks**: el HTML de email ya escapa contenido externo, pero conviene revisar si Slack requiere sanitización adicional para Markdown/URLs según la integración real que reemplace los mocks.
 
 ### Recomendaciones
 1. **Manejo de Errores (Error Handling):** Se observa el uso de "Continue On Fail" en los nodos HTTP, pero sería recomendable implementar un manejo global de errores en n8n a través del nodo "Error Trigger" para monitorear disrupciones en las fuentes o caídas de la API de sentimiento.
 2. **Reemplazo de Nodos Mock:** Sustituir los nodos funcionales de mockeo por sus correspondientes nodos nativos de Slack o Email (SendGrid/SMTP) para habilitar envíos reales.
-3. **Validación de SQL:** El diseño inyecta los datos como cadenas con una función de escape básica (`esc()`). Se recomienda parametrizar nativamente en el nodo PostgreSQL (`$1, $2`) siempre que sea posible para evitar riesgos de SQL Injection, a pesar de que los datos provengan de APIs conocidas.
+3. **Validación de SQL:** Algunos nodos ya fueron endurecidos para evitar bindings ambiguos de n8n, pero todavía conviene auditar los usos restantes de `queryReplacement` y contratos con JSON/arrays. Cuando n8n lo soporte de forma confiable para el caso, preferir parámetros nativos; si se construye SQL dinámico, mantenerlo acotado a valores normalizados y escapados explícitamente.
 4. **Acoplamiento de Índices:** El acoplamiento por correlación de índices (1:1) usado en las funciones `Enrich` podría fallar si PostgreSQL rechaza u omite filas temporalmente. Sería más seguro volver a emparejar por `external_id`.
 
 ### Riesgos

@@ -49,6 +49,7 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 
 - **Base de Datos**: El esquema relacional se inicializa de manera automática mediante `init.sql` al crear el contenedor `postgres` por primera vez.
 - **Workflows n8n**: Podes restaurar o actualizar los flujos usando el archivo `workflow.json` que está en el directorio. Si querés consultar GitHub con mayor margen de rate limit, configurá `GITHUB_TOKEN` como variable de n8n.
+- **Estado actual del workflow OSINT**: La deduplicación y el chequeo de existentes están alineados por `(platform, external_id)`, y el logging de ejecución contempla el caso donde todos los items recolectados ya existen. Después de importar el workflow, queda pendiente validar runtime en n8n que `execution_logs` inserte correctamente en ejecuciones all-existing.
 - **Import manual del workflow**: Para importar o actualizar el workflow versionado sin ejecutarlo en cada arranque, usá `docker compose --profile tools run --rm n8n-import`.
 - **Arranque completo por Docker**: Ejecutá `docker-compose up -d --build` desde `nexus-security-group/` (`docker compose up -d --build` si tu instalación usa el plugin). No expongas PostgreSQL, Dashboard API ni Sentiment API directamente al host; el acceso esperado es vía Traefik (`http://localhost`) y n8n queda disponible en `http://localhost:5678` para operación local.
 - **Estado de servicios**: Después del arranque, verificá salud y estado con `docker-compose ps` (`docker compose ps` con el plugin). El backend expone health check interno en `/api/health`; el frontend y los microservicios locales tienen healthchecks de Compose para ordenar dependencias sin publicar puertos extra.
@@ -72,5 +73,6 @@ Arquitectura automatizada para monitoreo OSINT, diseñada para detectar amenazas
 - [ ] Validar que los puertos `80`, `5678` y `8080` estén libres en el host.
 - [ ] Asegurarse de importar el `workflow.json` en n8n.
 - [ ] Crear/asignar la credencial PostgreSQL en los nodos n8n antes de activar el workflow.
+- [ ] Ejecutar una prueba all-existing del workflow y confirmar que se inserta un registro en `execution_logs`.
 - [ ] Crear un usuario administrador persistido desde `/api/users` después del primer login bootstrap.
 - [ ] Confirmar que `/api/health` responde y que las rutas privadas rechazan requests sin JWT.
