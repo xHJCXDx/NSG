@@ -531,12 +531,24 @@
     },
     {
       "parameters": {
-        "functionCode": "// MOCK: Replace with real Slack node in production.\n// Currently logs to console and passes data through.\nconsole.log('[MOCK SLACK]', $json.alert_message);\nreturn [{json: $json}];"
+        "method": "POST",
+        "url": "PASTE_SLACK_INCOMING_WEBHOOK_URL_HERE",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.alert_message }}"
+            }
+          ]
+        },
+        "options": {}
       },
       "id": "db76c78b-272c-42fd-b13c-8549c7ab699c",
-      "name": "⚠️ MOCK - Send Slack Alert",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
+      "name": "Send Slack Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         -900,
         100
@@ -544,12 +556,17 @@
     },
     {
       "parameters": {
-        "functionCode": "// MOCK: Replace with real SMTP/SendGrid node in production.\n// Currently logs to console and passes data through.\nconsole.log('[MOCK EMAIL]', $json.email_subject);\nreturn [{json: $json}];"
+        "fromEmail": "NSG Demo <your-gmail-address@gmail.com>",
+        "toEmail": "recipient@example.com",
+        "subject": "={{ $json.email_subject }}",
+        "emailFormat": "html",
+        "html": "={{ $json.email_html }}",
+        "options": {}
       },
       "id": "579bf678-3214-43cf-8ddb-85b776b3415a",
-      "name": "⚠️ MOCK - Send Email Alert",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
+      "name": "Send Gmail Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
       "position": [
         -900,
         300
@@ -913,12 +930,12 @@
       "main": [
         [
           {
-            "node": "⚠️ MOCK - Send Slack Alert",
+            "node": "Send Slack Alert",
             "type": "main",
             "index": 0
           },
           {
-            "node": "⚠️ MOCK - Send Email Alert",
+            "node": "Send Gmail Alert",
             "type": "main",
             "index": 0
           },
