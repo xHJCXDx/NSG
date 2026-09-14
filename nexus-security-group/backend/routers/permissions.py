@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth import require_permission
@@ -73,6 +74,13 @@ def update_role_permissions(
     db.query(RolePermission).filter(RolePermission.role == role).delete()
     for permission_key in request.permissions:
         db.add(RolePermission(role=role, permission_id=permissions_by_key[permission_key].permission_id))
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Permission assignment conflict; changes were not saved",
+        )
 
     return {"role": role, "permissions": request.permissions}

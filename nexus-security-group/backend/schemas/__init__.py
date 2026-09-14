@@ -15,6 +15,9 @@ from schemas.metrics import (
     RecentMentionResponse,
     SentimentDistribution,
 )
+from schemas.dashboard import DashboardSummaryResponse
+from schemas.permission import PermissionMatrixResponse, PermissionResponse, RolePermissionsResponse, RolePermissionsUpdate
+from schemas.user import UserCreate, UserResponse, UserUpdate
 from schemas.sentiment import SentimentResponse
 from schemas.threat import (
     RelatedMentionResponse,
@@ -55,4 +58,15 @@ __all__ = [
     "ExecutionLogResponse",
     # activity
     "UserActivityResponse",
+    # user
+    "UserCreate",
+    "UserResponse",
+    "UserUpdate",
+    # permission
+    "PermissionResponse",
+    "PermissionMatrixResponse",
+    "RolePermissionsUpdate",
+    "RolePermissionsResponse",
+    # dashboard
+    "DashboardSummaryResponse",
 ]

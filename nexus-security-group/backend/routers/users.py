@@ -18,10 +18,6 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("users", "write")),
 ):
-    existing = db.query(SystemUser).filter(SystemUser.username == request.username).first()
-    if existing is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
-
     user = SystemUser(
         username=request.username,
         password_hash=hash_password(request.password),

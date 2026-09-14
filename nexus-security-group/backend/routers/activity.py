@@ -19,6 +19,7 @@ def get_activities(
     username: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
     activity_type: Annotated[str | None, Query(min_length=1, max_length=50)] = None,
     db: Session = Depends(get_db),
+    # Activity shares the logs:read permission — no separate activity:read needed
     current_user: TokenData = Depends(require_permission("logs", "read")),
 ):
     query = db.query(UserActivity)

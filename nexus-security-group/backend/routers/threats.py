@@ -120,6 +120,7 @@ def review_threat(
         request.reviewed_by is not None
         or request.review_status is not None
         or request.review_notes is not None
+        or request.remediation_status is not None
     ):
         threat.reviewed_at = datetime.now(timezone.utc)
 
