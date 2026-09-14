@@ -11,6 +11,7 @@ from schemas.dashboard import DashboardSummaryResponse
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
 
+# NOTE: Counts are read without REPEATABLE READ — values may be slightly inconsistent under concurrent writes. Acceptable for a dashboard summary.
 @router.get("/summary", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(
     db: Session = Depends(get_db),

@@ -37,6 +37,7 @@ def list_permissions(
     role_permissions = db.query(RolePermission).all()
 
     permissions_by_id = {permission.permission_id: permission for permission in permissions}
+    # Roles defined inline — adding a roles table is deferred to a future release. See AUDIT.md 4.9
     matrix = {"admin": [], "analyst": []}
     for role_permission in role_permissions:
         permission = permissions_by_id.get(role_permission.permission_id)

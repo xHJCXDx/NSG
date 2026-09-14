@@ -3,7 +3,7 @@
     "name": "NSG OSINT Dashboard Demo",
     "color": "#D946EF",
     "icon": "analytics",
-    "description": "Minimal non-secret Appsmith demo manifest. Use README.md and queries.sql for manual configuration if Appsmith export compatibility changes."
+    "description": "Minimal non-secret Appsmith demo manifest. Use README.md and queries.sql for manual configuration if Appsmith export compatibility changes. Replace placeholders with actual values during setup — do NOT import this file directly into Appsmith without configuring the datasource first."
   },
   "datasources": [
     {

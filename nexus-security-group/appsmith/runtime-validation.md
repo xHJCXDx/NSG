@@ -70,6 +70,8 @@ Authorization: Bearer <APPSMITH_API_BEARER_TOKEN>
 Content-Type: application/json
 ```
 
+> Requires the backend service and n8n workflow to be running. If the endpoint is unreachable, verify that both containers are healthy via `docker compose ps`.
+
 Body:
 
 ```json

@@ -1,6 +1,11 @@
 -- NSG Appsmith dashboard query catalog.
 -- Use prepared Appsmith query fields/widgets. Do not concatenate SQL fragments.
 -- Common controls: DateRangePicker, PlatformSelect, SeveritySelect, StatusSelect, PageSizeSelect.
+--
+-- NOTE: Queries reading from materialized views (daily_activity_summary,
+-- daily_mention_stats, top_keywords_stats, workflow_performance_stats)
+-- show data as of the last REFRESH MATERIALIZED VIEW call.
+-- Refresh via: SELECT perform_daily_maintenance(); (defined in init.sql)
 
 -- name: Dashboard_KPIs
 -- purpose: High-level OSINT counts for the overview cards.

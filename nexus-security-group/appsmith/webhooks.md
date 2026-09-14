@@ -51,7 +51,7 @@ Use this only for a controlled local demo when the backend token flow is not con
 - URL from host machine: `http://localhost:5678/webhook/osint-trigger`
 - Headers:
   - `Content-Type: application/json`
-  - `<N8N_WEBHOOK_HEADER>: <N8N_WEBHOOK_TOKEN>` when the workflow is configured to validate one
+  - `X-N8N-Token: <N8N_WEBHOOK_TOKEN>` when the workflow is configured to validate one
 - Body: same payload as the preferred action.
 
 Fallback tradeoff: Appsmith widget visibility is not a security control. If this path is used, protect n8n with its own credentials/token and keep the action visible only to demo admins.

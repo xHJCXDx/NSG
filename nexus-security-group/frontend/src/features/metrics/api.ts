@@ -1,3 +1,4 @@
+// NOTE: This module provides API functions for the metrics feature. The corresponding hook and UI components are planned for a future release.
 import { createAuthHeaders } from '../../shared/api/authHeaders';
 import { METRICS_SUMMARY_ENDPOINT } from './contract';
 
