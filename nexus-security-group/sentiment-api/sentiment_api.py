@@ -89,7 +89,7 @@ def analyze_sentiment():
 
     except Exception as e:
         logger.error(f'Error during sentiment analysis: {str(e)}', exc_info=True)
-        return jsonify({'error': 'Internal server error during sentiment analysis', 'details': str(e)}), 500
+        return jsonify({'error': 'Internal server error during sentiment analysis', 'details': 'Internal analysis error'}), 500
 
 if __name__ == '__main__':
     logger.info('Starting Sentiment API v1.1')
