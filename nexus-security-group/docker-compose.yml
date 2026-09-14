@@ -19,7 +19,7 @@ services:
       - nexus-net
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.64.3
     container_name: osint-n8n
     dns:
       - 1.1.1.1
@@ -63,7 +63,7 @@ services:
       - nexus-net
 
   n8n-import:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:1.64.3
     profiles:
       - tools
     command: ["import:workflow", "--input=/workflows/workflow.json"]

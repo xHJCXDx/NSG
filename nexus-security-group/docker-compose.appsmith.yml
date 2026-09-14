@@ -1,6 +1,6 @@
 services:
   appsmith:
-    image: appsmith/appsmith-ce:latest
+    image: appsmith/appsmith-ce:v1.41
     container_name: osint-appsmith
     profiles:
       - appsmith
