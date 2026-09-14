@@ -18,11 +18,12 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Documentation policy: root README.md and curated docs/*.md belong in the repo
+# Documentation policy: root README.md, docs/, and project documentation belong in the repo
 *.md
 !/README.md
 !/docs/
 !/docs/*.md
+!/nexus-security-group/**/*.md
 *.mdx
 *.markdown
 *.docx
