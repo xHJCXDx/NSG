@@ -6,6 +6,8 @@ interface MentionCardProps {
   mention: Mention;
 }
 
+const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
+
 const formatDate = (value: string) => {
   if (!value) {
     return MENTIONS_COPY.card.unknownDate;
@@ -42,9 +44,20 @@ export function MentionCard({ mention }: MentionCardProps) {
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
         {mention.author && <span>{MENTIONS_COPY.card.authorLabel}: {mention.author}</span>}
         {mention.sourceUrl && (
-          <a href={mention.sourceUrl} className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300">
-            {MENTIONS_COPY.card.sourceLabel} <ExternalLink className="h-3 w-3" />
-          </a>
+          isSafeUrl(mention.sourceUrl) ? (
+            <a
+              href={mention.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-brand-400 hover:text-brand-300"
+            >
+              {MENTIONS_COPY.card.sourceLabel} <ExternalLink className="h-3 w-3" />
+            </a>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-gray-500">
+              {MENTIONS_COPY.card.sourceLabel} <ExternalLink className="h-3 w-3" />
+            </span>
+          )
         )}
       </div>
     </article>
