@@ -3,10 +3,10 @@ import { useAuth } from '../../auth';
 import { fetchDashboardSummary } from '../api';
 
 export function useDashboardSummary() {
-  const { token } = useAuth();
+  const { token, claims } = useAuth();
 
   return useQuery({
-    queryKey: ['dashboard', 'summary'],
+    queryKey: ['dashboard', 'summary', claims.sub],
     queryFn: () => fetchDashboardSummary(token),
     enabled: !!token,
   });

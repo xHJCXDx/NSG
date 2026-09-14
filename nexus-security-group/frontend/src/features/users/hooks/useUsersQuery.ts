@@ -3,10 +3,10 @@ import { useAuth } from '../../auth';
 import { listUsers } from '../api';
 
 export function useUsersQuery() {
-  const { token } = useAuth();
+  const { token, claims } = useAuth();
 
   return useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', claims.sub],
     queryFn: () => listUsers(token),
     enabled: !!token,
   });

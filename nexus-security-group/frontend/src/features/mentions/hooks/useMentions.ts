@@ -9,11 +9,11 @@ const initialFilters: MentionFilters = { search: '', platform: '' };
 export type MentionEmptyReason = 'initial-empty' | 'no-results';
 
 export function useMentions() {
-  const { token } = useAuth();
+  const { token, claims } = useAuth();
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
 
   const { data: mentions = [], isLoading, isError } = useQuery({
-    queryKey: ['mentions'],
+    queryKey: ['mentions', claims.sub],
     queryFn: () => fetchMentions(token),
     enabled: !!token,
   });

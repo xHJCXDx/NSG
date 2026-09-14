@@ -9,11 +9,11 @@ const initialFilters: ThreatFilters = { search: '', severity: '', classification
 export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 
 export function useThreats() {
-  const { token } = useAuth();
+  const { token, claims } = useAuth();
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
 
   const { data: threats = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['threats'],
+    queryKey: ['threats', claims.sub],
     queryFn: () => fetchThreats(token),
     enabled: !!token,
   });
