@@ -228,3 +228,9 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+async def logout():
+    """Client-side logout acknowledgment. Token invalidation is handled by the client clearing stored credentials. Server-side token blacklist is documented as future work."""
+    return {"message": "Logged out successfully"}
