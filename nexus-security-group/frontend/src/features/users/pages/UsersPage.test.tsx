@@ -12,7 +12,7 @@ const encodePayload = (payload: unknown) =>
 const adminToken = `header.${encodePayload({ role: 'admin', auth_source: 'database', permissions: ['users:read', 'users:write'] })}.signature`;
 
 const renderUsersPage = (token = adminToken) => {
-  localStorage.setItem('token', token);
+  localStorage.setItem('nsg:auth:token', token);
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <AuthProvider>

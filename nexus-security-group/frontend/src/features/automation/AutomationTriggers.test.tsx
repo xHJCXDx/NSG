@@ -14,7 +14,7 @@ const encodePayload = (payload: unknown) =>
 const makeToken = (permissions: string[]) => `header.${encodePayload({ permissions })}.signature`;
 
 const renderWithAuth = (token = makeToken(['workflows:execute'])) => {
-  localStorage.setItem('token', token);
+  localStorage.setItem('nsg:auth:token', token);
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <AuthProvider>

@@ -7,7 +7,7 @@ import { AuthProvider } from '../../auth';
 import { MentionsPage } from './MentionsPage';
 
 const renderMentionsPage = () => {
-  localStorage.setItem('token', 'fake-jwt');
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <AuthProvider>

@@ -7,7 +7,7 @@ import { AuthProvider } from '../../auth';
 import { ThreatsPage } from './ThreatsPage';
 
 const renderThreatsPage = () => {
-  localStorage.setItem('token', 'fake-jwt');
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <AuthProvider>

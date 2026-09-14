@@ -39,7 +39,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders protected route content when a token already exists', () => {
-    localStorage.setItem('token', 'existing-jwt');
+    localStorage.setItem('nsg:auth:token', 'existing-jwt');
 
     render(
       <AuthProvider>
@@ -64,7 +64,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders a UX-only restricted state when a required permission is missing', () => {
-    localStorage.setItem('token', makeToken(['dashboard:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
 
     render(
       <AuthProvider>
@@ -81,7 +81,7 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders protected content when the required permission exists', () => {
-    localStorage.setItem('token', makeToken(['users:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['users:read']));
 
     render(
       <AuthProvider>

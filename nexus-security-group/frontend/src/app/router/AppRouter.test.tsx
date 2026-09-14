@@ -44,7 +44,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the protected index route mounted under the dashboard layout', () => {
-    localStorage.setItem('token', makeToken(['dashboard:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/');
 
     render(
@@ -58,7 +58,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the mentions route inside the protected dashboard layout', () => {
-    localStorage.setItem('token', makeToken(['mentions:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['mentions:read']));
     window.history.pushState({}, '', '/mentions');
 
     render(
@@ -72,7 +72,7 @@ describe('AppRouter', () => {
   });
 
   it('keeps the users route inside the protected dashboard layout', () => {
-    localStorage.setItem('token', makeToken(['users:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['users:read']));
     window.history.pushState({}, '', '/users');
 
     render(
@@ -99,7 +99,7 @@ describe('AppRouter', () => {
   });
 
   it('blocks authenticated users from feature routes when the JWT permission is missing', () => {
-    localStorage.setItem('token', makeToken(['dashboard:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/users');
 
     render(

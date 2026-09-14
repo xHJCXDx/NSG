@@ -17,7 +17,7 @@ describe('DashboardLayout navigation', () => {
   });
 
   it('includes a Users destination inside the dashboard navigation', async () => {
-    localStorage.setItem('token', makeToken(['dashboard:read', 'users:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read', 'users:read']));
     render(
       <AuthProvider>
         <MemoryRouter initialEntries={['/']}>
@@ -37,7 +37,7 @@ describe('DashboardLayout navigation', () => {
   });
 
   it('hides destinations missing from JWT permissions', () => {
-    localStorage.setItem('token', makeToken(['dashboard:read']));
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
 
     render(
       <AuthProvider>

@@ -20,7 +20,7 @@ const createTestQueryClient = () =>
   new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
 const renderDashboard = () => {
-  localStorage.setItem('token', 'fake-jwt');
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
 
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
