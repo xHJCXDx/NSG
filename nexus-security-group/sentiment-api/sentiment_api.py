@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
+import hmac
 import logging
 import os
 
@@ -29,7 +30,7 @@ def analyze_sentiment():
                 return jsonify({'error': 'Unauthorized'}), 401
             
             token = auth_header.split(' ')[1]
-            if token != expected_token:
+            if not hmac.compare_digest(token, expected_token):
                 return jsonify({'error': 'Unauthorized'}), 401
 
         data = request.json

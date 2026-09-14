@@ -208,7 +208,7 @@ async def login_for_access_token(
         user_id = db_user.user_id
         permissions = _permissions_from_user(db_user)
     else:
-        if form_data.username != ADMIN_USER or form_data.password != ADMIN_PASSWORD:
+        if not hmac.compare_digest(form_data.username, ADMIN_USER) or not hmac.compare_digest(form_data.password, ADMIN_PASSWORD):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
