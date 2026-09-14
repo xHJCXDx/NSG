@@ -31,6 +31,7 @@ services:
     extra_hosts:
       # Bypass intermittent Docker DNS EAI_AGAIN errors for critical OSINT sources.
       # If either provider changes CDN IPs, refresh these values from the host resolver.
+      # To update: dig +short <hostname> and replace the IP here
       - "hn.algolia.com:34.160.168.181"
       - "www.exploit-db.com:192.124.249.13"
     ports:
@@ -116,6 +117,8 @@ services:
     ports:
       - "80:80"
     volumes:
+      # LIMITATION: Docker socket mounted read-only. In production, use a
+      # socket proxy (e.g. tecnativa/docker-socket-proxy) to restrict API access.
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - nexus-net
