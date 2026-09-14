@@ -4,7 +4,7 @@ This folder contains a safe Appsmith demo pack for the NSG thesis dashboard. It 
 
 ## Contents
 
-- `appsmith-export.json` — minimal non-secret Appsmith import placeholder and page/action manifest.
+- `appsmith-export.json` — reference manifest listing the datasource config, pages, and named queries required for manual setup. **This is NOT an importable Appsmith application export.** A real Appsmith export (`.json` produced by the Appsmith UI) includes widget DSL, layout trees, JS objects, and query configs — none of which can be captured without a running, configured Appsmith instance. This file serves as a structured reference to guide manual configuration; use it alongside `queries.sql` and `webhooks.md`.
 - `queries.sql` — named, bounded SQL query catalog for the dashboard.
 - `webhooks.md` — Appsmith action contracts for the preferred FastAPI proxy and controlled n8n fallback.
 - `security.md` — read-only PostgreSQL setup, existing-volume rollout, rollback, and no-secret checklist.
