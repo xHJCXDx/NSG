@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from auth import require_permission
 from database import get_db
 from models import Alert, ExecutionLog, KeywordMonitor, ThreatDetection, UserActivity
+from schemas.auth import TokenData
 from schemas.dashboard import DashboardSummaryResponse
 
 
@@ -13,7 +14,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 @router.get("/summary", response_model=DashboardSummaryResponse)
 def get_dashboard_summary(
     db: Session = Depends(get_db),
-    current_user=Depends(require_permission("dashboard", "read")),
+    current_user: TokenData = Depends(require_permission("dashboard", "read")),
 ):
     return {
         "total_threats": db.query(ThreatDetection).count() or 0,
