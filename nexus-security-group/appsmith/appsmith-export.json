@@ -1,0 +1,49 @@
+{
+  "application": {
+    "name": "NSG OSINT Dashboard Demo",
+    "color": "#D946EF",
+    "icon": "analytics",
+    "description": "Minimal non-secret Appsmith demo manifest. Use README.md and queries.sql for manual configuration if Appsmith export compatibility changes."
+  },
+  "datasources": [
+    {
+      "name": "NSG_Postgres_Readonly",
+      "type": "postgres",
+      "host": "postgres",
+      "port": 5432,
+      "database": "<POSTGRES_DB>",
+      "username": "appsmith_readonly",
+      "password": "<APPSMITH_DB_PASSWORD>"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Overview",
+      "queries": [
+        "Dashboard_KPIs",
+        "MentionTrend_ByDatePlatformSentiment",
+        "Sentiment_Distribution",
+        "ThreatSeverity_Distribution",
+        "TopKeywords_Ranking",
+        "WorkflowHealth_ByDay",
+        "UnresolvedThreats_Table",
+        "RecentMentions_Table",
+        "RecentAlerts_Table"
+      ]
+    },
+    {
+      "name": "Admin Controls",
+      "actions": [
+        "TriggerOsintScanViaApi",
+        "TriggerOsintScanDirectN8n"
+      ]
+    }
+  ],
+  "manualConfiguration": {
+    "setupGuide": "appsmith/README.md",
+    "queryCatalog": "appsmith/queries.sql",
+    "webhookContracts": "appsmith/webhooks.md",
+    "securityNotes": "appsmith/security.md"
+  },
+  "secretsPolicy": "Placeholders only. Replace values manually in the Appsmith runtime, never in repository files."
+}

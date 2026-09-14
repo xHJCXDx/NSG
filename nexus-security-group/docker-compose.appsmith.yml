@@ -1,0 +1,19 @@
+services:
+  appsmith:
+    image: appsmith/appsmith-ce:latest
+    container_name: osint-appsmith
+    profiles:
+      - appsmith
+    ports:
+      - "${APPSMITH_PORT:-8081}:80"
+    volumes:
+      - appsmith_stacks:/appsmith-stacks
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - nexus-net
+
+volumes:
+  appsmith_stacks:

@@ -517,6 +517,33 @@ WHERE td.review_status IN ('pending', 'reviewing', 'investigating')
   AND td.criticality_level IN ('high', 'critical')
 ORDER BY td.criticality_level DESC, td.detected_at ASC;
 
+CREATE OR REPLACE VIEW recent_mentions_dashboard AS
+SELECT
+    sm.mention_id,
+    sm.created_at,
+    sm.platform,
+    sm.author_username,
+    sm.processing_status,
+    sm.text_content,
+    sa.sentiment_label,
+    sa.final_sentiment_score
+FROM social_mentions sm
+LEFT JOIN sentiment_analysis sa ON sm.mention_id = sa.mention_id;
+
+CREATE OR REPLACE VIEW recent_alerts_dashboard AS
+SELECT
+    a.alert_id,
+    a.alert_uuid,
+    a.alert_title,
+    a.alert_severity,
+    a.delivery_status,
+    a.acknowledged,
+    a.created_at,
+    td.threat_type,
+    td.criticality_level
+FROM alerts a
+JOIN threat_detections td ON td.detection_id = a.detection_id;
+
 -- ============================================
 -- SEGURIDAD
 -- ============================================
@@ -535,6 +562,27 @@ GRANT INSERT, UPDATE ON alerts TO osint_analyst;
 GRANT INSERT ON user_activity TO osint_analyst;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
+
+-- Appsmith dashboard demo login: placeholder password only.
+-- For existing ./data/postgres volumes, apply this block manually because
+-- docker-entrypoint-initdb.d scripts run only on first database initialization.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'appsmith_readonly') THEN
+        CREATE ROLE appsmith_readonly LOGIN PASSWORD '<APPSMITH_DB_PASSWORD>';
+    END IF;
+END
+$$;
+
+GRANT osint_readonly TO appsmith_readonly;
+GRANT USAGE ON SCHEMA public TO appsmith_readonly;
+GRANT SELECT ON daily_activity_summary TO appsmith_readonly;
+GRANT SELECT ON daily_mention_stats TO appsmith_readonly;
+GRANT SELECT ON top_keywords_stats TO appsmith_readonly;
+GRANT SELECT ON workflow_performance_stats TO appsmith_readonly;
+GRANT SELECT ON unresolved_threats TO appsmith_readonly;
+GRANT SELECT ON recent_mentions_dashboard TO appsmith_readonly;
+GRANT SELECT ON recent_alerts_dashboard TO appsmith_readonly;
 
 ALTER TABLE social_mentions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE threat_detections ENABLE ROW LEVEL SECURITY;
