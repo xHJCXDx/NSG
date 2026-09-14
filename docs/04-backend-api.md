@@ -342,3 +342,19 @@ Todos los schemas de request y response están implementados en Pydantic v2 con 
 | `UserUpdate` | Al menos un campo debe estar presente (validado por `model_validator`) |
 
 Los schemas de request (input) no usan `from_attributes` dado que son cuerpos HTTP, no entidades ORM. Los schemas de respuesta nunca exponen `password_hash`.
+
+---
+
+## Limitaciones Conocidas
+
+### Ventana de invalidación de permisos (60 minutos)
+
+`require_permission()` lee los permisos directamente del claim `permissions` del JWT — **no realiza ninguna consulta a la base de datos por request**. En consecuencia, si un administrador revoca permisos a un usuario o desactiva su cuenta, el cambio **no tiene efecto hasta que el token actual expire** (hasta 60 minutos desde su emisión).
+
+**Tradeoff aceptado:** validar permisos contra la base de datos en cada request eliminaría la ventana, pero agrega latencia y una dependencia de BD a toda llamada a la API. Para un sistema de monitoreo con pocos usuarios concurrentes, la simpleza supera el riesgo.
+
+**Evolución recomendada:**
+- (a) Reducir el TTL del token a 5–10 minutos e introducir refresh tokens, o
+- (b) incluir un hash de permisos en el token y validarlo contra un valor cacheado en BD por request.
+
+**Por qué no en esta versión:** ambas opciones requieren infraestructura de refresh tokens o una capa de caché que excede el alcance de esta entrega. Documentado como hallazgo 4.3 del proceso de auditoría.

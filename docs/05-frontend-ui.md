@@ -45,3 +45,13 @@ Mantener la estructura actual basada en `features` y el patrón `useQuery` / `us
 
 ### Listo para Propuesta
 Sí. La arquitectura está implementada y en producción; los riesgos identificados son deuda técnica conocida, no bloqueantes.
+
+### Limitaciones Conocidas
+
+#### Almacenamiento de JWT en localStorage
+- **Estado actual:** el token JWT se persiste en `localStorage` a través de `frontend/src/features/auth/tokenStorage.ts`. Cualquier script con acceso al contexto de la página puede leerlo con `localStorage.getItem('token')`.
+- **Riesgo:** vulnerable a exfiltración de token vía XSS. Si un atacante logra inyectar código en la página, el token queda expuesto en su totalidad.
+- **Mitigación vigente:** headers CSP estrictos recomendados para la capa de hosting, ausencia de `eval()` y scripts inline, TypeScript strict con cero usos de `any`.
+- **Evolución recomendada:** migrar a cookies `httpOnly` — el backend emite `Set-Cookie` en el login, el frontend deja de gestionar el token directamente, y CORS debe configurarse con `credentials: include`. Esto elimina la superficie de ataque de XSS sobre el token.
+- **Por qué no ahora:** la migración implica cambios coordinados en el middleware de autenticación del backend, el `AuthContext` del frontend y la configuración CORS; es un refactor de ruptura que excede el alcance del presente release.
+- **Referencia:** OWASP Session Management Cheat Sheet — https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html
