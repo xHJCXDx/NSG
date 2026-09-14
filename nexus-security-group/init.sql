@@ -587,6 +587,13 @@ GRANT SELECT ON recent_alerts_dashboard TO appsmith_readonly;
 ALTER TABLE social_mentions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE threat_detections ENABLE ROW LEVEL SECURITY;
 
+-- All read roles (osint_readonly, osint_analyst, osint_admin, appsmith_readonly) need
+-- unrestricted SELECT on social_mentions — it's a monitoring feed, not user-partitioned data.
+-- INSERT/UPDATE/DELETE remain blocked for non-owner roles (RLS still enforced for writes).
+CREATE POLICY social_mentions_read_policy ON social_mentions
+    FOR SELECT
+    USING (true);
+
 CREATE POLICY user_isolation_policy ON threat_detections
     FOR ALL TO osint_analyst
     USING (reviewed_by = current_user OR reviewed_by IS NULL);
