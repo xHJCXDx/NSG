@@ -1,8 +1,8 @@
-# 04 — Contrato de API Backend (Release 1.0)
+# 04 — Contrato de API Backend
 
 ## Objetivo
 
-El backend de NSG es una API REST construida con FastAPI que actúa como único punto de acceso al sistema para el dashboard web y para las automatizaciones de n8n. Expone recursos de lectura y escritura sobre las entidades principales del sistema (amenazas, alertas, menciones, keywords, logs de ejecución, actividad de usuarios y usuarios del sistema), protege cada ruta mediante autenticación JWT y delega la persistencia a PostgreSQL a través de SQLAlchemy. El único endpoint sin autenticación es el health check; todo lo demás requiere un token válido, y las operaciones de administración de usuarios requieren además rol `admin`.
+El backend de NSG es una API REST construida con FastAPI que actúa como único punto de acceso al sistema para el dashboard web y para las automatizaciones de n8n. Expone recursos de lectura y escritura sobre las entidades principales del sistema (amenazas, alertas, menciones, keywords, logs de ejecución, actividad de usuarios, usuarios del sistema y permisos), protege cada ruta mediante autenticación JWT y delega la persistencia a PostgreSQL a través de SQLAlchemy. El único endpoint sin autenticación es el health check; todo lo demás requiere un token válido con el permiso `recurso:acción` correspondiente, verificado por la dependencia `require_permission`.
 
 ---
 
@@ -34,8 +34,11 @@ Si la base de datos falla durante el login, el sistema responde `503 Service Una
 | `sub` | `string` | Username del usuario autenticado |
 | `role` | `string` | `"admin"` o `"analyst"` |
 | `auth_source` | `string` | `"bootstrap"` o `"database"` |
+| `permissions` | `string[]` | Lista de permisos en formato `recurso:acción` asignados al rol en el momento del login |
 | `exp` | `timestamp` | Expiración (UTC, 60 minutos desde emisión) |
 | `user_id` | `int` | Presente solo cuando `auth_source = "database"` |
+
+El claim `permissions` es el vector de autorización real. Cada endpoint protegido verifica si el permiso requerido está presente en este array; el campo `role` es informativo. Los permisos son los asignados al rol en la tabla `role_permissions` en el momento del login — cambios posteriores en la asignación de permisos no tienen efecto hasta que el token expire.
 
 ### Algoritmo de hashing de contraseñas
 
@@ -45,11 +48,22 @@ Las contraseñas de usuarios en base de datos se almacenan usando PBKDF2-SHA256 
 
 ## Clasificación de rutas por protección
 
-| Nivel | Descripción | Dependencia |
-|-------|-------------|-------------|
+| Nivel | Descripción | Dependencia FastAPI |
+|-------|-------------|---------------------|
 | **Pública** | Sin autenticación requerida | — |
-| **Autenticada** | Requiere token JWT válido (`get_current_user`) | Cualquier rol |
-| **Permiso granular** | Requiere token JWT con permiso explícito (`require_permission`) | Permiso `recurso:acción` |
+| **Permiso granular** | Requiere token JWT con el permiso `recurso:acción` en el claim `permissions` | `require_permission("recurso", "acción")` |
+
+Todas las rutas protegidas (excepto el health check) usan `require_permission`. No existe un nivel de "autenticado sin permiso específico": el acceso siempre se verifica contra un permiso concreto.
+
+### Cómo funciona `require_permission`
+
+`require_permission(resource, action)` es una factory de dependencias FastAPI definida en `auth.py`. Retorna una dependencia que:
+
+1. Decodifica el JWT del header `Authorization: Bearer <token>`.
+2. Extrae la lista `permissions` del payload.
+3. Verifica que el string `"{resource}:{action}"` (normalizado a minúsculas) esté en esa lista.
+4. Si está presente, retorna el `TokenData` del usuario actual.
+5. Si no está presente, eleva `403 Forbidden` con `detail: "Permission required: {resource}:{action}"`.
 
 ---
 
@@ -79,9 +93,9 @@ Errores posibles:
 
 ### `/api/dashboard` — Resumen del Dashboard
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/dashboard/summary` | `DashboardSummaryResponse` | 200, 401 | Autenticada | Contadores agregados para la vista principal del dashboard |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/dashboard/summary` | `DashboardSummaryResponse` | 200, 401, 403 | `dashboard:read` | Contadores agregados para la vista principal del dashboard |
 
 **`DashboardSummaryResponse`** — campos: `total_threats`, `pending_threats`, `total_alerts`, `unacknowledged_alerts`, `active_keywords`, `execution_logs_count`, `activity_count` (todos `int`).
 
@@ -89,10 +103,10 @@ Errores posibles:
 
 ### `/api/metrics` — Métricas Agregadas
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/metrics/summary` | `MetricsSummaryEndpointResponse` | 200, 401 | Autenticada | Totales de menciones, distribución de sentimientos y conteo de alertas |
-| GET | `/api/metrics/mentions` | `list[RecentMentionResponse]` | 200, 401 | Autenticada | Menciones recientes ordenadas por fecha de creación descendente |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/metrics/summary` | `MetricsSummaryEndpointResponse` | 200, 401, 403 | `metrics:read` | Totales de menciones, distribución de sentimientos y conteo de alertas |
+| GET | `/api/metrics/mentions` | `list[RecentMentionResponse]` | 200, 401, 403 | `mentions:read` | Menciones recientes ordenadas por fecha de creación descendente |
 
 **`MetricsSummaryEndpointResponse`** — campos: `total_mentions: int`, `sentiment_distribution: dict[str, int]`, `alerts_count: int`. Los campos con valor `None` se omiten de la respuesta (`response_model_exclude_none=True`).
 
@@ -104,11 +118,11 @@ Query params de `/api/metrics/mentions`: `limit` (entero 1–100, default 50).
 
 ### `/api/threats` — Detecciones de Amenazas
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/threats` | `list[ThreatListResponse]` | 200, 401 | Autenticada | Lista de amenazas con mención relacionada embebida, ordenadas por `detected_at` desc |
-| GET | `/api/threats/{threat_id}` | `ThreatDetail` | 200, 401, 404 | Autenticada | Detalle completo de una amenaza por `detection_id` |
-| PATCH | `/api/threats/{threat_id}/review` | `ThreatDetail` | 200, 401, 404 | Autenticada | Actualiza el estado de revisión de una amenaza |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/threats` | `list[ThreatListResponse]` | 200, 401, 403 | `threats:read` | Lista de amenazas con mención relacionada embebida, ordenadas por `detected_at` desc |
+| GET | `/api/threats/{threat_id}` | `ThreatDetail` | 200, 401, 403, 404 | `threats:read` | Detalle completo de una amenaza por `detection_id` |
+| PATCH | `/api/threats/{threat_id}/review` | `ThreatDetail` | 200, 401, 403, 404 | `threats:write` | Actualiza el estado de revisión de una amenaza |
 
 Query params de `GET /api/threats`: `limit` (1–100, default 50), `criticality_level` (`low` | `medium` | `high` | `critical`), `review_status` (`pending` | `reviewing` | `confirmed` | `false_positive` | `investigating` | `resolved`), `mention_id` (entero ≥ 1).
 
@@ -122,11 +136,11 @@ Query params de `GET /api/threats`: `limit` (1–100, default 50), `criticality_
 
 ### `/api/alerts` — Alertas
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/alerts` | `list[AlertResponse]` | 200, 401 | Autenticada | Lista de alertas ordenadas por `created_at` desc |
-| GET | `/api/alerts/{alert_id}` | `AlertResponse` | 200, 401, 404 | Autenticada | Detalle de una alerta por `alert_id` |
-| PATCH | `/api/alerts/{alert_id}/acknowledge` | `AlertResponse` | 200, 401, 404 | Autenticada | Marca una alerta como reconocida |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/alerts` | `list[AlertResponse]` | 200, 401, 403 | `alerts:read` | Lista de alertas ordenadas por `created_at` desc |
+| GET | `/api/alerts/{alert_id}` | `AlertResponse` | 200, 401, 403, 404 | `alerts:read` | Detalle de una alerta por `alert_id` |
+| PATCH | `/api/alerts/{alert_id}/acknowledge` | `AlertResponse` | 200, 401, 403, 404 | `alerts:write` | Marca una alerta como reconocida |
 
 Query params de `GET /api/alerts`: `limit` (1–100, default 50), `delivery_status` (`pending` | `sent` | `delivered` | `failed`), `acknowledged` (bool).
 
@@ -138,13 +152,13 @@ Query params de `GET /api/alerts`: `limit` (1–100, default 50), `delivery_stat
 
 ### `/api/keywords` — Keywords de Monitoreo
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/keywords` | `list[KeywordResponse]` | 200, 401 | Autenticada | Lista de keywords ordenadas por `keyword_id` asc |
-| POST | `/api/keywords` | `KeywordResponse` | 201, 401, 409 | Autenticada | Crea un nuevo keyword de monitoreo |
-| GET | `/api/keywords/{keyword_id}` | `KeywordResponse` | 200, 401, 404 | Autenticada | Detalle de un keyword por `keyword_id` |
-| PATCH | `/api/keywords/{keyword_id}` | `KeywordResponse` | 200, 401, 404, 409 | Autenticada | Actualización parcial de un keyword |
-| DELETE | `/api/keywords/{keyword_id}` | — | 204, 401, 404 | Autenticada | Elimina un keyword |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/keywords` | `list[KeywordResponse]` | 200, 401, 403 | `keywords:read` | Lista de keywords ordenadas por `keyword_id` asc |
+| POST | `/api/keywords` | `KeywordResponse` | 201, 401, 403, 409 | `keywords:write` | Crea un nuevo keyword de monitoreo |
+| GET | `/api/keywords/{keyword_id}` | `KeywordResponse` | 200, 401, 403, 404 | `keywords:read` | Detalle de un keyword por `keyword_id` |
+| PATCH | `/api/keywords/{keyword_id}` | `KeywordResponse` | 200, 401, 403, 404, 409 | `keywords:write` | Actualización parcial de un keyword |
+| DELETE | `/api/keywords/{keyword_id}` | — | 204, 401, 403, 404 | `keywords:delete` | Elimina un keyword |
 
 Query params de `GET /api/keywords`: `active_only` (bool, default `false`), `limit` (1–200, default 100).
 
@@ -158,10 +172,10 @@ Query params de `GET /api/keywords`: `active_only` (bool, default `false`), `lim
 
 ### `/api/logs` — Logs de Ejecución de Workflows
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/logs` | `list[ExecutionLogResponse]` | 200, 401 | Autenticada | Lista de logs ordenados por `started_at` desc |
-| GET | `/api/logs/{log_id}` | `ExecutionLogResponse` | 200, 401, 404 | Autenticada | Detalle de un log de ejecución por `log_id` |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/logs` | `list[ExecutionLogResponse]` | 200, 401, 403 | `logs:read` | Lista de logs ordenados por `started_at` desc |
+| GET | `/api/logs/{log_id}` | `ExecutionLogResponse` | 200, 401, 403, 404 | `logs:read` | Detalle de un log de ejecución por `log_id` |
 
 Query params de `GET /api/logs`: `limit` (1–100, default 50), `status` (`success` | `partial_success` | `error` | `warning` | `timeout`), `workflow_name` (1–100 caracteres).
 
@@ -171,10 +185,10 @@ Query params de `GET /api/logs`: `limit` (1–100, default 50), `status` (`succe
 
 ### `/api/activity` — Actividad de Usuarios
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| GET | `/api/activity` | `list[UserActivityResponse]` | 200, 401 | Autenticada | Log de actividad ordenado por `activity_timestamp` desc |
-| GET | `/api/activity/{activity_id}` | `UserActivityResponse` | 200, 401, 404 | Autenticada | Entrada de actividad por `activity_id` |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/activity` | `list[UserActivityResponse]` | 200, 401, 403 | `logs:read` | Log de actividad ordenado por `activity_timestamp` desc |
+| GET | `/api/activity/{activity_id}` | `UserActivityResponse` | 200, 401, 403, 404 | `logs:read` | Entrada de actividad por `activity_id` |
 
 Query params de `GET /api/activity`: `limit` (1–100, default 50), `username` (1–100 caracteres), `activity_type` (1–50 caracteres).
 
@@ -184,11 +198,11 @@ Query params de `GET /api/activity`: `limit` (1–100, default 50), `username` (
 
 ### `/api/users` — Administración de Usuarios del Sistema
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| POST | `/api/users` | `UserResponse` | 201, 401, 403, 409 | Solo Admin | Crea un nuevo usuario del sistema |
-| GET | `/api/users` | `list[UserResponse]` | 200, 401, 403 | Solo Admin | Lista todos los usuarios ordenados por username asc |
-| PATCH | `/api/users/{user_id}` | `UserResponse` | 200, 401, 403, 404 | Solo Admin | Actualización parcial de un usuario |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| POST | `/api/users` | `UserResponse` | 201, 401, 403, 409 | `users:write` | Crea un nuevo usuario del sistema |
+| GET | `/api/users` | `list[UserResponse]` | 200, 401, 403 | `users:read` | Lista todos los usuarios ordenados por username asc |
+| PATCH | `/api/users/{user_id}` | `UserResponse` | 200, 401, 403, 404 | `users:write` | Actualización parcial de un usuario |
 
 **`UserCreate`** — campos: `username` (1–100 caracteres, requerido), `password` (8–255 caracteres, requerido), `role` (`"admin"` | `"analyst"`, default `"analyst"`), `is_active` (bool, default `true`).
 
@@ -196,15 +210,38 @@ Query params de `GET /api/activity`: `limit` (1–100, default 50), `username` (
 
 **`UserResponse`** — excluye `password_hash`. Campos: `user_id`, `username`, `role`, `is_active`, `created_at`, `updated_at`.
 
-No existe endpoint de borrado físico de usuarios en Release 1.0. La desactivación se realiza via `PATCH` con `is_active: false`.
+No existe endpoint de borrado físico de usuarios. La desactivación se realiza via `PATCH` con `is_active: false`.
 
 ---
 
 ### `/api/n8n` — Proxy de Webhooks n8n
 
-| Método | Path | Response Model | Status Codes | Auth | Descripción |
-|--------|------|----------------|--------------|------|-------------|
-| POST | `/api/n8n/webhook/{webhook_id}` | Passthrough | 200, 401, 502 | Autenticada | Reenvía la solicitud al webhook interno de n8n y retorna su respuesta |
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| POST | `/api/n8n/webhook/{webhook_id}` | Passthrough | 200, 401, 403, 502 | `workflows:execute` | Reenvía la solicitud al webhook interno de n8n y retorna su respuesta |
+
+---
+
+### `/api/permissions` — Gestión de Permisos RBAC
+
+| Método | Path | Response Model | Status Codes | Permiso | Descripción |
+|--------|------|----------------|--------------|---------|-------------|
+| GET | `/api/permissions` | `PermissionMatrixResponse` | 200, 401, 403 | `permissions:read` | Retorna el catálogo completo de permisos y la asignación actual por rol |
+| PUT | `/api/permissions/roles/{role}` | `RolePermissionsResponse` | 200, 400, 401, 403 | `permissions:write` | Reemplaza el conjunto de permisos asignado a un rol |
+
+**`{role}`** — valor posible: `admin` o `analyst`.
+
+**`PermissionMatrixResponse`** — campos:
+- `permissions`: lista de entradas del catálogo (`permission_id`, `resource`, `action`, `permission` en formato `recurso:acción`, `description`, `created_at`, `updated_at`).
+- `role_permissions`: objeto `{ admin: string[], analyst: string[] }` con los permisos asignados actualmente a cada rol, ordenados alfabéticamente.
+
+**`RolePermissionsUpdate`** (body del PUT): `permissions: string[]` — lista de permisos en formato `recurso:acción` que reemplaza completamente la asignación del rol. Todas las entradas son normalizadas a minúsculas. Los permisos desconocidos producen `400 Bad Request`.
+
+**`RolePermissionsResponse`** — campos: `role: string`, `permissions: string[]`.
+
+Restricciones:
+- El rol `admin` no puede quedar sin el permiso `permissions:write` (garantía de al menos un administrador con capacidad de modificar permisos). Intentarlo produce `400 Bad Request`.
+- Solo se aceptan permisos que existan en el catálogo (`permissions` table). Permisos inexistentes producen `400 Bad Request` con la lista de claves desconocidas.
 
 ---
 
@@ -216,7 +253,7 @@ No existe endpoint de borrado físico de usuarios en Release 1.0. La desactivaci
 | `201 Created` | Recurso creado exitosamente (POST con body de respuesta) |
 | `204 No Content` | Eliminación exitosa (DELETE — sin cuerpo) |
 | `401 Unauthorized` | Token ausente, inválido o expirado. Incluye `WWW-Authenticate: Bearer` |
-| `403 Forbidden` | Token válido pero el usuario no tiene rol `admin` |
+| `403 Forbidden` | Token válido pero el claim `permissions` no incluye el permiso requerido para esa operación |
 | `404 Not Found` | El recurso identificado por el path param no existe |
 | `409 Conflict` | Violación de unicidad (username o keyword duplicados) |
 | `422 Unprocessable Entity` | Validación Pydantic fallida (body o query params malformados) |
@@ -237,7 +274,7 @@ El endpoint `POST /api/n8n/webhook/{webhook_id}` no declara un `response_model` 
 
 ### Usuarios — sin borrado físico
 
-En Release 1.0 no existe `DELETE /api/users/{user_id}`. La desactivación de cuentas se realiza exclusivamente vía `PATCH /api/users/{user_id}` con `{ "is_active": false }`.
+No existe `DELETE /api/users/{user_id}`. La desactivación de cuentas se realiza exclusivamente vía `PATCH /api/users/{user_id}` con `{ "is_active": false }`. El permiso `users:delete` está en el catálogo y asignado al rol `admin`, pero no hay endpoint correspondiente implementado.
 
 ### Bootstrap — ausencia de `user_id` en el token
 
@@ -246,6 +283,44 @@ Cuando el sistema opera en modo bootstrap (tabla `system_users` vacía), el JWT 
 ### Threats — join externo con `SocialMention`
 
 `GET /api/threats` realiza un `OUTER JOIN` con `social_mentions`. El campo `related_mention` en `ThreatListResponse` puede ser `null` si la mención fue eliminada o si el `mention_id` no tiene registro correspondiente.
+
+---
+
+## Modelo de permisos RBAC
+
+### Tablas involucradas
+
+| Tabla | Descripción |
+|-------|-------------|
+| `permissions` | Catálogo normalizado de permisos. Cada fila representa un par `(resource, action)` con una restricción `UNIQUE(resource, action)`. Los campos `permission_id`, `resource`, `action`, `description`, `created_at` y `updated_at` son los campos expuestos por la API. |
+| `role_permissions` | Tabla pivote que asigna permisos del catálogo a roles. Clave primaria compuesta `(role, permission_id)`. El campo `role` está restringido a `'admin'` o `'analyst'` mediante `CHECK constraint`. El borrado en cascada desde `permissions` elimina las asignaciones asociadas automáticamente. |
+
+Los permisos del catálogo son sembrados por `init.sql` con `ON CONFLICT DO NOTHING`, lo que hace la inserción idempotente.
+
+### Matriz de permisos por rol (valores por defecto)
+
+Los valores a continuación corresponden al seed de `init.sql`. Pueden ser modificados en runtime mediante `PUT /api/permissions/roles/{role}`.
+
+| Permiso | admin | analyst |
+|---------|:-----:|:-------:|
+| `alerts:read` | ✓ | ✓ |
+| `alerts:write` | ✓ | ✓ |
+| `dashboard:read` | ✓ | ✓ |
+| `keywords:delete` | ✓ | — |
+| `keywords:read` | ✓ | ✓ |
+| `keywords:write` | ✓ | — |
+| `logs:read` | ✓ | ✓ |
+| `mentions:read` | ✓ | ✓ |
+| `metrics:read` | ✓ | ✓ |
+| `permissions:read` | ✓ | — |
+| `permissions:write` | ✓ | — |
+| `threats:read` | ✓ | ✓ |
+| `threats:write` | ✓ | ✓ |
+| `users:delete` | ✓ | — |
+| `users:read` | ✓ | — |
+| `users:write` | ✓ | — |
+| `workflows:execute` | ✓ | ✓ |
+| `workflows:read` | ✓ | ✓ |
 
 ---
 
