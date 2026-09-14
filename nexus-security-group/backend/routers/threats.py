@@ -113,7 +113,7 @@ def review_threat(
 
     threat.review_status = request.review_status
     threat.review_notes = request.review_notes
-    threat.reviewed_by = request.reviewed_by
+    threat.reviewed_by = current_user.username
     threat.remediation_status = request.remediation_status
 
     if (

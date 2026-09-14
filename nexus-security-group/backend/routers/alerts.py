@@ -63,7 +63,7 @@ def acknowledge_alert(
         )
 
     alert.acknowledged = True
-    alert.acknowledged_by = request.acknowledged_by
+    alert.acknowledged_by = current_user.username
     alert.acknowledged_at = datetime.now(timezone.utc)
 
     db.commit()
