@@ -17,7 +17,7 @@ export async function fetchDashboardSummary(token: string | null) {
   });
 
   if (!res.ok) {
-    return null;
+    throw new Error(`Failed to fetch dashboard summary: ${res.status}`);
   }
 
   return res.json() as Promise<DashboardSummaryResponse>;

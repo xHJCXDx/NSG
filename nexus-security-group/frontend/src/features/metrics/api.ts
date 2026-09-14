@@ -17,7 +17,7 @@ export async function fetchMetricsSummary(token: string | null) {
   });
 
   if (!res.ok) {
-    return null;
+    throw new Error(`Failed to fetch metrics summary: ${res.status}`);
   }
 
   return res.json() as Promise<MetricsSummary>;

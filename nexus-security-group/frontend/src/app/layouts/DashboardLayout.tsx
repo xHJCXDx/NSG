@@ -1,11 +1,10 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth';
 import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert, Users } from 'lucide-react';
 
 export function DashboardLayout() {
   const { hasPermission, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -38,20 +37,26 @@ export function DashboardLayout() {
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
             return (
-              <button
+              <NavLink
                 key={item.name}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
-                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                }`}
+                to={item.path}
+                end={item.path === '/'}
+                className={({ isActive }) =>
+                  `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
+                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                  }`
+                }
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
-                <span className="font-medium">{item.name}</span>
-              </button>
+                {({ isActive }) => (
+                  <>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
+                    <span className="font-medium">{item.name}</span>
+                  </>
+                )}
+              </NavLink>
             );
           })}
         </nav>

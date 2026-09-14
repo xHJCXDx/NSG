@@ -10,12 +10,12 @@ describe('token storage and auth headers', () => {
   it('preserves the localStorage token key contract', () => {
     setToken('fake-jwt');
 
-    expect(localStorage.getItem('token')).toBe('fake-jwt');
+    expect(localStorage.getItem('nsg:auth:token')).toBe('fake-jwt');
     expect(getToken()).toBe('fake-jwt');
 
     removeToken();
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('nsg:auth:token')).toBeNull();
     expect(getToken()).toBeNull();
   });
 
