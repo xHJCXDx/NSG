@@ -1,4 +1,3 @@
-import { useAuth } from '../../auth';
 import { ThreatEmptyState } from '../components/ThreatEmptyState';
 import { ThreatErrorState } from '../components/ThreatErrorState';
 import { ThreatsList } from '../components/ThreatsList';
@@ -7,8 +6,7 @@ import { THREATS_COPY } from '../contract';
 import { useThreats } from '../hooks/useThreats';
 
 export function ThreatsPage() {
-  const { token } = useAuth();
-  const { filteredThreats, status, error, filters, setFilters, availableFilters, emptyReason, reload } = useThreats(token);
+  const { filteredThreats, status, error, filters, setFilters, availableFilters, emptyReason, reload } = useThreats();
 
   return (
     <section className="space-y-6">

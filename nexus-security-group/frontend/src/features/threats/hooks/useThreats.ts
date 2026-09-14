@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../auth';
 import { fetchThreats } from '../api';
 import type { ThreatFilters, ThreatLoadStatus } from '../types';
 
@@ -7,7 +8,8 @@ const initialFilters: ThreatFilters = { search: '', severity: '', classification
 
 export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 
-export function useThreats(token: string | null) {
+export function useThreats() {
+  const { token } = useAuth();
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
 
   const { data: threats = [], isLoading, isError, refetch } = useQuery({

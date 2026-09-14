@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../auth';
 import { fetchMentions } from '../api';
 import type { MentionFilters, MentionLoadStatus } from '../types';
 
@@ -7,7 +8,8 @@ const initialFilters: MentionFilters = { search: '', platform: '' };
 
 export type MentionEmptyReason = 'initial-empty' | 'no-results';
 
-export function useMentions(token: string | null) {
+export function useMentions() {
+  const { token } = useAuth();
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
 
   const { data: mentions = [], isLoading, isError } = useQuery({

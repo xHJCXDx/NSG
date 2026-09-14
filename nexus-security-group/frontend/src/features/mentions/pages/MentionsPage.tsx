@@ -1,4 +1,3 @@
-import { useAuth } from '../../auth';
 import { MentionEmptyState } from '../components/MentionEmptyState';
 import { MentionErrorState } from '../components/MentionErrorState';
 import { MentionsList } from '../components/MentionsList';
@@ -7,8 +6,7 @@ import { MENTIONS_COPY } from '../contract';
 import { useMentions } from '../hooks/useMentions';
 
 export function MentionsPage() {
-  const { token } = useAuth();
-  const { filteredMentions, status, error, filters, setFilters, emptyReason } = useMentions(token);
+  const { filteredMentions, status, error, filters, setFilters, emptyReason } = useMentions();
 
   return (
     <section className="space-y-6">

@@ -3,14 +3,18 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
+import { AuthProvider } from '../../auth';
 import * as threatsApi from '../api';
 import type { Threat } from '../types';
 import { useThreats } from './useThreats';
 
 function createWrapper() {
   const queryClient = createTestQueryClient();
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>{children}</AuthProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -45,7 +49,7 @@ describe('useThreats', () => {
   it('loads threats and exposes success state', async () => {
     vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(threats);
 
-    const { result } = renderHook(() => useThreats('fake-jwt'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
     expect(result.current.status).toBe('loading');
 
@@ -57,7 +61,7 @@ describe('useThreats', () => {
   it('uses empty state when the response has no threats', async () => {
     vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue([]);
 
-    const { result } = renderHook(() => useThreats('fake-jwt'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.status).toBe('empty'));
     expect(result.current.emptyReason).toBe('initial-empty');
@@ -69,7 +73,7 @@ describe('useThreats', () => {
       .mockRejectedValueOnce(new Error('network down'))
       .mockResolvedValueOnce(threats);
 
-    const { result } = renderHook(() => useThreats('fake-jwt'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.status).toBe('error'));
     expect(result.current.error).toBe('Failed to load threats');
@@ -82,7 +86,7 @@ describe('useThreats', () => {
   it('filters by loaded text, severity, and classification fields', async () => {
     vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(threats);
 
-    const { result } = renderHook(() => useThreats('fake-jwt'), { wrapper: createWrapper() });
+    const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));
 
     act(() => result.current.setFilters({ search: 'lookalike', severity: '', classification: '' }));
