@@ -16,6 +16,9 @@ const toOptionalString = (value: string | number | null | undefined) =>
   value === null || value === undefined || value === '' ? undefined : String(value);
 
 export const mapRawMention = (raw: RawMention): Mention => {
+  if (!toOptionalString(raw.id ?? raw.mention_id)) {
+    console.warn('Backend returned item without ID, using generated fallback');
+  }
   const id = toOptionalString(raw.id ?? raw.mention_id) ?? crypto.randomUUID();
   const text = toOptionalString(raw.text ?? raw.text_content ?? raw.content ?? raw.summary) ?? '';
   const platform = toOptionalString(raw.platform ?? raw.source) ?? 'other';

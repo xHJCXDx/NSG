@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS sentiment_analysis (
     textblob_subjectivity NUMERIC(4,3) CHECK (textblob_subjectivity BETWEEN 0 AND 1),
 
     final_sentiment_score NUMERIC(5,4) CHECK (final_sentiment_score BETWEEN -1 AND 1) NOT NULL,
-    sentiment_label VARCHAR(20) CHECK (sentiment_label IN ('positive', 'neutral', 'negative', 'mixed')) NOT NULL,
+    sentiment_label VARCHAR(20) CHECK (sentiment_label IN ('positive', 'neutral', 'negative')) NOT NULL,
     confidence_score NUMERIC(4,3) CHECK (confidence_score BETWEEN 0 AND 1),
 
     analysis_method VARCHAR(50) NOT NULL,

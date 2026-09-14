@@ -1,7 +1,0 @@
-{
-  "deprecated": true,
-  "reason": "The previous root Appsmith dashboard was an empty canvas placeholder.",
-  "replacement": "appsmith/appsmith-export.json",
-  "setupGuide": "appsmith/README.md",
-  "notes": "Use the structured appsmith/ demo pack for import/manual setup. Repository values are placeholders only; configure real credentials inside Appsmith runtime."
-}

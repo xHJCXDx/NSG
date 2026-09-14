@@ -16,6 +16,7 @@ SELECT
     alerts_today,
     unacknowledged_alerts
 FROM daily_activity_summary
+ORDER BY report_date DESC
 LIMIT 1;
 
 -- name: MentionTrend_ByDatePlatformSentiment

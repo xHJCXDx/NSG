@@ -63,6 +63,9 @@ const mapRelatedMention = (raw?: RawRelatedMention | null): RelatedMention | und
 };
 
 export const mapRawThreat = (raw: RawThreat): Threat => {
+  if (!toOptionalString(raw.detection_id ?? raw.id)) {
+    console.warn('Backend returned item without ID, using generated fallback');
+  }
   const id = toOptionalString(raw.detection_id ?? raw.id) ?? crypto.randomUUID();
   const mentionId = toOptionalString(raw.mention_id);
   const type = toOptionalString(raw.threat_type ?? raw.type) ?? 'unknown';

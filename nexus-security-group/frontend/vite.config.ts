@@ -15,6 +15,7 @@ export default defineConfig({
       '/api': {
         target: 'http://dashboard-api:8000',
         changeOrigin: true,
+        // TLS verification disabled for local development proxy
         secure: false,
       }
     }
