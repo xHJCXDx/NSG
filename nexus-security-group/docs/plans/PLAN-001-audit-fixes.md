@@ -41,7 +41,7 @@
 | M25 | ✅ DONE | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
 | M26 | ✅ DONE | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
 | M27 | ✅ DONE | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
-| M28 | LOW | Backend | Schema muerto MetricsSummaryResponse | backend/schemas/metrics.py |
+| M28 | ✅ DONE | Backend | Schema muerto MetricsSummaryResponse | backend/schemas/metrics.py |
 
 ---
 
@@ -1150,7 +1150,7 @@ Crear un wrapper de `fetch` que inyecte auth headers automaticamente y maneje 40
 
 ---
 
-### M28 — Eliminar schema muerto MetricsSummaryResponse [LOW]
+### M28 — Eliminar schema muerto MetricsSummaryResponse [LOW] ✅ COMPLETADO
 
 **Archivos a modificar:**
 - `backend/schemas/metrics.py`

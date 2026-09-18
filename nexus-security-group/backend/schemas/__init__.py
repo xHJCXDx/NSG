@@ -11,9 +11,7 @@ from schemas.log import ExecutionLogResponse
 from schemas.mention import MentionDetail, MentionListItem
 from schemas.metrics import (
     MetricsSummaryEndpointResponse,
-    MetricsSummaryResponse,
     RecentMentionResponse,
-    SentimentDistribution,
 )
 from schemas.dashboard import DashboardSummaryResponse
 from schemas.permission import PermissionMatrixResponse, PermissionResponse, RolePermissionsResponse, RolePermissionsUpdate
@@ -33,9 +31,7 @@ __all__ = [
     "TokenData",
     # metrics
     "MetricsSummaryEndpointResponse",
-    "MetricsSummaryResponse",
     "RecentMentionResponse",
-    "SentimentDistribution",
     # mention
     "MentionListItem",
     "MentionDetail",
