@@ -32,7 +32,7 @@
 | M16 | ✅ DONE | Backend | Indices en columnas de filtrado | backend/models/*.py |
 | M17 | ✅ DONE | Backend | get_db() con rollback explicito | backend/database.py |
 | M18 | ✅ DONE | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
-| M19 | MEDIUM | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
+| M19 | ✅ DONE | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
 | M20 | MEDIUM | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
 | M21 | MEDIUM | Backend | Actualizar dependencias | backend/requirements.txt |
 | M22 | MEDIUM | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
@@ -971,7 +971,7 @@ Agregar imports: `from pydantic import model_validator`.
 
 ---
 
-### M19 — Remover console.warn en produccion [MEDIUM]
+### M19 — Remover console.warn en produccion [MEDIUM] ✅ COMPLETADO
 
 **Problema:** `console.warn` llega al browser del usuario en produccion.
 
