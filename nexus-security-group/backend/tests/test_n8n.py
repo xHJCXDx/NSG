@@ -19,7 +19,7 @@ N8N_PATH = Path(__file__).parent.parent / "routers" / "n8n.py"
 @pytest.fixture(autouse=True)
 def auth_env(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-that-is-at-least-32-characters-long")
     monkeypatch.setenv("ADMIN_USER", "test-admin")
     monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
 

@@ -31,7 +31,7 @@
 | M15 | ✅ DONE | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py |
 | M16 | ✅ DONE | Backend | Indices en columnas de filtrado | backend/models/*.py |
 | M17 | ✅ DONE | Backend | get_db() con rollback explicito | backend/database.py |
-| M18 | MEDIUM | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
+| M18 | ✅ DONE | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
 | M19 | MEDIUM | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
 | M20 | MEDIUM | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
 | M21 | MEDIUM | Backend | Actualizar dependencias | backend/requirements.txt |
@@ -931,7 +931,7 @@ workflow_name = Column(String(100), ..., index=True)
 
 ---
 
-### M18 — JWT_SECRET_KEY validacion de longitud [MEDIUM]
+### M18 — JWT_SECRET_KEY validacion de longitud [MEDIUM] ✅ COMPLETADO
 
 **Problema:** Un secreto de 4 caracteres es valido. Insuficiente para seguridad.
 

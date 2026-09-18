@@ -49,7 +49,7 @@ class PermissionAccessError:
 @pytest.fixture(autouse=True)
 def auth_env(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-that-is-at-least-32-characters-long")
     monkeypatch.setenv("ADMIN_USER", "test-admin")
     monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
 
@@ -96,7 +96,7 @@ async def test_login_success():
     body = response.json()
     assert "access_token" in body
     assert body["token_type"] == "bearer"
-    claims = jwt.decode(body["access_token"], "test-jwt-secret", algorithms=["HS256"])
+    claims = jwt.decode(body["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
     assert claims["role"] == "admin"
     assert claims["auth_source"] == "bootstrap"
     assert claims["permissions"] == auth.ADMIN_PERMISSION_CLAIMS
@@ -137,7 +137,7 @@ async def test_login_db_user_success():
     app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret", algorithms=["HS256"])
+    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
     assert claims["sub"] == "analyst1"
     assert claims["role"] == "analyst"
     assert claims["auth_source"] == "database"
@@ -169,7 +169,7 @@ async def test_login_db_user_handles_unavailable_permissions_relation():
     app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret", algorithms=["HS256"])
+    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
     assert claims["permissions"] == []
 
 
