@@ -24,7 +24,7 @@
 | M08 | ✅ DONE | Backend | Health check con verificacion DB | backend/main.py, tests/* |
 | M09 | ✅ DONE | Backend | Exception handler global | backend/main.py |
 | M10 | ✅ DONE | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
-| M11 | HIGH | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
+| M11 | ✅ DONE | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
 | M12 | HIGH | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
 | M13 | HIGH | Backend | Security headers middleware | backend/main.py |
 | M14 | HIGH | Backend | Dockerfile non-root user | backend/Dockerfile |
@@ -647,7 +647,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 ---
 
-### M11 — Validacion de expiracion JWT en cliente [HIGH]
+### M11 — Validacion de expiracion JWT en cliente [HIGH] ✅ COMPLETADO
 
 **Problema:** `isAuthenticated: !!token` no verifica que el token no haya expirado. Usuario con token expirado ve el dashboard hasta que el backend rechace.
 

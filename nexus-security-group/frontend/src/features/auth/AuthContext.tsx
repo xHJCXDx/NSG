@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { decodeTokenClaims, type TokenClaims } from '../../shared/auth/decodeTokenClaims';
 import { getToken, removeToken, setToken as saveToken } from '../../shared/storage/tokenStorage';
 
@@ -17,11 +17,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isTokenExpired(claims: TokenClaims): boolean {
+  if (claims.exp === undefined) return false;
+  return Date.now() >= claims.exp * 1000;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(getToken());
   const claims = decodeTokenClaims(token);
   const permissions = claims.permissions ?? [];
   const hasPermission = (resource: string, action: string) => permissions.includes(`${resource}:${action}`);
+
+  useEffect(() => {
+    if (token && isTokenExpired(decodeTokenClaims(token))) {
+      removeToken();
+      setToken(null);
+    }
+  }, [token]);
 
   const login = (newToken: string) => {
     saveToken(newToken);
@@ -39,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         login,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: !!token && !isTokenExpired(claims),
         claims,
         permissions,
         hasPermission,

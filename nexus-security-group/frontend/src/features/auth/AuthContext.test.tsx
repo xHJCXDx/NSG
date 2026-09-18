@@ -79,6 +79,35 @@ describe('AuthProvider behavior', () => {
     expect(screen.getByText('admin: yes')).toBeInTheDocument();
   });
 
+  it('treats a token with exp in the past as unauthenticated and clears it from storage', () => {
+    const pastExp = Math.floor(Date.now() / 1000) - 3600;
+    setToken(makeToken({ role: 'analyst', exp: pastExp }));
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText('status: anonymous')).toBeInTheDocument();
+    expect(getToken()).toBeNull();
+  });
+
+  it('treats a token with exp in the future as authenticated', () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    setToken(makeToken({ role: 'analyst', exp: futureExp }));
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText('status: authenticated')).toBeInTheDocument();
+    expect(screen.getByText('role: analyst')).toBeInTheDocument();
+    expect(getToken()).not.toBeNull();
+  });
+
   it('keeps malformed tokens authenticated but non-admin for presentation claims', () => {
     setToken('malformed-token');
 
