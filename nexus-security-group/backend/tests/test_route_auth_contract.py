@@ -128,10 +128,19 @@ def test_backend_api_routes_have_explicit_auth_contracts():
 
 
 def test_public_health_route_remains_intentionally_public():
-    response = TestClient(app).get("/api/health")
+    class FakeDb:
+        def connection(self):
+            return None
 
-    assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    app.dependency_overrides[get_db] = lambda: FakeDb()
+    try:
+        response = TestClient(app).get("/api/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["db"] == "connected"
+    finally:
+        app.dependency_overrides.pop(get_db, None)
 
 
 def test_private_routes_reject_missing_bearer_token_before_handler_logic():

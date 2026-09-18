@@ -21,7 +21,7 @@
 | M05 | ✅ DONE | Frontend | Ruta 404 | frontend/src/app/pages/NotFoundPage.tsx, frontend/src/app/router/AppRouter.tsx |
 | M06 | ✅ DONE | Frontend | Corregir 4 tests rotos | DashboardLayout.test.tsx, dashboard/api.test.ts, metrics/api.test.ts |
 | M07 | ✅ DONE | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
-| M08 | HIGH | Backend | Health check con verificacion DB | backend/main.py |
+| M08 | ✅ DONE | Backend | Health check con verificacion DB | backend/main.py, tests/* |
 | M09 | HIGH | Backend | Exception handler global | backend/main.py |
 | M10 | HIGH | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
 | M11 | HIGH | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
@@ -502,7 +502,7 @@ async def login_for_access_token(request: Request, ...):
 
 ---
 
-### M08 — Health check con verificacion DB [HIGH]
+### M08 — Health check con verificacion DB [HIGH] ✅ COMPLETADO
 
 **Problema:** El health check devuelve `200 healthy` aunque la DB este caida.
 

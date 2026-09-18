@@ -139,7 +139,7 @@ def test_get_threats_lists_recent_detections_with_limit():
     query = FakeQuery(all_result=[(threat, mention)])
     fake_db = FakeDb(query)
 
-    result = get_threats(db=fake_db, limit=7, current_user=object())
+    result = get_threats(db=fake_db, limit=7, current_user=SimpleNamespace(username="test-user"))
 
     assert result == [
         {
@@ -181,7 +181,7 @@ def test_get_threats_applies_supported_filters_before_limit():
         criticality_level="critical",
         review_status="pending",
         mention_id=20,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     assert result == []
@@ -194,7 +194,7 @@ def test_get_threats_limit_defaults_to_fifty_when_called_directly():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
 
-    result = get_threats(db=fake_db, current_user=object())
+    result = get_threats(db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == []
     assert query.limit_value == 50
@@ -205,7 +205,7 @@ def test_get_threat_returns_detail_by_detection_id():
     query = FakeQuery(first_result=threat)
     fake_db = FakeDb(query)
 
-    result = get_threat(threat_id=42, db=fake_db, current_user=object())
+    result = get_threat(threat_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     detail = ThreatDetail.model_validate(result)
 
@@ -220,7 +220,7 @@ def test_get_threat_raises_404_when_detection_is_missing():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_threat(threat_id=999, db=fake_db, current_user=object())
+        get_threat(threat_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Threat detection not found"
@@ -233,7 +233,6 @@ def test_review_threat_updates_fields_commits_refreshes_and_returns_detail():
     request = ThreatReviewRequest(
         review_status="confirmed",
         review_notes="Verified by analyst",
-        reviewed_by="analyst@example.com",
         remediation_status="in_progress",
     )
 
@@ -241,7 +240,7 @@ def test_review_threat_updates_fields_commits_refreshes_and_returns_detail():
         threat_id=42,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     detail = ThreatDetail.model_validate(result)
@@ -249,7 +248,7 @@ def test_review_threat_updates_fields_commits_refreshes_and_returns_detail():
     assert result == threat
     assert threat.review_status == "confirmed"
     assert threat.review_notes == "Verified by analyst"
-    assert threat.reviewed_by == "analyst@example.com"
+    assert threat.reviewed_by == "test-user"
     assert threat.remediation_status == "in_progress"
     assert fake_db.committed is True
     assert fake_db.refreshed == [threat]
@@ -268,7 +267,7 @@ def test_review_threat_raises_404_when_detection_is_missing_and_does_not_commit(
             threat_id=999,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 404
@@ -287,7 +286,7 @@ def test_review_threat_sets_timezone_aware_reviewed_at():
         threat_id=10,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     assert threat.reviewed_at is not None

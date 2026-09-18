@@ -111,7 +111,7 @@ def test_get_alerts_lists_recent_alerts_with_limit():
     query = FakeQuery(all_result=[alert])
     fake_db = FakeDb(query)
 
-    result = get_alerts(db=fake_db, limit=7, current_user=object())
+    result = get_alerts(db=fake_db, limit=7, current_user=SimpleNamespace(username="test-user"))
 
     assert result == [alert]
     assert len(fake_db.query_args) == 1
@@ -131,7 +131,7 @@ def test_get_alerts_applies_supported_status_filters_before_limit():
         limit=25,
         delivery_status="failed",
         acknowledged=False,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     assert result == []
@@ -144,7 +144,7 @@ def test_get_alerts_limit_defaults_to_fifty_when_called_directly():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
 
-    result = get_alerts(db=fake_db, current_user=object())
+    result = get_alerts(db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == []
     assert query.limit_value == 50
@@ -155,7 +155,7 @@ def test_get_alert_returns_detail_by_alert_id():
     query = FakeQuery(first_result=alert)
     fake_db = FakeDb(query)
 
-    result = get_alert(alert_id=42, db=fake_db, current_user=object())
+    result = get_alert(alert_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     detail = AlertResponse.model_validate(result)
     assert result == alert
@@ -170,7 +170,7 @@ def test_get_alert_raises_404_when_alert_is_missing():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_alert(alert_id=999, db=fake_db, current_user=object())
+        get_alert(alert_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Alert not found"
@@ -180,27 +180,27 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     alert = _alert_row(alert_id=42)
     query = FakeQuery(first_result=alert)
     fake_db = FakeDb(query)
-    request = AcknowledgeRequest(acknowledged_by="analyst@example.com")
+    request = AcknowledgeRequest(acknowledged_by="ignored-value")
 
     result = acknowledge_alert(
         alert_id=42,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     response = AlertResponse.model_validate(result)
 
     assert result == alert
     assert alert.acknowledged is True
-    assert alert.acknowledged_by == "analyst@example.com"
+    assert alert.acknowledged_by == "test-user"
     assert alert.acknowledged_at is not None
     assert fake_db.committed is True
     assert fake_db.refreshed == [alert]
     assert query.filter_args
     assert response.alert_id == 42
     assert response.acknowledged is True
-    assert response.acknowledged_by == "analyst@example.com"
+    assert response.acknowledged_by == "test-user"
 
 
 def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit():
@@ -213,7 +213,7 @@ def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit(
             alert_id=999,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 404
@@ -232,7 +232,7 @@ def test_acknowledge_alert_sets_timezone_aware_acknowledged_at():
         alert_id=10,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
 
     assert alert.acknowledged_at is not None

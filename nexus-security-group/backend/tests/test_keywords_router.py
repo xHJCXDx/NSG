@@ -143,7 +143,7 @@ def test_get_keywords_lists_keywords_with_default_limit():
     query = FakeQuery(all_result=[keyword])
     fake_db = FakeDb(query)
 
-    result = get_keywords(db=fake_db, current_user=object())
+    result = get_keywords(db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == [keyword]
     assert len(fake_db.query_args) == 1
@@ -159,7 +159,7 @@ def test_get_keywords_filters_active_keywords_when_requested():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
 
-    result = get_keywords(active_only=True, limit=25, db=fake_db, current_user=object())
+    result = get_keywords(active_only=True, limit=25, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == []
     assert len(query.filter_args) == 1
@@ -184,7 +184,7 @@ def test_create_keyword_adds_commits_refreshes_and_returns_response_valid_object
         description="Critical data exposure keyword",
     )
 
-    result = create_keyword(request=request, db=fake_db, current_user=object())
+    result = create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
     response = KeywordResponse.model_validate(result)
 
     assert fake_db.added == [result]
@@ -205,7 +205,7 @@ def test_create_keyword_returns_409_for_duplicate_keyword():
     request = KeywordCreate(keyword_text="credential leak")
 
     with pytest.raises(HTTPException) as exc_info:
-        create_keyword(request=request, db=fake_db, current_user=object())
+        create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Keyword already exists"
@@ -218,7 +218,7 @@ def test_get_keyword_returns_detail_by_keyword_id():
     query = FakeQuery(first_result=keyword)
     fake_db = FakeDb(query)
 
-    result = get_keyword(keyword_id=42, db=fake_db, current_user=object())
+    result = get_keyword(keyword_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     detail = KeywordResponse.model_validate(result)
 
@@ -233,7 +233,7 @@ def test_get_keyword_raises_404_when_keyword_is_missing():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_keyword(keyword_id=999, db=fake_db, current_user=object())
+        get_keyword(keyword_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Keyword not found"
@@ -249,7 +249,7 @@ def test_update_keyword_changes_only_provided_fields_commits_and_refreshes():
         keyword_id=42,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
     response = KeywordResponse.model_validate(result)
 
@@ -277,7 +277,7 @@ def test_update_keyword_returns_409_for_duplicate_keyword_text():
             keyword_id=42,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 409
@@ -296,7 +296,7 @@ def test_update_keyword_raises_404_when_missing_and_does_not_commit():
             keyword_id=999,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 404
@@ -310,7 +310,7 @@ def test_delete_keyword_deletes_and_commits():
     query = FakeQuery(first_result=keyword)
     fake_db = FakeDb(query)
 
-    result = delete_keyword(keyword_id=42, db=fake_db, current_user=object())
+    result = delete_keyword(keyword_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result is None
     assert fake_db.deleted == [keyword]
@@ -323,7 +323,7 @@ def test_delete_keyword_raises_404_when_missing_and_does_not_commit():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        delete_keyword(keyword_id=999, db=fake_db, current_user=object())
+        delete_keyword(keyword_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Keyword not found"

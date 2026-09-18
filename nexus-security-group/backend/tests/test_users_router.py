@@ -143,7 +143,10 @@ def test_user_without_users_write_cannot_create_users():
 
 
 def test_duplicate_username_returns_409_and_does_not_commit():
-    fake_db = FakeDb(first_result=object())
+    fake_db = FakeDb(
+        first_result=None,
+        commit_exception=IntegrityError("duplicate", params=None, orig=None),
+    )
     request = UserCreate(username="analyst1", password="secret123")
     admin = TokenData(username="root", role="admin", auth_source="bootstrap")
 
@@ -151,8 +154,7 @@ def test_duplicate_username_returns_409_and_does_not_commit():
         create_user(request=request, db=fake_db, current_user=admin)
 
     assert exc_info.value.status_code == 409
-    assert fake_db.added == []
-    assert fake_db.committed is False
+    assert fake_db.rolled_back is True
 
 
 def test_create_user_rolls_back_integrity_error_and_returns_409():

@@ -2,13 +2,15 @@ import logging
 import time
 import uuid
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from auth import router as auth_router
 from config import settings
+from database import get_db
 from rate_limit import limiter
 from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, threats, users
 
@@ -65,5 +67,12 @@ app.include_router(permissions.router)
 app.include_router(users.router)
 
 @app.get("/api/health")
-def health_check():
-    return {"status": "healthy"}
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.connection()
+        return {"status": "healthy", "db": "connected"}
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        )

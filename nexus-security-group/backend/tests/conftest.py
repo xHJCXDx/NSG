@@ -17,3 +17,8 @@ os.environ.setdefault("ADMIN_PASSWORD", "test-admin-password")
 # after test env setup prevents those stubs from leaking into tests that import
 # the full FastAPI app from `main` and expect `/api/auth/login` to exist.
 import auth  # noqa: F401, E402
+
+# Disable rate limiting during tests to prevent 429 responses when multiple
+# login tests run in rapid succession.
+from rate_limit import limiter  # noqa: E402
+limiter.enabled = False
