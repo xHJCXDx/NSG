@@ -16,7 +16,7 @@
 |---|-----------|------|-------------|----------|
 | M01 | ✅ DONE | Backend | Reemplazar python-jose por PyJWT | backend/auth.py, backend/requirements.txt, backend/tests/test_auth.py |
 | M02 | ✅ DONE | Backend | Agregar logging estructurado | backend/main.py, backend/auth.py, todos los routers |
-| M03 | CRITICAL | Backend | Rate limiting en login | backend/main.py, backend/requirements.txt |
+| M03 | ✅ DONE | Backend | Rate limiting en login | backend/main.py, backend/auth.py, backend/rate_limit.py, backend/requirements.txt |
 | M04 | CRITICAL | Frontend | Error boundaries | frontend/src/app/ |
 | M05 | CRITICAL | Frontend | Ruta 404 | frontend/src/app/router/AppRouter.tsx |
 | M06 | CRITICAL | Frontend | Corregir 4 tests rotos | frontend/src/ (4 archivos) |
@@ -192,7 +192,7 @@
 
 ---
 
-### M03 — Rate limiting en login [CRITICAL]
+### M03 — Rate limiting en login [CRITICAL] ✅ COMPLETADO
 
 **Problema:** `/api/auth/login` sin proteccion contra fuerza bruta. Un atacante puede probar passwords sin restriccion.
 

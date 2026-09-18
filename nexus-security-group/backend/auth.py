@@ -6,10 +6,11 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import bcrypt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 logger = logging.getLogger("nsg.auth")
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from rate_limit import limiter
 import jwt
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import SQLAlchemyError
@@ -183,7 +184,9 @@ def require_permission(resource: str, action: str):
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 async def login_for_access_token(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):

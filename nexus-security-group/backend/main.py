@@ -5,8 +5,11 @@ import uuid
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from auth import router as auth_router
+from rate_limit import limiter
 from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, threats, users
 
 logging.basicConfig(
@@ -17,6 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger("nsg")
 
 app = FastAPI(title="Dashboard API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
