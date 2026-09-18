@@ -11,6 +11,7 @@ from schemas.auth import TokenData
 
 PUBLIC_ROUTE_EXCEPTIONS = {
     ("/api/auth/login", "POST"): "Credential exchange: intentionally public.",
+    ("/api/auth/logout", "POST"): "Client-side logout acknowledgment: intentionally public.",
     ("/api/health", "GET"): "Operational health probe: intentionally public.",
 }
 

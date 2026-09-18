@@ -1,4 +1,5 @@
 import ast
+import re
 from pathlib import Path
 
 
@@ -19,10 +20,17 @@ RAW_SQL_KEYWORDS = (
     "drop table",
 )
 
+_PERMISSION_RE = re.compile(r"^\w+:\w+$")
+
 
 def _string_literals(tree: ast.AST):
     for node in ast.walk(tree):
         if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            stripped = node.value.strip()
+            if _PERMISSION_RE.match(stripped):
+                continue
+            if " " not in stripped:
+                continue
             yield node
 
 

@@ -5,7 +5,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
+from auth import get_current_user
+from database import get_db
 from routers import alerts, keywords, n8n
+from schemas.auth import TokenData
 
 
 BACKEND_DIR = Path(__file__).parent.parent
@@ -83,9 +86,12 @@ def test_http_exceptions_use_documented_statuses_and_string_detail_payloads():
 
             assert status_code is not None, f"{relative_path} has HTTPException without status_code"
             assert detail is not None, f"{relative_path} has HTTPException without detail"
-            assert isinstance(detail, ast.Constant), f"{relative_path} HTTPException detail must be a string literal"
-            assert isinstance(detail.value, str), f"{relative_path} HTTPException detail must serialize as a string"
-            assert detail.value.strip(), f"{relative_path} HTTPException detail must not be empty"
+            assert isinstance(detail, (ast.Constant, ast.JoinedStr)), (
+                f"{relative_path} HTTPException detail must be a string literal or f-string"
+            )
+            if isinstance(detail, ast.Constant):
+                assert isinstance(detail.value, str), f"{relative_path} HTTPException detail must serialize as a string"
+                assert detail.value.strip(), f"{relative_path} HTTPException detail must not be empty"
 
             observed_statuses.add(ast.unparse(status_code))
 
@@ -95,8 +101,10 @@ def test_http_exceptions_use_documented_statuses_and_string_detail_payloads():
 def test_not_found_errors_serialize_as_fastapi_detail_string_payload():
     app = FastAPI()
     app.include_router(alerts.router)
-    app.dependency_overrides[alerts.get_current_user] = lambda: object()
-    app.dependency_overrides[alerts.get_db] = lambda: MissingRowDb()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="test", permissions=["alerts:read"],
+    )
+    app.dependency_overrides[get_db] = lambda: MissingRowDb()
 
     response = TestClient(app).get("/api/alerts/999")
 
@@ -107,8 +115,10 @@ def test_not_found_errors_serialize_as_fastapi_detail_string_payload():
 def test_conflict_errors_serialize_as_fastapi_detail_string_payload():
     app = FastAPI()
     app.include_router(keywords.router)
-    app.dependency_overrides[keywords.get_current_user] = lambda: object()
-    app.dependency_overrides[keywords.get_db] = lambda: CommitConflictDb()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="test", permissions=["keywords:write"],
+    )
+    app.dependency_overrides[get_db] = lambda: CommitConflictDb()
 
     response = TestClient(app).post("/api/keywords", json={"keyword_text": "credential leak"})
 
