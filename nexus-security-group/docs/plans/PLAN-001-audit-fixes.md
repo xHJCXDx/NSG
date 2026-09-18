@@ -17,7 +17,7 @@
 | M01 | ✅ DONE | Backend | Reemplazar python-jose por PyJWT | backend/auth.py, backend/requirements.txt, backend/tests/test_auth.py |
 | M02 | ✅ DONE | Backend | Agregar logging estructurado | backend/main.py, backend/auth.py, todos los routers |
 | M03 | ✅ DONE | Backend | Rate limiting en login | backend/main.py, backend/auth.py, backend/rate_limit.py, backend/requirements.txt |
-| M04 | CRITICAL | Frontend | Error boundaries | frontend/src/app/ |
+| M04 | ✅ DONE | Frontend | Error boundaries | frontend/src/shared/components/ErrorBoundary.tsx, frontend/src/app/router/AppRouter.tsx |
 | M05 | CRITICAL | Frontend | Ruta 404 | frontend/src/app/router/AppRouter.tsx |
 | M06 | CRITICAL | Frontend | Corregir 4 tests rotos | frontend/src/ (4 archivos) |
 | M07 | HIGH | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
@@ -271,7 +271,7 @@ async def login_for_access_token(request: Request, ...):
 
 ---
 
-### M04 — Error Boundaries en frontend [CRITICAL]
+### M04 — Error Boundaries en frontend [CRITICAL] ✅ COMPLETADO
 
 **Problema:** Si cualquier componente React lanza durante render, toda la app se rompe con pantalla en blanco.
 
