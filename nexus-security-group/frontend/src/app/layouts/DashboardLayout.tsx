@@ -23,10 +23,10 @@ export function DashboardLayout() {
   return (
     <div className="min-h-screen bg-dark-900 flex text-gray-100 selection:bg-brand-500 selection:text-white">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col h-screen sticky top-0">
+      <aside aria-label="Sidebar" className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col h-screen sticky top-0">
         <div className="p-6 flex items-center space-x-3">
           <div className="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30">
-            <Shield className="w-5 h-5 text-brand-400" />
+            <Shield aria-hidden="true" className="w-5 h-5 text-brand-400" />
           </div>
           <div>
             <h2 className="font-bold text-white tracking-tight leading-tight">NSG</h2>
@@ -34,7 +34,7 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+        <nav aria-label="Main navigation" className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -52,7 +52,7 @@ export function DashboardLayout() {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
+                    <Icon aria-hidden="true" className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
                     <span className="font-medium">{item.name}</span>
                   </>
                 )}
@@ -66,7 +66,7 @@ export function DashboardLayout() {
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut aria-hidden="true" className="w-5 h-5" />
             <span className="font-medium">Sign Out</span>
           </button>
         </div>

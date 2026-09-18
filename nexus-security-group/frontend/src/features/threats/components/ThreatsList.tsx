@@ -8,10 +8,12 @@ interface ThreatsListProps {
 
 export function ThreatsList({ threats }: ThreatsListProps) {
   return (
-    <div className="space-y-4" aria-label={THREATS_COPY.list.ariaLabel}>
+    <ul className="space-y-4" aria-label={THREATS_COPY.list.ariaLabel}>
       {threats.map((threat) => (
-        <ThreatCard key={threat.id} threat={threat} />
+        <li key={threat.id}>
+          <ThreatCard threat={threat} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

@@ -33,7 +33,7 @@
 | M17 | ✅ DONE | Backend | get_db() con rollback explicito | backend/database.py |
 | M18 | ✅ DONE | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
 | M19 | ✅ DONE | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
-| M20 | MEDIUM | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
+| M20 | ✅ DONE | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
 | M21 | MEDIUM | Backend | Actualizar dependencias | backend/requirements.txt |
 | M22 | MEDIUM | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
 | M23 | MEDIUM | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
@@ -999,7 +999,7 @@ if (isDev) console.warn('Backend returned item without ID', raw);
 
 ---
 
-### M20 — Accesibilidad (aria-labels, semantica) [MEDIUM]
+### M20 — Accesibilidad (aria-labels, semantica) [MEDIUM] ✅ COMPLETADO
 
 **Problema:** Falta aria-labels en landmarks, iconos sin aria-hidden, semantica incorrecta en listas.
 
