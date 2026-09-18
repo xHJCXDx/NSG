@@ -34,7 +34,7 @@
 | M18 | ✅ DONE | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
 | M19 | ✅ DONE | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
 | M20 | ✅ DONE | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
-| M21 | MEDIUM | Backend | Actualizar dependencias | backend/requirements.txt |
+| M21 | ✅ DONE | Backend | Actualizar dependencias | backend/requirements.txt |
 | M22 | MEDIUM | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
 | M23 | MEDIUM | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
 | M24 | MEDIUM | Backend | OpenAPI metadata completa | backend/main.py |
@@ -1033,7 +1033,7 @@ if (isDev) console.warn('Backend returned item without ID', raw);
 
 ---
 
-### M21 — Actualizar dependencias backend [MEDIUM]
+### M21 — Actualizar dependencias backend [MEDIUM] ✅ COMPLETADO
 
 **Archivos a modificar:**
 - `backend/requirements.txt`
