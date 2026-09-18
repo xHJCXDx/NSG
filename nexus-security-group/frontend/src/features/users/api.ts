@@ -1,4 +1,4 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { USERS_COPY, USERS_ENDPOINT } from './contract';
 import type { ApiErrorResponse, CreateUserPayload, UserResponse } from './types';
 
@@ -59,12 +59,9 @@ export async function createUser(token: string | null, payload: CreateUserPayloa
   }
 
   try {
-    const response = await fetch(USERS_ENDPOINT, {
+    const response = await authFetch(token, USERS_ENDPOINT, {
       method: 'POST',
-      headers: {
-        ...createAuthHeaders(token),
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -89,9 +86,8 @@ export async function listUsers(token: string | null): Promise<UserResponse[]> {
   }
 
   try {
-    const response = await fetch(USERS_ENDPOINT, {
+    const response = await authFetch(token, USERS_ENDPOINT, {
       method: 'GET',
-      headers: createAuthHeaders(token),
     });
 
     if (!response.ok) {

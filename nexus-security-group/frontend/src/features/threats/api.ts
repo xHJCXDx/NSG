@@ -1,4 +1,4 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { THREATS_COPY, THREATS_DEFAULT_LIMIT, THREATS_ENDPOINT } from './contract';
 import type { RawRelatedMention, RawThreat, RawThreatsResponse, RelatedMention, Threat, ThreatsQuery } from './types';
 
@@ -97,9 +97,7 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
 
 export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<Threat[]> {
   const params = new URLSearchParams({ limit: String(query.limit ?? THREATS_DEFAULT_LIMIT) });
-  const res = await fetch(`${THREATS_ENDPOINT}?${params.toString()}`, {
-    headers: createAuthHeaders(token),
-  });
+  const res = await authFetch(token, `${THREATS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(THREATS_COPY.error.title);

@@ -1,4 +1,4 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { DASHBOARD_ENDPOINT } from './contract';
 
 export interface DashboardSummaryResponse {
@@ -12,9 +12,7 @@ export interface DashboardSummaryResponse {
 }
 
 export async function fetchDashboardSummary(token: string | null) {
-  const res = await fetch(DASHBOARD_ENDPOINT, {
-    headers: createAuthHeaders(token),
-  });
+  const res = await authFetch(token, DASHBOARD_ENDPOINT);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch dashboard summary: ${res.status}`);

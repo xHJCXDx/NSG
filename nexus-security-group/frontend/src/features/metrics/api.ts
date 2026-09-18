@@ -1,5 +1,5 @@
 // NOTE: This module provides API functions for the metrics feature. The corresponding hook and UI components are planned for a future release.
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { METRICS_SUMMARY_ENDPOINT } from './contract';
 
 export interface MetricsSummary {
@@ -13,9 +13,7 @@ export interface MetricsSummary {
 }
 
 export async function fetchMetricsSummary(token: string | null) {
-  const res = await fetch(METRICS_SUMMARY_ENDPOINT, {
-    headers: createAuthHeaders(token),
-  });
+  const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);
 
   if (!res.ok) {
     throw new Error(`Failed to fetch metrics summary: ${res.status}`);

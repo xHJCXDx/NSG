@@ -40,7 +40,7 @@
 | M24 | ✅ DONE | Backend | OpenAPI metadata completa | backend/main.py |
 | M25 | ✅ DONE | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
 | M26 | ✅ DONE | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
-| M27 | LOW | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
+| M27 | ✅ DONE | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
 | M28 | LOW | Backend | Schema muerto MetricsSummaryResponse | backend/schemas/metrics.py |
 
 ---
@@ -1131,7 +1131,7 @@ Mover `FakeDb` y `FakeQuery` a `conftest.py` y eliminar las copias duplicadas.
 
 ---
 
-### M27 — Interceptor HTTP centralizado [LOW]
+### M27 — Interceptor HTTP centralizado [LOW] ✅ COMPLETADO
 
 **Archivos a crear/modificar:**
 - CREAR `frontend/src/shared/api/apiClient.ts`

@@ -1,4 +1,4 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { AUTOMATION_COPY, AUTOMATION_ENDPOINT, AUTOMATION_STATUS } from './contract';
 import type { AutomationStatus, TriggerResult } from './types';
 
@@ -12,12 +12,9 @@ export async function triggerWorkflow(token: string | null): Promise<TriggerResu
   }
 
   try {
-    const response = await fetch(`${AUTOMATION_ENDPOINT}/${AUTOMATION_STATUS.webhookId}`, {
+    const response = await authFetch(token, `${AUTOMATION_ENDPOINT}/${AUTOMATION_STATUS.webhookId}`, {
       method: 'POST',
-      headers: {
-        ...createAuthHeaders(token),
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ source: 'dashboard' }),
     });
 

@@ -1,4 +1,4 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
+import { authFetch } from '../../shared/api/apiClient';
 import { MENTIONS_COPY, MENTIONS_DEFAULT_LIMIT, MENTIONS_ENDPOINT } from './contract';
 import type { Mention, MentionsQuery, RawMention, RawMentionsResponse } from './types';
 
@@ -44,9 +44,7 @@ export const mapRawMention = (raw: RawMention): Mention => {
 
 export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<Mention[]> {
   const params = new URLSearchParams({ limit: String(query.limit ?? MENTIONS_DEFAULT_LIMIT) });
-  const res = await fetch(`${MENTIONS_ENDPOINT}?${params.toString()}`, {
-    headers: createAuthHeaders(token),
-  });
+  const res = await authFetch(token, `${MENTIONS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(MENTIONS_COPY.error.title);
