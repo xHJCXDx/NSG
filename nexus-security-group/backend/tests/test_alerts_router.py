@@ -24,56 +24,8 @@ from routers.alerts import (
 from database import get_db
 from schemas.alert import AlertResponse
 from schemas.auth import TokenData
+from tests.conftest import FakeDb, FakeQuery
 
-
-class FakeQuery:
-    def __init__(self, *, all_result=None, first_result=None):
-        self.all_result = all_result or []
-        self.first_result = first_result
-        self.order_by_args = None
-        self.offset_value = None
-        self.limit_value = None
-        self.filter_args = []
-
-    def order_by(self, *args):
-        self.order_by_args = args
-        return self
-
-    def offset(self, value):
-        self.offset_value = value
-        return self
-
-    def limit(self, value):
-        self.limit_value = value
-        return self
-
-    def filter(self, *args):
-        self.filter_args.append(args)
-        return self
-
-    def all(self):
-        return self.all_result
-
-    def first(self):
-        return self.first_result
-
-
-class FakeDb:
-    def __init__(self, query):
-        self.query_obj = query
-        self.query_args = []
-        self.committed = False
-        self.refreshed = []
-
-    def query(self, *args):
-        self.query_args.append(args)
-        return self.query_obj
-
-    def commit(self):
-        self.committed = True
-
-    def refresh(self, obj):
-        self.refreshed.append(obj)
 
 
 def _alert_row(**overrides):

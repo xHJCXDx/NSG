@@ -39,7 +39,7 @@
 | M23 | ✅ DONE | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
 | M24 | ✅ DONE | Backend | OpenAPI metadata completa | backend/main.py |
 | M25 | ✅ DONE | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
-| M26 | LOW | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
+| M26 | ✅ DONE | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
 | M27 | LOW | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
 | M28 | LOW | Backend | Schema muerto MetricsSummaryResponse | backend/schemas/metrics.py |
 
@@ -1119,7 +1119,7 @@ Extraer las 7 cards repetitivas a un componente reutilizable con props para icon
 
 ---
 
-### M26 — FakeDb centralizado en tests [LOW]
+### M26 — FakeDb centralizado en tests [LOW] ✅ COMPLETADO
 
 **Archivos a modificar:**
 - `backend/tests/conftest.py`

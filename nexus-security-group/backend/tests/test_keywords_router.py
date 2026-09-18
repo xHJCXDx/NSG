@@ -26,33 +26,7 @@ from routers.keywords import (
 )
 from schemas.auth import TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
-
-
-class FakeQuery:
-    def __init__(self, *, all_result=None, first_result=None):
-        self.all_result = all_result or []
-        self.first_result = first_result
-        self.filter_args = []
-        self.order_by_args = None
-        self.limit_value = None
-
-    def filter(self, *args):
-        self.filter_args.append(args)
-        return self
-
-    def order_by(self, *args):
-        self.order_by_args = args
-        return self
-
-    def limit(self, value):
-        self.limit_value = value
-        return self
-
-    def all(self):
-        return self.all_result
-
-    def first(self):
-        return self.first_result
+from tests.conftest import FakeQuery
 
 
 class FakeDb:
