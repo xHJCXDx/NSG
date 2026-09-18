@@ -30,7 +30,7 @@
 | M14 | ✅ DONE | Backend | Dockerfile non-root user | backend/Dockerfile |
 | M15 | ✅ DONE | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py |
 | M16 | ✅ DONE | Backend | Indices en columnas de filtrado | backend/models/*.py |
-| M17 | MEDIUM | Backend | get_db() con rollback explicito | backend/database.py |
+| M17 | ✅ DONE | Backend | get_db() con rollback explicito | backend/database.py |
 | M18 | MEDIUM | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
 | M19 | MEDIUM | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
 | M20 | MEDIUM | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
@@ -904,7 +904,7 @@ workflow_name = Column(String(100), ..., index=True)
 
 ---
 
-### M17 — get_db() con rollback explicito [MEDIUM]
+### M17 — get_db() con rollback explicito [MEDIUM] ✅ COMPLETADO
 
 **Problema:** Si un commit falla, la sesion se cierra sin rollback explicito.
 
