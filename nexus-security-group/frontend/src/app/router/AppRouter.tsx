@@ -7,6 +7,7 @@ import { ThreatsPage } from '../../features/threats';
 import { UsersPage } from '../../features/users';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
+import { NotFoundPage } from '../pages/NotFoundPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -33,6 +34,8 @@ export function AppRouter() {
           <Route path="analytics" element={<ProtectedRoute requiredPermission="metrics:read"><AnalyticsPage /></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute requiredPermission="permissions:read"><SettingsPage /></ProtectedRoute>} />
         </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
