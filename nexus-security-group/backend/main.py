@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 import uuid
 
@@ -9,6 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from starlette.middleware.base import BaseHTTPMiddleware
 from auth import router as auth_router
+from config import settings
 from rate_limit import limiter
 from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, threats, users
 
@@ -46,7 +46,7 @@ app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost").split(","),
+    allow_origins=settings.CORS_ORIGINS.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

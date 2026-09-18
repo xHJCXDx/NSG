@@ -20,7 +20,7 @@
 | M04 | ✅ DONE | Frontend | Error boundaries | frontend/src/shared/components/ErrorBoundary.tsx, frontend/src/app/router/AppRouter.tsx |
 | M05 | ✅ DONE | Frontend | Ruta 404 | frontend/src/app/pages/NotFoundPage.tsx, frontend/src/app/router/AppRouter.tsx |
 | M06 | ✅ DONE | Frontend | Corregir 4 tests rotos | DashboardLayout.test.tsx, dashboard/api.test.ts, metrics/api.test.ts |
-| M07 | HIGH | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
+| M07 | ✅ DONE | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
 | M08 | HIGH | Backend | Health check con verificacion DB | backend/main.py |
 | M09 | HIGH | Backend | Exception handler global | backend/main.py |
 | M10 | HIGH | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
@@ -446,7 +446,7 @@ async def login_for_access_token(request: Request, ...):
 
 ---
 
-### M07 — Mover CORS_ORIGINS a Settings [HIGH]
+### M07 — Mover CORS_ORIGINS a Settings [HIGH] ✅ COMPLETADO
 
 **Problema:** `CORS_ORIGINS` se lee con `os.getenv()` directo en `main.py`, inconsistente con el resto de la config que usa `pydantic-settings`. El default permisivo con `localhost` puede quedar habilitado en produccion.
 
