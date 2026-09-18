@@ -35,7 +35,7 @@
 | M19 | ✅ DONE | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
 | M20 | ✅ DONE | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
 | M21 | ✅ DONE | Backend | Actualizar dependencias | backend/requirements.txt |
-| M22 | MEDIUM | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
+| M22 | ✅ DONE | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
 | M23 | MEDIUM | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
 | M24 | MEDIUM | Backend | OpenAPI metadata completa | backend/main.py |
 | M25 | LOW | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
@@ -1044,7 +1044,7 @@ if (isDev) console.warn('Backend returned item without ID', raw);
 
 ---
 
-### M22 — Separar dependencias de test [MEDIUM]
+### M22 — Separar dependencias de test [MEDIUM] ✅ COMPLETADO
 
 **Archivos a crear/modificar:**
 - CREAR `backend/requirements-test.txt`
