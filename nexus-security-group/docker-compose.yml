@@ -8,7 +8,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./init-n8n-db.sql:/docker-entrypoint-initdb.d/00-init-n8n-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -19,7 +20,7 @@ services:
       - nexus-net
 
   n8n:
-    image: n8nio/n8n:1.64.3
+    image: n8nio/n8n:2.39.7
     container_name: osint-n8n
     dns:
       - 1.1.1.1
@@ -51,7 +52,7 @@ services:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_DATABASE=n8n_internal
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
@@ -64,7 +65,7 @@ services:
       - nexus-net
 
   n8n-import:
-    image: n8nio/n8n:1.64.3
+    image: n8nio/n8n:2.39.7
     profiles:
       - tools
     command: ["import:workflow", "--input=/workflows/workflow.json"]
@@ -75,7 +76,7 @@ services:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_DATABASE=n8n_internal
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
@@ -160,7 +161,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`localhost`)"
-      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+      - "traefik.http.services.frontend.loadbalancer.server.port=4173"
     depends_on:
       dashboard-api:
         condition: service_healthy
@@ -168,7 +169,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "wget --quiet --tries=1 --spider http://127.0.0.1:5173/ || exit 1",
+          "wget --quiet --tries=1 --spider http://127.0.0.1:4173/ || exit 1",
         ]
       interval: 10s
       timeout: 5s
