@@ -14,7 +14,7 @@
 
 | # | Prioridad | Area | Descripcion | Archivos |
 |---|-----------|------|-------------|----------|
-| M01 | CRITICAL | Backend | Reemplazar python-jose por PyJWT | backend/auth.py, backend/requirements.txt |
+| M01 | ✅ DONE | Backend | Reemplazar python-jose por PyJWT | backend/auth.py, backend/requirements.txt, backend/tests/test_auth.py |
 | M02 | CRITICAL | Backend | Agregar logging estructurado | backend/main.py, backend/auth.py, todos los routers |
 | M03 | CRITICAL | Backend | Rate limiting en login | backend/main.py, backend/requirements.txt |
 | M04 | CRITICAL | Frontend | Error boundaries | frontend/src/app/ |
@@ -49,7 +49,7 @@
 
 ---
 
-### M01 — Reemplazar python-jose por PyJWT [CRITICAL]
+### M01 — Reemplazar python-jose por PyJWT [CRITICAL] ✅ COMPLETADO
 
 **Problema:** `python-jose` esta abandonado (ultimo release 2021). Hay CVEs documentados. Es la libreria que maneja JWT en un sistema de seguridad.
 

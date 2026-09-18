@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 from httpx import AsyncClient, ASGITransport
-from jose import jwt
+import jwt
 from sqlalchemy.exc import SQLAlchemyError
 
 

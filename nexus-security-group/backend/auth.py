@@ -7,7 +7,8 @@ from typing import Optional
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from config import settings
@@ -157,7 +158,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             auth_source=payload.get("auth_source"),
             permissions=_permissions_from_payload(payload),
         )
-    except JWTError:
+    except InvalidTokenError:
         raise credentials_exception
     return token_data
 
