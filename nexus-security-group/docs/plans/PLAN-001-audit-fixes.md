@@ -26,7 +26,7 @@
 | M10 | ✅ DONE | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
 | M11 | ✅ DONE | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
 | M12 | ✅ DONE | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
-| M13 | HIGH | Backend | Security headers middleware | backend/main.py |
+| M13 | ✅ DONE | Backend | Security headers middleware | backend/main.py |
 | M14 | HIGH | Backend | Dockerfile non-root user | backend/Dockerfile |
 | M15 | MEDIUM | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py, users.py |
 | M16 | MEDIUM | Backend | Indices en columnas de filtrado | backend/models/*.py |
@@ -741,7 +741,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 ---
 
-### M13 — Security headers middleware [HIGH]
+### M13 — Security headers middleware [HIGH] ✅ COMPLETADO
 
 **Problema:** Sin headers de seguridad basicos.
 
