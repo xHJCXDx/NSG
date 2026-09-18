@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api/logs", tags=["logs"])
 @router.get("", response_model=list[ExecutionLogResponse])
 def get_logs(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
     log_status: Annotated[ExecutionLogStatus | None, Query(alias="status")] = None,
     workflow_name: Annotated[str | None, Query(min_length=1, max_length=100)] = None,
     db: Session = Depends(get_db),
@@ -28,7 +29,7 @@ def get_logs(
     if workflow_name is not None:
         query = query.filter(ExecutionLog.workflow_name == workflow_name)
 
-    return query.order_by(ExecutionLog.started_at.desc()).limit(limit).all()
+    return query.order_by(ExecutionLog.started_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.get("/{log_id}", response_model=ExecutionLogResponse)

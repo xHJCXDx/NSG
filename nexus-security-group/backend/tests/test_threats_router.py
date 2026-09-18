@@ -26,6 +26,7 @@ class FakeQuery:
         self.all_result = all_result or []
         self.first_result = first_result
         self.order_by_args = None
+        self.offset_value = None
         self.limit_value = None
         self.filter_args = []
         self.outerjoin_args = None
@@ -33,6 +34,10 @@ class FakeQuery:
 
     def order_by(self, *args):
         self.order_by_args = args
+        return self
+
+    def offset(self, value):
+        self.offset_value = value
         return self
 
     def limit(self, value):

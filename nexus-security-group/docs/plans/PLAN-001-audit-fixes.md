@@ -28,7 +28,7 @@
 | M12 | ✅ DONE | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
 | M13 | ✅ DONE | Backend | Security headers middleware | backend/main.py |
 | M14 | ✅ DONE | Backend | Dockerfile non-root user | backend/Dockerfile |
-| M15 | MEDIUM | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py, users.py |
+| M15 | ✅ DONE | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py |
 | M16 | MEDIUM | Backend | Indices en columnas de filtrado | backend/models/*.py |
 | M17 | MEDIUM | Backend | get_db() con rollback explicito | backend/database.py |
 | M18 | MEDIUM | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
@@ -807,7 +807,7 @@ USER appuser
 
 ---
 
-### M15 — Paginacion real con offset [MEDIUM]
+### M15 — Paginacion real con offset [MEDIUM] ✅ COMPLETADO
 
 **Problema:** Endpoints de lista usan `limit` sin `offset`. Imposible obtener pagina 2.
 

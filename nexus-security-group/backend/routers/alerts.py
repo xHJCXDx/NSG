@@ -20,6 +20,7 @@ router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 @router.get("", response_model=list[AlertResponse])
 def get_alerts(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
     delivery_status: Annotated[AlertDeliveryStatus | None, Query()] = None,
     acknowledged: Annotated[bool | None, Query()] = None,
     db: Session = Depends(get_db),
@@ -32,7 +33,7 @@ def get_alerts(
     if acknowledged is not None:
         query = query.filter(Alert.acknowledged == acknowledged)
 
-    return query.order_by(Alert.created_at.desc()).limit(limit).all()
+    return query.order_by(Alert.created_at.desc()).offset(offset).limit(limit).all()
 
 
 @router.get("/{alert_id}", response_model=AlertResponse)

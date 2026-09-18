@@ -53,6 +53,7 @@ def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None
 @router.get("", response_model=list[ThreatListResponse])
 def get_threats(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
     criticality_level: Annotated[ThreatCriticalityLevel | None, Query()] = None,
     review_status: Annotated[ThreatReviewStatus | None, Query()] = None,
     mention_id: Annotated[int | None, Query(ge=1)] = None,
@@ -72,7 +73,7 @@ def get_threats(
     if mention_id is not None:
         query = query.filter(ThreatDetection.mention_id == mention_id)
 
-    rows = query.order_by(ThreatDetection.detected_at.desc()).limit(limit).all()
+    rows = query.order_by(ThreatDetection.detected_at.desc()).offset(offset).limit(limit).all()
     return [_map_threat_list_item(threat, mention) for threat, mention in rows]
 
 
