@@ -103,5 +103,4 @@ class ThreatReviewRequest(BaseModel):
 
     review_status: ThreatReviewStatus
     review_notes: Optional[str] = None
-    reviewed_by: Optional[str] = None
     remediation_status: Optional[ThreatRemediationStatus] = None

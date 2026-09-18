@@ -22,7 +22,7 @@ from routers.alerts import (
     router,
 )
 from database import get_db
-from schemas.alert import AcknowledgeRequest, AlertResponse
+from schemas.alert import AlertResponse
 from schemas.auth import TokenData
 
 
@@ -180,11 +180,9 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     alert = _alert_row(alert_id=42)
     query = FakeQuery(first_result=alert)
     fake_db = FakeDb(query)
-    request = AcknowledgeRequest(acknowledged_by="ignored-value")
 
     result = acknowledge_alert(
         alert_id=42,
-        request=request,
         db=fake_db,
         current_user=SimpleNamespace(username="test-user"),
     )
@@ -206,12 +204,10 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
 def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit():
     query = FakeQuery(first_result=None)
     fake_db = FakeDb(query)
-    request = AcknowledgeRequest(acknowledged_by="analyst@example.com")
 
     with pytest.raises(HTTPException) as exc_info:
         acknowledge_alert(
             alert_id=999,
-            request=request,
             db=fake_db,
             current_user=SimpleNamespace(username="test-user"),
         )
@@ -226,11 +222,9 @@ def test_acknowledge_alert_sets_timezone_aware_acknowledged_at():
     alert = _alert_row(acknowledged_at=None)
     query = FakeQuery(first_result=alert)
     fake_db = FakeDb(query)
-    request = AcknowledgeRequest(acknowledged_by="analyst@example.com")
 
     acknowledge_alert(
         alert_id=10,
-        request=request,
         db=fake_db,
         current_user=SimpleNamespace(username="test-user"),
     )
@@ -343,10 +337,7 @@ def test_acknowledge_alert_rejects_user_without_alerts_write_permission():
         permissions=["alerts:read"],
     )
 
-    response = TestClient(authz_app).patch(
-        "/api/alerts/1/acknowledge",
-        json={"acknowledged_by": "analyst@example.com"},
-    )
+    response = TestClient(authz_app).patch("/api/alerts/1/acknowledge")
 
     assert response.status_code == 403
     assert "alerts:write" in response.json()["detail"]
@@ -368,9 +359,6 @@ def test_acknowledge_alert_allows_user_with_alerts_write_permission():
         permissions=["alerts:write"],
     )
 
-    response = TestClient(authz_app).patch(
-        "/api/alerts/1/acknowledge",
-        json={"acknowledged_by": "analyst@example.com"},
-    )
+    response = TestClient(authz_app).patch("/api/alerts/1/acknowledge")
 
     assert response.status_code == 200

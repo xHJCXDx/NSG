@@ -1,14 +1,14 @@
-"""Alert schemas — AlertResponse and AcknowledgeRequest.
+"""Alert schemas — AlertResponse.
 
 Maps to the alerts ORM model. alert_uuid is a server-generated UUID
 (uuid-ossp extension). last_updated is trigger-maintained and included
-only in Response schemas. AcknowledgeRequest is input-only.
+only in Response schemas.
 """
 import uuid
 from datetime import datetime
-from typing import Annotated, Literal, Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict
 
 
 AlertSeverity = Literal["info", "warning", "high", "critical"]
@@ -43,13 +43,3 @@ class AlertResponse(BaseModel):
     last_updated: Optional[datetime] = None
 
 
-class AcknowledgeRequest(BaseModel):
-    """Input schema for acknowledging an alert.
-
-    No from_attributes — this is a request body, not an ORM response.
-    """
-
-    acknowledged_by: Annotated[
-        str,
-        StringConstraints(strip_whitespace=True, min_length=1, max_length=100),
-    ]

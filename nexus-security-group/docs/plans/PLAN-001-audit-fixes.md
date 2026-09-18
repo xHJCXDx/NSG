@@ -25,7 +25,7 @@
 | M09 | ✅ DONE | Backend | Exception handler global | backend/main.py |
 | M10 | ✅ DONE | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
 | M11 | ✅ DONE | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
-| M12 | HIGH | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
+| M12 | ✅ DONE | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
 | M13 | HIGH | Backend | Security headers middleware | backend/main.py |
 | M14 | HIGH | Backend | Dockerfile non-root user | backend/Dockerfile |
 | M15 | MEDIUM | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py, users.py |
@@ -701,7 +701,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 ---
 
-### M12 — Eliminar campos client-spoofable [HIGH]
+### M12 — Eliminar campos client-spoofable [HIGH] ✅ COMPLETADO
 
 **Problema:** `ThreatReviewRequest` acepta `reviewed_by` y `AcknowledgeRequest` acepta `acknowledged_by` del cliente. Aunque el backend los ignora, crean confision y riesgo si la logica cambia.
 

@@ -10,7 +10,7 @@ from auth import require_permission
 logger = logging.getLogger("nsg.alerts")
 from database import get_db
 from models import Alert
-from schemas.alert import AcknowledgeRequest, AlertDeliveryStatus, AlertResponse
+from schemas.alert import AlertDeliveryStatus, AlertResponse
 from schemas.auth import TokenData
 
 
@@ -54,7 +54,6 @@ def get_alert(
 @router.patch("/{alert_id}/acknowledge", response_model=AlertResponse)
 def acknowledge_alert(
     alert_id: int,
-    request: AcknowledgeRequest,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("alerts", "write")),
 ):

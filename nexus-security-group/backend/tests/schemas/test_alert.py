@@ -1,4 +1,4 @@
-"""Tests for schemas.alert — AlertResponse and AcknowledgeRequest."""
+"""Tests for schemas.alert — AlertResponse."""
 import pytest
 import uuid
 from datetime import datetime, timezone
@@ -29,10 +29,6 @@ def test_alert_response_importable():
     from schemas.alert import AlertResponse
     assert AlertResponse is not None
 
-
-def test_acknowledge_request_importable():
-    from schemas.alert import AcknowledgeRequest
-    assert AcknowledgeRequest is not None
 
 
 def test_alert_response_happy_path():
@@ -99,17 +95,6 @@ def test_alert_response_trigger_columns_present():
     resp = AlertResponse(**_base_alert_fields())
     assert resp.last_updated == NOW
 
-
-def test_acknowledge_request_happy_path():
-    from schemas.alert import AcknowledgeRequest
-    req = AcknowledgeRequest(acknowledged_by="  admin  ")
-    assert req.acknowledged_by == "admin"
-
-
-def test_acknowledge_request_rejects_blank_acknowledged_by():
-    from schemas.alert import AcknowledgeRequest
-    with pytest.raises(ValidationError):
-        AcknowledgeRequest(acknowledged_by="   ")
 
 
 def test_alert_response_orm_mode():

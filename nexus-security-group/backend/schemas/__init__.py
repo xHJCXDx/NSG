@@ -4,7 +4,7 @@ Import any schema directly from `schemas`:
     from schemas import AlertResponse, KeywordCreate
 """
 from schemas.activity import UserActivityResponse
-from schemas.alert import AcknowledgeRequest, AlertResponse
+from schemas.alert import AlertResponse
 from schemas.auth import Token, TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
 from schemas.log import ExecutionLogResponse
@@ -49,7 +49,6 @@ __all__ = [
     "ThreatReviewRequest",
     # alert
     "AlertResponse",
-    "AcknowledgeRequest",
     # keyword
     "KeywordResponse",
     "KeywordCreate",
