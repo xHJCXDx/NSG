@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -5,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from auth import require_permission
+
+logger = logging.getLogger("nsg.alerts")
 from database import get_db
 from models import Alert
 from schemas.alert import AcknowledgeRequest, AlertDeliveryStatus, AlertResponse
@@ -68,5 +71,6 @@ def acknowledge_alert(
 
     db.commit()
     db.refresh(alert)
+    logger.info("Alert acknowledged: id=%s by %s", alert_id, current_user.username)
 
     return alert

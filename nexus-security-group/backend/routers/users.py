@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth import hash_password, require_permission
+
+logger = logging.getLogger("nsg.users")
 from database import get_db
 from models import SystemUser
 from schemas.auth import TokenData
@@ -32,6 +36,7 @@ def create_user(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already exists")
     db.refresh(user)
+    logger.info("User created: %s by %s", request.username, current_user.username)
     return user
 
 
@@ -64,4 +69,5 @@ def update_user(
 
     db.commit()
     db.refresh(user)
+    logger.info("User updated: id=%s by %s", user_id, current_user.username)
     return user

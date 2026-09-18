@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -5,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from auth import require_permission
+
+logger = logging.getLogger("nsg.threats")
 from database import get_db
 from models import SocialMention, ThreatDetection
 from schemas.auth import TokenData
@@ -126,5 +129,6 @@ def review_threat(
 
     db.commit()
     db.refresh(threat)
+    logger.info("Threat reviewed: id=%s status=%s by %s", threat_id, request.review_status, current_user.username)
 
     return threat

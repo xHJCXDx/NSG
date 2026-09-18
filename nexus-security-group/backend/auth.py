@@ -1,11 +1,14 @@
 import base64
 import hashlib
 import hmac
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger("nsg.auth")
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -159,6 +162,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             permissions=_permissions_from_payload(payload),
         )
     except InvalidTokenError:
+        logger.warning("Invalid token presented")
         raise credentials_exception
     return token_data
 
@@ -199,6 +203,7 @@ async def login_for_access_token(
 
     if has_db_users:
         if not db_user or not db_user.is_active or not verify_password(form_data.password, db_user.password_hash):
+            logger.warning("Login failed: user=%s", form_data.username)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -210,6 +215,7 @@ async def login_for_access_token(
         permissions = _permissions_from_user(db_user)
     else:
         if not hmac.compare_digest(form_data.username, ADMIN_USER) or not hmac.compare_digest(form_data.password, ADMIN_PASSWORD):
+            logger.warning("Login failed: user=%s (bootstrap)", form_data.username)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -228,6 +234,7 @@ async def login_for_access_token(
         data=token_data,
         expires_delta=access_token_expires,
     )
+    logger.info("Login successful: user=%s source=%s", form_data.username, auth_source)
     return {"access_token": access_token, "token_type": "bearer"}
 
 

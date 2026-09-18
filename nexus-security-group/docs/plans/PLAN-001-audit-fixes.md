@@ -15,7 +15,7 @@
 | # | Prioridad | Area | Descripcion | Archivos |
 |---|-----------|------|-------------|----------|
 | M01 | ✅ DONE | Backend | Reemplazar python-jose por PyJWT | backend/auth.py, backend/requirements.txt, backend/tests/test_auth.py |
-| M02 | CRITICAL | Backend | Agregar logging estructurado | backend/main.py, backend/auth.py, todos los routers |
+| M02 | ✅ DONE | Backend | Agregar logging estructurado | backend/main.py, backend/auth.py, todos los routers |
 | M03 | CRITICAL | Backend | Rate limiting en login | backend/main.py, backend/requirements.txt |
 | M04 | CRITICAL | Frontend | Error boundaries | frontend/src/app/ |
 | M05 | CRITICAL | Frontend | Ruta 404 | frontend/src/app/router/AppRouter.tsx |
@@ -105,7 +105,7 @@
 
 ---
 
-### M02 — Agregar logging estructurado [CRITICAL]
+### M02 — Agregar logging estructurado [CRITICAL] ✅ COMPLETADO
 
 **Problema:** Cero logging en toda la aplicacion. Imposible debuggear, auditar, o monitorear en produccion. En un sistema de seguridad, el audit trail es parte del producto.
 

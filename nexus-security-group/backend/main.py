@@ -1,11 +1,43 @@
+import logging
 import os
+import time
+import uuid
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from auth import router as auth_router
 from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, threats, users
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger("nsg")
+
 app = FastAPI(title="Dashboard API")
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = str(uuid.uuid4())[:8]
+        request.state.request_id = request_id
+        start = time.time()
+        response = await call_next(request)
+        duration = round((time.time() - start) * 1000)
+        logger.info(
+            "[%s] %s %s %s %dms",
+            request_id,
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration,
+        )
+        return response
+
+
+app.add_middleware(RequestLoggingMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

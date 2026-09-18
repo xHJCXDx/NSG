@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -5,6 +6,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from auth import require_permission
+
+logger = logging.getLogger("nsg.keywords")
 from database import get_db
 from models import KeywordMonitor
 from schemas.auth import TokenData
@@ -50,6 +53,7 @@ def create_keyword(
             detail="Keyword already exists",
         )
     db.refresh(keyword)
+    logger.info("Keyword created: id=%s by %s", keyword.keyword_id, current_user.username)
 
     return keyword
 
@@ -104,6 +108,7 @@ def update_keyword(
             detail="Keyword already exists",
         )
     db.refresh(keyword)
+    logger.info("Keyword updated: id=%s by %s", keyword_id, current_user.username)
 
     return keyword
 
@@ -127,3 +132,4 @@ def delete_keyword(
 
     db.delete(keyword)
     db.commit()
+    logger.info("Keyword deleted: id=%s by %s", keyword_id, current_user.username)

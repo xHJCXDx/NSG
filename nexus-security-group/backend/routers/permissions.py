@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from auth import require_permission
+
+logger = logging.getLogger("nsg.permissions")
 from database import get_db
 from models import Permission, RolePermission
 from schemas.auth import TokenData
@@ -84,4 +88,5 @@ def update_role_permissions(
             detail="Permission assignment conflict; changes were not saved",
         )
 
+    logger.info("Permissions updated: role=%s by %s", role, current_user.username)
     return {"role": role, "permissions": request.permissions}
