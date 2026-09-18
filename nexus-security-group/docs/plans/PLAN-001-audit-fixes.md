@@ -36,7 +36,7 @@
 | M20 | ✅ DONE | Frontend | Accesibilidad (aria-labels, semantica) | frontend/src/app/layouts/DashboardLayout.tsx |
 | M21 | ✅ DONE | Backend | Actualizar dependencias | backend/requirements.txt |
 | M22 | ✅ DONE | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
-| M23 | MEDIUM | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
+| M23 | ✅ DONE | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
 | M24 | MEDIUM | Backend | OpenAPI metadata completa | backend/main.py |
 | M25 | LOW | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
 | M26 | LOW | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
@@ -1056,7 +1056,7 @@ Mover `pytest`, `anyio`, `httpx` (si solo se usa en tests) a `requirements-test.
 
 ---
 
-### M23 — Lazy loading de rutas [MEDIUM]
+### M23 — Lazy loading de rutas [MEDIUM] ✅ COMPLETADO
 
 **Archivos a modificar:**
 - `frontend/src/app/router/AppRouter.tsx`

@@ -43,7 +43,7 @@ describe('AppRouter', () => {
     window.history.pushState({}, '', '/');
   });
 
-  it('keeps the protected index route mounted under the dashboard layout', () => {
+  it('keeps the protected index route mounted under the dashboard layout', async () => {
     localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/');
 
@@ -54,10 +54,10 @@ describe('AppRouter', () => {
     );
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
-    expect(screen.getByText('Dashboard page')).toBeInTheDocument();
+    expect(await screen.findByText('Dashboard page')).toBeInTheDocument();
   });
 
-  it('keeps the mentions route inside the protected dashboard layout', () => {
+  it('keeps the mentions route inside the protected dashboard layout', async () => {
     localStorage.setItem('nsg:auth:token', makeToken(['mentions:read']));
     window.history.pushState({}, '', '/mentions');
 
@@ -68,10 +68,10 @@ describe('AppRouter', () => {
     );
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
-    expect(screen.getByText('Mentions page')).toBeInTheDocument();
+    expect(await screen.findByText('Mentions page')).toBeInTheDocument();
   });
 
-  it('keeps the users route inside the protected dashboard layout', () => {
+  it('keeps the users route inside the protected dashboard layout', async () => {
     localStorage.setItem('nsg:auth:token', makeToken(['users:read']));
     window.history.pushState({}, '', '/users');
 
@@ -82,7 +82,7 @@ describe('AppRouter', () => {
     );
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
-    expect(screen.getByText('Users page')).toBeInTheDocument();
+    expect(await screen.findByText('Users page')).toBeInTheDocument();
   });
 
   it('redirects unauthenticated users away from the users route', () => {
