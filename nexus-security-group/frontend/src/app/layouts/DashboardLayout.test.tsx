@@ -31,7 +31,7 @@ describe('DashboardLayout navigation', () => {
       </AuthProvider>,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /Users/i }));
+    await userEvent.click(screen.getByRole('link', { name: /Users/i }));
 
     expect(screen.getByText('Users content')).toBeInTheDocument();
   });
@@ -51,7 +51,7 @@ describe('DashboardLayout navigation', () => {
       </AuthProvider>,
     );
 
-    expect(screen.getByRole('button', { name: /Dashboard/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Users/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Dashboard/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Users/i })).not.toBeInTheDocument();
   });
 });

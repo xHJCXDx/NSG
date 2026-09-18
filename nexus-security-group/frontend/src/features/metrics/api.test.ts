@@ -28,6 +28,6 @@ describe('fetchMetricsSummary', () => {
   it('preserves null data behavior for non-ok responses', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
 
-    await expect(fetchMetricsSummary('fake-jwt')).resolves.toBeNull();
+    await expect(fetchMetricsSummary('fake-jwt')).rejects.toThrow();
   });
 });

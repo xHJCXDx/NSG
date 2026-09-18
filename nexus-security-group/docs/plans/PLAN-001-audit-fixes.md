@@ -19,7 +19,7 @@
 | M03 | ✅ DONE | Backend | Rate limiting en login | backend/main.py, backend/auth.py, backend/rate_limit.py, backend/requirements.txt |
 | M04 | ✅ DONE | Frontend | Error boundaries | frontend/src/shared/components/ErrorBoundary.tsx, frontend/src/app/router/AppRouter.tsx |
 | M05 | ✅ DONE | Frontend | Ruta 404 | frontend/src/app/pages/NotFoundPage.tsx, frontend/src/app/router/AppRouter.tsx |
-| M06 | CRITICAL | Frontend | Corregir 4 tests rotos | frontend/src/ (4 archivos) |
+| M06 | ✅ DONE | Frontend | Corregir 4 tests rotos | DashboardLayout.test.tsx, dashboard/api.test.ts, metrics/api.test.ts |
 | M07 | HIGH | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
 | M08 | HIGH | Backend | Health check con verificacion DB | backend/main.py |
 | M09 | HIGH | Backend | Exception handler global | backend/main.py |
@@ -402,7 +402,7 @@ async def login_for_access_token(request: Request, ...):
 
 ---
 
-### M06 — Corregir 4 tests rotos [CRITICAL]
+### M06 — Corregir 4 tests rotos [CRITICAL] ✅ COMPLETADO
 
 **Problema:** 4 tests fallan por desincronizacion entre tests y produccion.
 
