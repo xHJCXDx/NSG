@@ -37,7 +37,7 @@
 | M21 | ✅ DONE | Backend | Actualizar dependencias | backend/requirements.txt |
 | M22 | ✅ DONE | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
 | M23 | ✅ DONE | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
-| M24 | MEDIUM | Backend | OpenAPI metadata completa | backend/main.py |
+| M24 | ✅ DONE | Backend | OpenAPI metadata completa | backend/main.py |
 | M25 | LOW | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
 | M26 | LOW | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
 | M27 | LOW | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
@@ -1087,7 +1087,7 @@ const UsersPage = lazy(() => import('../../features/users').then(m => ({ default
 
 ---
 
-### M24 — OpenAPI metadata completa [MEDIUM]
+### M24 — OpenAPI metadata completa [MEDIUM] ✅ COMPLETADO
 
 **Archivos a modificar:**
 - `backend/main.py`

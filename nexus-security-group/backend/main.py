@@ -23,7 +23,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("nsg")
 
-app = FastAPI(title="Dashboard API")
+app = FastAPI(
+    title="NSG Security Dashboard API",
+    description="API for the Nexus Security Group OSINT monitoring dashboard",
+    version="1.0.0",
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
