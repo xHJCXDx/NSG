@@ -22,7 +22,7 @@
 | M06 | ✅ DONE | Frontend | Corregir 4 tests rotos | DashboardLayout.test.tsx, dashboard/api.test.ts, metrics/api.test.ts |
 | M07 | ✅ DONE | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
 | M08 | ✅ DONE | Backend | Health check con verificacion DB | backend/main.py, tests/* |
-| M09 | HIGH | Backend | Exception handler global | backend/main.py |
+| M09 | ✅ DONE | Backend | Exception handler global | backend/main.py |
 | M10 | HIGH | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
 | M11 | HIGH | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
 | M12 | HIGH | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
@@ -544,7 +544,7 @@ Agregar imports necesarios: `from fastapi import Depends, HTTPException, status`
 
 ---
 
-### M09 — Exception handler global [HIGH]
+### M09 — Exception handler global [HIGH] ✅ COMPLETADO
 
 **Problema:** Error no previsto devuelve 500 con stacktrace potencialmente visible.
 
