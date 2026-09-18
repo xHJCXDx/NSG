@@ -1,10 +1,13 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Activity, Bell, KeyRound, ListChecks, ShieldAlert, Zap } from 'lucide-react';
 import { DASHBOARD_COPY } from '../contract';
+import { KpiCard } from '../components/KpiCard';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 export function Dashboard() {
   const { data, isLoading } = useDashboardSummary();
+
+  const kpiValue = (field: number | undefined) => isLoading ? '-' : (field ?? 0);
 
   const chartData = data ? [
     { name: 'Threats', value: data.total_threats, fill: '#f87171' },
@@ -22,89 +25,13 @@ export function Dashboard() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalThreats}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.total_threats ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-brand-500/20 flex items-center justify-center border border-brand-500/30 group-hover:scale-110 transition-transform">
-            <Activity className="w-6 h-6 text-brand-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.pendingThreats}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.pending_threats ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30 group-hover:scale-110 transition-transform">
-            <ShieldAlert className="w-6 h-6 text-yellow-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.totalAlerts}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.total_alerts ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
-            <Bell className="w-6 h-6 text-emerald-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.unacknowledgedAlerts}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.unacknowledged_alerts ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center border border-red-500/30 group-hover:scale-110 transition-transform">
-            <ShieldAlert className="w-6 h-6 text-red-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activeKeywords}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.active_keywords ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform">
-            <KeyRound className="w-6 h-6 text-purple-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.executionLogs}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.execution_logs_count ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center border border-cyan-500/30 group-hover:scale-110 transition-transform">
-            <ListChecks className="w-6 h-6 text-cyan-400" />
-          </div>
-        </div>
-
-        <div className="glass-card p-6 flex items-start justify-between group md:col-span-3">
-          <div>
-            <p className="text-sm font-medium text-gray-400 mb-1">{DASHBOARD_COPY.kpi.activityCount}</p>
-            <h3 className="text-3xl font-bold text-white">
-              {isLoading ? '-' : (data?.activity_count ?? 0)}
-            </h3>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 group-hover:scale-110 transition-transform">
-            <Zap className="w-6 h-6 text-emerald-400" />
-          </div>
-        </div>
+        <KpiCard label={DASHBOARD_COPY.kpi.totalThreats} value={kpiValue(data?.total_threats)} icon={Activity} color="brand" />
+        <KpiCard label={DASHBOARD_COPY.kpi.pendingThreats} value={kpiValue(data?.pending_threats)} icon={ShieldAlert} color="yellow" />
+        <KpiCard label={DASHBOARD_COPY.kpi.totalAlerts} value={kpiValue(data?.total_alerts)} icon={Bell} color="emerald" />
+        <KpiCard label={DASHBOARD_COPY.kpi.unacknowledgedAlerts} value={kpiValue(data?.unacknowledged_alerts)} icon={ShieldAlert} color="red" />
+        <KpiCard label={DASHBOARD_COPY.kpi.activeKeywords} value={kpiValue(data?.active_keywords)} icon={KeyRound} color="purple" />
+        <KpiCard label={DASHBOARD_COPY.kpi.executionLogs} value={kpiValue(data?.execution_logs_count)} icon={ListChecks} color="cyan" />
+        <KpiCard label={DASHBOARD_COPY.kpi.activityCount} value={kpiValue(data?.activity_count)} icon={Zap} color="emerald" className="md:col-span-3" />
       </div>
 
       {/* Charts Area */}

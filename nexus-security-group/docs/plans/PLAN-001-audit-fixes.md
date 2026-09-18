@@ -38,7 +38,7 @@
 | M22 | ✅ DONE | Backend | Separar deps de test | backend/requirements.txt, backend/requirements-test.txt |
 | M23 | ✅ DONE | Frontend | Lazy loading de rutas | frontend/src/app/router/AppRouter.tsx |
 | M24 | ✅ DONE | Backend | OpenAPI metadata completa | backend/main.py |
-| M25 | LOW | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
+| M25 | ✅ DONE | Frontend | Componente KpiCard reutilizable | frontend/src/features/dashboard/ |
 | M26 | LOW | Backend | FakeDb centralizado en tests | backend/tests/conftest.py |
 | M27 | LOW | Frontend | Interceptor HTTP centralizado | frontend/src/shared/api/ |
 | M28 | LOW | Backend | Schema muerto MetricsSummaryResponse | backend/schemas/metrics.py |
@@ -1107,7 +1107,7 @@ const UsersPage = lazy(() => import('../../features/users').then(m => ({ default
 
 ---
 
-### M25 — Componente KpiCard reutilizable [LOW]
+### M25 — Componente KpiCard reutilizable [LOW] ✅ COMPLETADO
 
 **Archivos a crear/modificar:**
 - CREAR `frontend/src/features/dashboard/components/KpiCard.tsx`
