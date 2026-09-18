@@ -29,7 +29,7 @@
 | M13 | ✅ DONE | Backend | Security headers middleware | backend/main.py |
 | M14 | ✅ DONE | Backend | Dockerfile non-root user | backend/Dockerfile |
 | M15 | ✅ DONE | Backend | Paginacion real (offset) | backend/routers/alerts.py, threats.py, logs.py |
-| M16 | MEDIUM | Backend | Indices en columnas de filtrado | backend/models/*.py |
+| M16 | ✅ DONE | Backend | Indices en columnas de filtrado | backend/models/*.py |
 | M17 | MEDIUM | Backend | get_db() con rollback explicito | backend/database.py |
 | M18 | MEDIUM | Backend | JWT_SECRET_KEY validacion de longitud | backend/config.py |
 | M19 | MEDIUM | Frontend | Remover console.warn en produccion | frontend/src/features/threats/api.ts, mentions/api.ts |
@@ -860,7 +860,7 @@ Esto requiere cambio en el frontend tambien para consumir la paginacion.
 
 ---
 
-### M16 — Indices en columnas de filtrado [MEDIUM]
+### M16 — Indices en columnas de filtrado [MEDIUM] ✅ COMPLETADO
 
 **Problema:** Columnas usadas en filtros de GET no tienen indice. Queries lentas con datos reales.
 
