@@ -17,15 +17,29 @@ export function UsersPage() {
   const [role, setRole] = useState<UserRole>('analyst');
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
 
   const isSubmitting = createUserMutation.isPending;
   const canSubmit = canCreateUsers && username.trim().length > 0 && password.length > 0 && !isSubmitting;
 
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    const trimmed = username.trim();
+    if (!trimmed) newErrors.username = 'Username is required';
+    else if (trimmed.length > 100) newErrors.username = 'Username must be 100 characters or fewer';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    else if (password.length > 255) newErrors.password = 'Password must be 255 characters or fewer';
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setCreatedUser(null);
+    if (!validate()) return;
 
     try {
       const user = await createUserMutation.mutateAsync({
@@ -69,9 +83,12 @@ export function UsersPage() {
             name="username"
             className="mt-2 w-full rounded-xl border border-white/10 bg-dark-800 px-4 py-3 text-white outline-none transition focus:border-brand-500"
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={(event) => { setUsername(event.target.value); setFieldErrors((prev) => ({ ...prev, username: undefined })); }}
             autoComplete="username"
           />
+          {fieldErrors.username && (
+            <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.username}</p>
+          )}
         </div>
 
         <div>
@@ -84,9 +101,12 @@ export function UsersPage() {
             type="password"
             className="mt-2 w-full rounded-xl border border-white/10 bg-dark-800 px-4 py-3 text-white outline-none transition focus:border-brand-500"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => { setPassword(event.target.value); setFieldErrors((prev) => ({ ...prev, password: undefined })); }}
             autoComplete="new-password"
           />
+          {fieldErrors.password && (
+            <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.password}</p>
+          )}
         </div>
 
         <div>

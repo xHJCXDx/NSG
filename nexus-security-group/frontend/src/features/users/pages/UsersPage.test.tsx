@@ -79,7 +79,7 @@ describe('UsersPage', () => {
     expect(submit).toBeDisabled();
 
     await user.type(screen.getByLabelText('Username'), ' alice ');
-    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.type(screen.getByLabelText('Password'), 'secret-pw');
     await user.selectOptions(screen.getByLabelText('Role'), 'admin');
     await user.click(submit);
 
@@ -119,7 +119,7 @@ describe('UsersPage', () => {
 
     renderUsersPage();
     await user.type(screen.getByLabelText('Username'), 'alice');
-    await user.type(screen.getByLabelText('Password'), 'secret');
+    await user.type(screen.getByLabelText('Password'), 'secret-pw');
     await user.click(screen.getByRole('button', { name: 'Create user' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(detail);
@@ -133,8 +133,24 @@ describe('UsersPage', () => {
 
     expect(screen.getByRole('note')).toHaveTextContent('users:write');
     await userEvent.type(screen.getByLabelText('Username'), 'alice');
-    await userEvent.type(screen.getByLabelText('Password'), 'secret');
+    await userEvent.type(screen.getByLabelText('Password'), 'secret-pw');
     expect(screen.getByRole('button', { name: 'Create user' })).toBeDisabled();
+  });
+
+  it('shows inline validation error for short password without calling the API', async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+
+    renderUsersPage();
+
+    await user.type(screen.getByLabelText('Username'), 'alice');
+    await user.type(screen.getByLabelText('Password'), 'short');
+    await user.click(screen.getByRole('button', { name: 'Create user' }));
+
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('User created')).not.toBeInTheDocument();
   });
 
   it('surfaces list errors separately from the create-user form', async () => {

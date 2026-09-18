@@ -8,13 +8,24 @@ export function LoginView() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const validate = () => {
+    const newErrors: { username?: string; password?: string } = {};
+    if (!username.trim()) newErrors.username = 'Username is required';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    if (!validate()) return;
     setLoading(true);
 
     try {
@@ -61,12 +72,15 @@ export function LoginView() {
                   id="login-username"
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => { setUsername(e.target.value); setFieldErrors((prev) => ({ ...prev, username: undefined })); }}
                   className="w-full pl-10 pr-4 py-2.5 bg-dark-800/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 text-white placeholder-gray-500 outline-none transition-all"
                   placeholder="Enter username"
                   required
                 />
               </div>
+              {fieldErrors.username && (
+                <p className="text-red-400 text-sm mt-1" role="alert">{fieldErrors.username}</p>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -79,12 +93,15 @@ export function LoginView() {
                   id="login-password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setFieldErrors((prev) => ({ ...prev, password: undefined })); }}
                   className="w-full pl-10 pr-4 py-2.5 bg-dark-800/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 text-white placeholder-gray-500 outline-none transition-all"
                   placeholder="••••••••"
                   required
                 />
               </div>
+              {fieldErrors.password && (
+                <p className="text-red-400 text-sm mt-1" role="alert">{fieldErrors.password}</p>
+              )}
             </div>
 
             <button

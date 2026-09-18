@@ -23,7 +23,7 @@
 | M07 | ✅ DONE | Backend | Mover CORS_ORIGINS a Settings | backend/config.py, backend/main.py |
 | M08 | ✅ DONE | Backend | Health check con verificacion DB | backend/main.py, tests/* |
 | M09 | ✅ DONE | Backend | Exception handler global | backend/main.py |
-| M10 | HIGH | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
+| M10 | ✅ DONE | Frontend | Validacion de formularios | frontend/src/features/auth/, frontend/src/features/users/ |
 | M11 | HIGH | Frontend | Validacion de expiracion JWT | frontend/src/features/auth/AuthContext.tsx |
 | M12 | HIGH | Backend | Eliminar campos client-spoofable | backend/schemas/threat.py, backend/schemas/alert.py |
 | M13 | HIGH | Backend | Security headers middleware | backend/main.py |
@@ -579,7 +579,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 ---
 
-### M10 — Validacion de formularios en frontend [HIGH]
+### M10 — Validacion de formularios en frontend [HIGH] ✅ COMPLETADO
 
 **Problema:** Los formularios del frontend no validan antes de enviar al backend. El usuario no recibe feedback hasta que el backend rechaza.
 

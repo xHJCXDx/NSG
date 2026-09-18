@@ -43,6 +43,55 @@ describe('LoginView', () => {
     expect(getToken()).toBe('jwt-token');
   });
 
+  it('shows inline error when password is shorter than 8 characters and does not call the API', async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), 'admin');
+    await user.type(screen.getByLabelText('Password'), 'short');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.queryByText('Dashboard route')).not.toBeInTheDocument();
+  });
+
+  it('shows inline error when username is whitespace-only and does not call the API', async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), '   ');
+    await user.type(screen.getByLabelText('Password'), 'long-enough-pw');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    expect(screen.getByText('Username is required')).toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('clears field errors when user types into the field', async () => {
+    const user = userEvent.setup();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), '   ');
+    await user.type(screen.getByLabelText('Password'), 'short');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+    expect(screen.getByText('Username is required')).toBeInTheDocument();
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Username'), 'a');
+    expect(screen.queryByText('Username is required')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Password'), 'x');
+    expect(screen.queryByText('Password must be at least 8 characters')).not.toBeInTheDocument();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('displays an invalid-credentials message and stays on login when login fails', async () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
