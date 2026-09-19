@@ -9,5 +9,6 @@ export function useDashboardSummary() {
     queryKey: ['dashboard', 'summary', claims.sub],
     queryFn: () => fetchDashboardSummary(token),
     enabled: !!token,
+    refetchInterval: 30000,
   });
 }
