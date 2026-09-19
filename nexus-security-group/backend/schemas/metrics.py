@@ -53,3 +53,13 @@ class CategoryCount(BaseModel):
 
     label: str
     count: int
+
+
+class PaginatedMentionsResponse(BaseModel):
+    """Paginated envelope for the /api/metrics/mentions endpoint."""
+
+    data: list[RecentMentionResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

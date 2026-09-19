@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime, timezone
+from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from auth import require_permission
@@ -12,6 +14,7 @@ from database import get_db
 from models import SocialMention, ThreatDetection
 from schemas.auth import TokenData
 from schemas.threat import (
+    PaginatedThreatsResponse,
     ThreatCriticalityLevel,
     ThreatDetail,
     ThreatListResponse,
@@ -50,31 +53,43 @@ def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None
     }
 
 
-@router.get("", response_model=list[ThreatListResponse])
+@router.get("", response_model=PaginatedThreatsResponse)
 def get_threats(
-    limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     criticality_level: Annotated[ThreatCriticalityLevel | None, Query()] = None,
     review_status: Annotated[ThreatReviewStatus | None, Query()] = None,
     mention_id: Annotated[int | None, Query(ge=1)] = None,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("threats", "read")),
 ):
-    query = (
-        db.query(ThreatDetection)
-        .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
-        .add_entity(SocialMention)
-    )
+    base_query = db.query(ThreatDetection)
 
     if criticality_level is not None:
-        query = query.filter(ThreatDetection.criticality_level == criticality_level)
+        base_query = base_query.filter(ThreatDetection.criticality_level == criticality_level)
     if review_status is not None:
-        query = query.filter(ThreatDetection.review_status == review_status)
+        base_query = base_query.filter(ThreatDetection.review_status == review_status)
     if mention_id is not None:
-        query = query.filter(ThreatDetection.mention_id == mention_id)
+        base_query = base_query.filter(ThreatDetection.mention_id == mention_id)
 
-    rows = query.order_by(ThreatDetection.detected_at.desc()).offset(offset).limit(limit).all()
-    return [_map_threat_list_item(threat, mention) for threat, mention in rows]
+    total_count = base_query.with_entities(func.count(ThreatDetection.detection_id)).scalar() or 0
+
+    rows = (
+        base_query
+        .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
+        .add_entity(SocialMention)
+        .order_by(ThreatDetection.detected_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return {
+        "data": [_map_threat_list_item(threat, mention) for threat, mention in rows],
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": ceil(total_count / page_size) if total_count > 0 else 1,
+    }
 
 
 @router.get("/{threat_id}", response_model=ThreatDetail)

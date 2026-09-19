@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -11,6 +12,7 @@ from schemas.auth import TokenData
 from schemas.metrics import (
     CategoryCount,
     MetricsSummaryEndpointResponse,
+    PaginatedMentionsResponse,
     RecentMentionResponse,
     SentimentTimeSeriesPoint,
     TimeSeriesPoint,
@@ -52,12 +54,15 @@ def get_metrics_summary(
     }
 
 
-@router.get("/mentions", response_model=list[RecentMentionResponse])
+@router.get("/mentions", response_model=PaginatedMentionsResponse)
 def get_recent_mentions(
     db: Session = Depends(get_db),
-    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     current_user: TokenData = Depends(require_permission("mentions", "read")),
 ):
+    total_count = db.query(func.count(SocialMention.mention_id)).scalar() or 0
+
     mentions = (
         db.query(
             SocialMention.mention_id,
@@ -67,10 +72,11 @@ def get_recent_mentions(
             SocialMention.author_username,
         )
         .order_by(SocialMention.created_at.desc())
-        .limit(limit)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
         .all()
     )
-    return [
+    data = [
         {
             "id": row.mention_id,
             "platform": row.platform,
@@ -80,6 +86,13 @@ def get_recent_mentions(
         }
         for row in mentions
     ]
+    return {
+        "data": data,
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": ceil(total_count / page_size) if total_count > 0 else 1,
+    }
 
 
 @router.get("/mentions-over-time", response_model=list[TimeSeriesPoint])
