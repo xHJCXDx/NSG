@@ -24,6 +24,7 @@
 | M09 | ✅ DONE | Full-stack | Paginacion en Mentions y Threats (backend + frontend) | DONE |
 | M10 | ✅ DONE | Full-stack | Filtros server-side y opciones de filtro globales desde backend | DONE |
 | M11 | ✅ DONE | Frontend | Reemplazar tooltips nativos por texto expandible en ThreatCard | DONE |
+| M12 | ✅ DONE | Frontend | Rediseño UX de la página de Users y permisos de roles | DONE |
 
 ---
 
@@ -303,6 +304,29 @@
 
 ---
 
+## M12 — Rediseño UX de la página de Users y permisos de roles
+
+**Prioridad:** MEDIUM
+**Area:** Frontend
+**Estado:** DONE
+
+**Que se hizo:**
+- User directory: iconos de seccion (Users, Shield), badges de rol con colores (admin=brand, analyst=cyan), indicadores de estado con dot verde/rojo
+- Create user form: cambiado de seccion separada a formulario inline colapsable con boton "Create user" en el header del directorio, layout en grilla 2 columnas (username/password) + 3 columnas (role/active/botones), boton cancelar
+- Permissions section: accordion integrado dentro de glass-card (antes era boton suelto + contenido separado), header con icono Shield y descripcion inline, separador visual con border-top
+- Permission matrix: checkboxes nativos reemplazados por toggle switches estilizados, filas modificadas resaltadas con fondo amber + dot indicador, tabla con bordes redondeados, agrupamiento de recursos con headers bold
+- Confirmacion de usuario creado: movida arriba del directorio con estilo emerald, form se cierra y resetea automaticamente al crear usuario exitosamente
+- Traducciones: agregado `cancelLabel` en EN y ES
+
+**Archivos afectados:**
+- `frontend/src/features/users/pages/UsersPage.tsx`
+- `frontend/src/features/users/components/PermissionMatrix.tsx`
+- `frontend/src/shared/i18n/translations.ts`
+
+**Commit:** `feat(frontend): redesign users page with improved UX for roles and permissions`
+
+---
+
 ## Orden de implementacion (completado)
 
 1. ✅ **M06** — Dashboard polling
@@ -316,3 +340,4 @@
 9. ✅ **M09** — Paginacion mentions y threats
 10. ✅ **M10** — Filtros server-side y opciones globales
 11. ✅ **M11** — Tooltips a expandible en ThreatCard
+12. ✅ **M12** — Rediseño UX Users y permisos
