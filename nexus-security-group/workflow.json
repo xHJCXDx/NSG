@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "NSG",
   "nodes": [
     {
       "parameters": {
@@ -77,8 +77,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        3328,
-        768
+        3312,
+        752
       ]
     },
     {
@@ -92,8 +92,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        4064,
-        1088
+        4048,
+        1072
       ]
     },
     {
@@ -272,8 +272,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1360,
-        1088
+        1456,
+        1376
       ]
     },
     {
@@ -543,21 +543,34 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Build Alert Content\n// Creates Slack blocks, email HTML, and maps\n// criticality_level to alert_severity.\n//\n// MAPPING (criticality_level -> alert_severity):\n//   low      -> info\n//   medium   -> warning\n//   high     -> high\n//   critical -> critical\n//\n// Only high/critical should reach here via the IF node,\n// but we map all values as a safety net.\n// =============================================\n\nconst items = $input.all();\nconst alerts = [];\n\n// Map criticality_level to alert_severity\nconst severityMap = {\n  'low': 'info',\n  'medium': 'warning',\n  'high': 'high',\n  'critical': 'critical'\n};\n\nconst severityEmoji = {\n  'critical': '\\ud83d\\udd34',\n  'high': '\\ud83d\\udfe0',\n  'medium': '\\ud83d\\udfe1',\n  'low': '\\u26aa'\n};\n\nconst severityColor = {\n  'critical': '#DC2626',\n  'high': '#EA580C',\n  'medium': '#F59E0B',\n  'low': '#6B7280'\n};\n\nconst escapeHtml = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\"/g, '&quot;')\n  .replace(/'/g, '&#39;');\n\nconst escapeAttr = (value) => escapeHtml(value).replace(/`/g, '&#96;');\n\nfor (const item of items) {\n  const data = item.json;\n  const threat = data.threat || {};\n  const sentiment = data.sentiment || {};\n  const critLevel = data.criticality_level || threat.criticality_level || 'low';\n\n  // Map to valid alert_severity\n  const alertSeverity = severityMap[critLevel] || 'info';\n  const emoji = severityEmoji[critLevel] || '\\u26aa';\n  const color = severityColor[critLevel] || '#6B7280';\n\n  const textContent = data.text_content || '';\n  // Platform-aware fallback URL\n  const fallbackUrls = {\n    'hackernews': 'https://news.ycombinator.com/item?id=' + (data.external_id || ''),\n    'exploit-db': 'https://www.exploit-db.com/',\n    'github': 'https://github.com/search?q=security&type=issues'\n  };\n  const sourceUrl = (data.urls && data.urls.length > 0)\n    ? data.urls[0]\n    : (fallbackUrls[data.platform] || 'https://news.ycombinator.com/');\n\n  const matchedKeywords = (threat.matched_keywords || []).map(k => '`' + k + '`').join(', ');\n  const confidencePct = ((threat.confidence_score || 0) * 100).toFixed(1) + '%';\n  const truncatedText = textContent.substring(0, 500) + (textContent.length > 500 ? '...' : '');\n  const safeTextContent = escapeHtml(textContent);\n  const safeAuthor = escapeHtml(data.author_username || 'unknown');\n  const safeSourceUrl = escapeAttr(sourceUrl);\n  const safeDetectionId = escapeHtml(data.detection_id || 'unknown');\n  const safeTimestamp = escapeHtml(new Date().toLocaleString('es-AR'));\n\n  // Slack blocks\n  const slackBlocks = JSON.stringify([\n    {\n      type: 'header',\n      text: { type: 'plain_text', text: emoji + ' ALERTA DE AMENAZA - ' + critLevel.toUpperCase() }\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '*Plataforma:*\\n' + (data.platform || 'unknown').toUpperCase() },\n        { type: 'mrkdwn', text: '*Fecha:*\\n' + new Date(data.created_at || Date.now()).toLocaleString('es-AR') },\n        { type: 'mrkdwn', text: '*Tipo:*\\n' + (threat.threat_type || 'general').replace(/_/g, ' ') },\n        { type: 'mrkdwn', text: '*Confianza:*\\n' + confidencePct }\n      ]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Contenido:*\\n>' + truncatedText }\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '*Autor:*\\n' + (data.author_username || 'unknown') },\n        { type: 'mrkdwn', text: '*Engagement:*\\n' + (data.likes_count || 0) }\n      ]\n    },\n    {\n      type: 'section',\n      fields: [\n        { type: 'mrkdwn', text: '*Comentarios:*\\n' + (data.replies_count || 0) },\n        { type: 'mrkdwn', text: '*Sentimiento:*\\n' + (sentiment.sentiment_label || 'N/A') + ' (' + (sentiment.ensemble_score != null ? sentiment.ensemble_score.toFixed(3) : 'N/A') + ')' }\n      ]\n    },\n    {\n      type: 'section',\n      text: { type: 'mrkdwn', text: '*Keywords:*\\n' + (matchedKeywords || 'ninguno') }\n    },\n    {\n      type: 'actions',\n      elements: [\n        { type: 'button', text: { type: 'plain_text', text: 'Ver Original' }, url: sourceUrl, style: 'primary' },\n        { type: 'button', text: { type: 'plain_text', text: 'Falso Positivo' }, value: 'fp_' + data.detection_id, action_id: 'mark_false_positive' }\n      ]\n    },\n    {\n      type: 'context',\n      elements: [\n        { type: 'mrkdwn', text: 'Detection ID: ' + data.detection_id + ' | Mention ID: ' + data.mention_id }\n      ]\n    }\n  ]);\n\n  // Email HTML\n  const emailHtml = '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><style>' +\n    'body{font-family:Arial,sans-serif;line-height:1.6;color:#333}' +\n    '.container{max-width:600px;margin:0 auto;padding:20px}' +\n    '.header{background:' + color + ';color:white;padding:20px;text-align:center;border-radius:5px 5px 0 0}' +\n    '.content{background:#f9fafb;padding:20px;border:1px solid #e5e7eb}' +\n    '.section{margin-bottom:20px}.label{font-weight:bold;color:#4b5563}' +\n    '.value{margin-top:5px}' +\n    '.button{display:inline-block;padding:12px 24px;background:' + color + ';color:white;text-decoration:none;border-radius:5px;margin:10px 5px}' +\n    '.footer{background:#f3f4f6;padding:15px;text-align:center;font-size:12px;color:#6b7280}' +\n    '</style></head><body><div class=\"container\">' +\n    '<div class=\"header\"><h1>' + emoji + ' ALERTA DE AMENAZA</h1><p>Criticidad: ' + critLevel.toUpperCase() + '</p></div>' +\n    '<div class=\"content\">' +\n    '<div class=\"section\"><div class=\"label\">Contenido</div><div class=\"value\" style=\"background:white;padding:15px;border-left:4px solid ' + color + '\">' + safeTextContent + '</div></div>' +\n    '<div class=\"section\"><div class=\"label\">Autor</div><div class=\"value\">' + safeAuthor + '</div></div>' +\n    '<div style=\"text-align:center;margin-top:30px\"><a href=\"' + safeSourceUrl + '\" class=\"button\">Ver Original</a></div>' +\n    '</div>' +\n    '<div class=\"footer\"><p>Detection ID: ' + safeDetectionId + ' | ' + safeTimestamp + '</p></div>' +\n    '</div></body></html>';\n\n  const alertMessage = emoji + ' *ALERTA ' + critLevel.toUpperCase() + '*: ' + textContent.substring(0, 100) + '...';\n\n  alerts.push({\n    json: {\n      ...data,\n      // CRITICAL: alert_severity uses the MAPPED value, not criticality_level directly\n      alert_severity: alertSeverity,\n      alert_message: alertMessage,\n      slack_blocks: slackBlocks,\n      email_subject: '[' + critLevel.toUpperCase() + '] Amenaza detectada',\n      email_html: emailHtml\n    }\n  });\n}\n\nreturn alerts;"
+        "jsCode": "// =============================================\n// Aggregate Alerts\n// Collects ALL high/critical items from this batch\n// into a single consolidated item for summary alerting.\n// This ensures N alerts = 1 email + 1 Slack message.\n// =============================================\n\nconst items = $input.all();\n\nif (!items || items.length === 0) {\n  return [];\n}\n\nconst alerts = items.map(item => {\n  const d = item.json;\n  const threat = d.threat || {};\n  const fallbackUrls = {\n    'hackernews': 'https://news.ycombinator.com/item?id=' + (d.external_id || ''),\n    'exploit-db': 'https://www.exploit-db.com/',\n    'github': 'https://github.com/search?q=security&type=issues'\n  };\n  const sourceUrl = (d.urls && d.urls.length > 0)\n    ? d.urls[0]\n    : (fallbackUrls[d.platform] || 'https://news.ycombinator.com/');\n  return {\n    detection_id: d.detection_id || null,\n    mention_id: d.mention_id || null,\n    text_content: d.text_content || '',\n    platform: d.platform || 'unknown',\n    author: d.author_username || 'unknown',\n    criticality_level: d.criticality_level || threat.criticality_level || 'high',\n    threat_type: threat.threat_type || 'general',\n    confidence_score: threat.confidence_score || 0,\n    source_url: sourceUrl,\n    detected_at: d.created_at || new Date().toISOString()\n  };\n});\n\n// Determine highest severity across all alerts\nconst hasCritical = alerts.some(a => a.criticality_level === 'critical');\nconst highestSeverity = hasCritical ? 'critical' : 'high';\n\nreturn [{\n  json: {\n    alert_count: alerts.length,\n    alerts: alerts,\n    execution_timestamp: new Date().toISOString(),\n    highest_severity: highestSeverity\n  }\n}];"
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Aggregate Alerts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3464,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// =============================================\n// Build Alert Content\n// Receives ONE consolidated item from Aggregate Alerts\n// with an alerts[] array. Produces a single summary email,\n// a Slack Block Kit message, and a plain-text log message.\n//\n// M07 + M08: consolidated summary + redesigned template.\n// =============================================\n\nconst item = $input.first();\nif (!item) return [];\n\nconst data = item.json;\nconst alerts = data.alerts || [];\nconst alertCount = data.alert_count || alerts.length;\nconst highestSeverity = data.highest_severity || 'high';\nconst execTimestamp = data.execution_timestamp || new Date().toISOString();\n\nconst criticalAlerts = alerts.filter(a => a.criticality_level === 'critical');\nconst highAlerts = alerts.filter(a => a.criticality_level === 'high');\nconst criticalCount = criticalAlerts.length;\nconst highCount = highAlerts.length;\n\n// ── Helpers ────────────────────────────────────────────────────────────────\nconst escHtml = (v) => String(v ?? '')\n  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')\n  .replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\n\nconst fmtTimestamp = (iso) => {\n  try { return new Date(iso).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }); }\n  catch (e) { return iso; }\n};\n\nconst fmtConfidence = (score) => ((score || 0) * 100).toFixed(1) + '%';\n\nconst truncate = (str, max) => {\n  const s = String(str || '');\n  return s.length > max ? s.slice(0, max) + '…' : s;\n};\n\n// ── Email subject ───────────────────────────────────────────────────────────\nlet subjectParts = [];\nif (criticalCount > 0) subjectParts.push(criticalCount + ' critical');\nif (highCount > 0) subjectParts.push(highCount + ' high');\nconst email_subject = '[NSG] Scan Report — ' + alertCount + ' alert' + (alertCount !== 1 ? 's' : '') + ' detected (' + subjectParts.join(', ') + ')';\n\n// ── Severity badge (inline CSS — email clients strip <style> blocks) ────────\nconst badgeStyle = (level) => {\n  const base = 'display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;';\n  if (level === 'critical') return base + 'background:#ef4444;color:#fff;';\n  return base + 'background:#f97316;color:#fff;';\n};\n\n// ── Alert rows for the table ────────────────────────────────────────────────\nconst alertRows = alerts.map((a, idx) => {\n  const severityBadge = '<span style=\"' + badgeStyle(a.criticality_level) + '\">' + escHtml(a.criticality_level) + '</span>';\n  const threatType = escHtml((a.threat_type || 'general').replace(/_/g, ' '));\n  const platform = escHtml((a.platform || 'unknown').toUpperCase());\n  const author = escHtml(truncate(a.author, 30));\n  const confidence = escHtml(fmtConfidence(a.confidence_score));\n  const detected = escHtml(fmtTimestamp(a.detected_at));\n  const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';\n  const textPreview = escHtml(truncate(a.text_content, 120));\n  const cellStyle = 'padding:10px 12px;vertical-align:top;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151;';\n  const linkStyle = 'color:#2563eb;text-decoration:none;';\n\n  const numCell = '<td style=\"' + cellStyle + 'width:32px;text-align:center;color:#9ca3af;font-size:12px;background:' + rowBg + '\">' + (idx + 1) + '</td>';\n  const sevCell = '<td style=\"' + cellStyle + 'background:' + rowBg + '\">' + severityBadge + '</td>';\n  const typeCell = '<td style=\"' + cellStyle + 'background:' + rowBg + '\">' + threatType + '<br><span style=\"font-size:11px;color:#6b7280;\">' + textPreview + '</span></td>';\n  const platformCell = '<td style=\"' + cellStyle + 'background:' + rowBg + '\">' + platform + '</td>';\n  const authorCell = '<td style=\"' + cellStyle + 'background:' + rowBg + '\">' + author + '</td>';\n  const confCell = '<td style=\"' + cellStyle + 'text-align:right;background:' + rowBg + '\">' + confidence + '</td>';\n  const detectedCell = '<td style=\"' + cellStyle + 'font-size:11px;background:' + rowBg + '\">' +\n    (a.source_url ? '<a href=\"' + escHtml(a.source_url) + '\" style=\"' + linkStyle + '\">' + detected + '</a>' : detected) + '</td>';\n\n  return '<tr>' + numCell + sevCell + typeCell + platformCell + authorCell + confCell + detectedCell + '</tr>';\n}).join('');\n\n// ── Summary stats ───────────────────────────────────────────────────────────\nconst statBoxStyle = 'display:inline-block;min-width:120px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px 20px;margin:0 8px 8px 0;text-align:center;vertical-align:top;';\nconst statNumStyle = 'font-size:28px;font-weight:700;color:#0f172a;margin:0;';\nconst statLabelStyle = 'font-size:12px;color:#6b7280;margin:4px 0 0;text-transform:uppercase;letter-spacing:0.5px;';\n\nconst statTotal = '<div style=\"' + statBoxStyle + '\"><p style=\"' + statNumStyle + '\">' + alertCount + '</p><p style=\"' + statLabelStyle + '\">Total Alerts</p></div>';\nconst statCritical = '<div style=\"' + statBoxStyle + 'border-top:3px solid #ef4444;\"><p style=\"' + statNumStyle + 'color:#ef4444;\">' + criticalCount + '</p><p style=\"' + statLabelStyle + '\">Critical</p></div>';\nconst statHigh = '<div style=\"' + statBoxStyle + 'border-top:3px solid #f97316;\"><p style=\"' + statNumStyle + 'color:#f97316;\">' + highCount + '</p><p style=\"' + statLabelStyle + '\">High</p></div>';\nconst statTime = '<div style=\"' + statBoxStyle + '\"><p style=\"font-size:12px;font-weight:600;color:#0f172a;margin:0;\">' + escHtml(fmtTimestamp(execTimestamp)) + '</p><p style=\"' + statLabelStyle + '\">Scan Time</p></div>';\n\n// ── Full email HTML (all inline CSS) ────────────────────────────────────────\nconst email_html = '<!DOCTYPE html>' +\n  '<html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>' +\n  '<body style=\"margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,\\'Segoe UI\\',Arial,sans-serif;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f1f5f9;padding:24px 0;\">' +\n  '<tr><td align=\"center\">' +\n  '<table width=\"640\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:640px;width:100%;\">' +\n\n  '<!-- HEADER -->' +\n  '<tr><td style=\"background:#0b0f19;border-radius:8px 8px 0 0;padding:24px 32px;\">' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr>' +\n  '<td><span style=\"font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;\">NSG</span>' +\n  '<span style=\"font-size:13px;color:#94a3b8;margin-left:8px;\">Nexus Security Group</span></td>' +\n  '<td align=\"right\"><span style=\"font-size:11px;color:#64748b;font-family:monospace;\">AUTOMATED REPORT</span></td>' +\n  '</tr></table>' +\n  '</td></tr>' +\n\n  '<!-- TITLE BAND -->' +\n  '<tr><td style=\"background:#' + (highestSeverity === 'critical' ? 'ef4444' : 'f97316') + ';padding:14px 32px;\">' +\n  '<span style=\"font-size:16px;font-weight:600;color:#fff;\">&#9888; Scan Report — ' + alertCount + ' threat' + (alertCount !== 1 ? 's' : '') + ' detected</span>' +\n  '</td></tr>' +\n\n  '<!-- BODY -->' +\n  '<tr><td style=\"background:#ffffff;padding:28px 32px;\">' +\n\n  '<!-- Summary stats -->' +\n  '<p style=\"font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 16px;\">Summary</p>' +\n  '<div style=\"margin-bottom:28px;\">' + statTotal + statCritical + statHigh + statTime + '</div>' +\n\n  '<!-- Alerts table -->' +\n  '<p style=\"font-size:13px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 12px;\">Detected Threats</p>' +\n  '<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;\">' +\n  '<thead><tr style=\"background:#f8fafc;\">' +\n  '<th style=\"padding:10px 12px;text-align:center;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;width:32px;\">#</th>' +\n  '<th style=\"padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Severity</th>' +\n  '<th style=\"padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Type / Preview</th>' +\n  '<th style=\"padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Platform</th>' +\n  '<th style=\"padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Author</th>' +\n  '<th style=\"padding:10px 12px;text-align:right;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Confidence</th>' +\n  '<th style=\"padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;\">Detected</th>' +\n  '</tr></thead>' +\n  '<tbody>' + alertRows + '</tbody>' +\n  '</table>' +\n\n  '</td></tr>' +\n\n  '<!-- FOOTER -->' +\n  '<tr><td style=\"background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 8px 8px;padding:16px 32px;text-align:center;\">' +\n  '<p style=\"margin:0;font-size:12px;color:#94a3b8;\">This is an automated report from <strong style=\"color:#64748b;\">NSG — Nexus Security Group</strong></p>' +\n  '</td></tr>' +\n\n  '</table>' +\n  '</td></tr></table>' +\n  '</body></html>';\n\n// ── Slack Block Kit message ─────────────────────────────────────────────────\nconst slackBlocks_arr = [\n  {\n    type: 'header',\n    text: { type: 'plain_text', text: '\\uD83D\\uDEA8 NSG Scan Report', emoji: true }\n  },\n  {\n    type: 'section',\n    text: {\n      type: 'mrkdwn',\n      text: '*' + alertCount + ' threat' + (alertCount !== 1 ? 's' : '') + ' detected* — ' +\n        (criticalCount > 0 ? '\\uD83D\\uDD34 ' + criticalCount + ' critical  ' : '') +\n        (highCount > 0 ? '\\uD83D\\DFE0 ' + highCount + ' high' : '') +\n        '\\n_Scan time: ' + fmtTimestamp(execTimestamp) + '_'\n    }\n  },\n  { type: 'divider' }\n];\n\nconst shownAlerts = alerts.slice(0, 5);\nconst remainingCount = alerts.length - shownAlerts.length;\n\nfor (const a of shownAlerts) {\n  const emoji = a.criticality_level === 'critical' ? '\\uD83D\\uDD34' : '\\uD83D\\DFE0';\n  const type = (a.threat_type || 'general').replace(/_/g, ' ');\n  const preview = truncate(a.text_content, 100);\n  slackBlocks_arr.push({\n    type: 'section',\n    text: {\n      type: 'mrkdwn',\n      text: emoji + ' *' + type.toUpperCase() + '* — ' + (a.platform || 'unknown').toUpperCase() +\n        ' \\u2022 _' + (a.author || 'unknown') + '_\\n>' + preview\n    }\n  });\n}\n\nif (remainingCount > 0) {\n  slackBlocks_arr.push({\n    type: 'context',\n    elements: [{ type: 'mrkdwn', text: '…and *' + remainingCount + '* more threat' + (remainingCount !== 1 ? 's' : '') + ' — check the full report in your email.' }]\n  });\n}\n\nconst slack_blocks = JSON.stringify(slackBlocks_arr);\n\n// ── Plain text for DB logging ────────────────────────────────────────────────\nconst alert_message = '[NSG] ' + alertCount + ' alert' + (alertCount !== 1 ? 's' : '') + ' detected: ' +\n  subjectParts.join(', ') + ' — ' + fmtTimestamp(execTimestamp);\n\nreturn [{\n  json: {\n    alert_count: alertCount,\n    alerts: alerts,\n    highest_severity: highestSeverity,\n    execution_timestamp: execTimestamp,\n    alert_severity: highestSeverity === 'critical' ? 'critical' : 'high',\n    alert_message,\n    slack_blocks,\n    email_subject,\n    email_html\n  }\n}];"
       },
       "id": "2d8eebd8-4cbe-4707-b5d2-243af62e0881",
       "name": "Build Alert Content",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        3568,
+        3672,
         896
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "PASTE_SLACK_INCOMING_WEBHOOK_URL_HERE",
+        "url": "https://hooks.slack.com/services/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",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -591,8 +604,8 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        3760,
-        1088
+        3808,
+        992
       ],
       "webhookId": "79e2e096-a580-4f4a-8333-9b6ba905154d",
       "credentials": {
@@ -675,8 +688,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.2,
       "position": [
-        4368,
-        1184
+        4384,
+        1200
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -949,7 +962,12 @@
       "main": [
         [
           {
-            "node": "Build Alert Content",
+            "node": "Aggregate Alerts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prep Alert Insert",
             "type": "main",
             "index": 0
           }
@@ -957,6 +975,17 @@
         [
           {
             "node": "Summarize Skipped Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Alerts": {
+      "main": [
+        [
+          {
+            "node": "Build Alert Content",
             "type": "main",
             "index": 0
           }
@@ -973,11 +1002,6 @@
           },
           {
             "node": "Send Gmail Alert",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Prep Alert Insert",
             "type": "main",
             "index": 0
           }
@@ -1007,12 +1031,15 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "versionId": "404c25aa-2bb3-4170-a655-5e72c91bc2e2",
+  "versionId": "1dd7842d-67a0-4988-b9db-573f9f0f53ab",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "bf7e1a196ef54928007db0016ea25ab4e38a98bbdd791cd2d035d278ad7fa4c1"
