@@ -88,6 +88,7 @@ export function PermissionMatrix({ data, canWrite, onSave, isSaving }: Permissio
                       <input
                         type="checkbox"
                         checked
+                        readOnly
                         disabled
                         className="h-4 w-4 rounded border-white/20 bg-white/5 text-brand-500 cursor-not-allowed opacity-50"
                         aria-label={`Admin ${entry.permission}`}
