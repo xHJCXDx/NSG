@@ -72,10 +72,13 @@ const stripMarkdown = (text: string): string =>
 
 const SUMMARY_TRUNCATE_LENGTH = 200;
 
+const RELATED_MENTION_TRUNCATE_LENGTH = 80;
+
 export function ThreatCard({ threat }: ThreatCardProps) {
   const t = useTranslation();
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [evidenceExpanded, setEvidenceExpanded] = useState(false);
+  const [relatedMentionExpanded, setRelatedMentionExpanded] = useState(false);
 
   const { badge, border } = getSeverityStyles(threat.severity);
   const evidence = threat.evidence ?? [];
@@ -132,7 +135,6 @@ export function ThreatCard({ threat }: ThreatCardProps) {
               <span
                 key={index}
                 className="rounded-md border border-edge bg-surface-hover px-2 py-1 text-xs text-content-secondary max-w-xs truncate"
-                title={item}
               >
                 {item}
               </span>
@@ -153,11 +155,28 @@ export function ThreatCard({ threat }: ThreatCardProps) {
       <div className="flex flex-wrap items-center gap-3 text-sm text-content-secondary">
         {threat.source && <span>{t.threats.card.sourceLabel}: {threat.source}</span>}
         {threat.relatedMention ? (
-          <span title={threat.relatedMention.text ?? undefined}>
+          <span>
             {t.threats.card.relatedMentionLabel}: {(() => {
               const raw = threat.relatedMention.text ?? threat.relatedMention.id;
               const clean = stripMarkdown(String(raw));
-              return clean.length > 80 ? `${clean.slice(0, 80)}…` : clean;
+              const shouldTruncate = clean.length > RELATED_MENTION_TRUNCATE_LENGTH;
+              const displayText = shouldTruncate && !relatedMentionExpanded
+                ? `${clean.slice(0, RELATED_MENTION_TRUNCATE_LENGTH)}…`
+                : clean;
+              return (
+                <>
+                  {displayText}
+                  {shouldTruncate && (
+                    <button
+                      type="button"
+                      onClick={() => setRelatedMentionExpanded((prev) => !prev)}
+                      className="ml-2 text-brand-400 text-xs hover:underline"
+                    >
+                      {relatedMentionExpanded ? t.threats.card.showLess : t.threats.card.showMore}
+                    </button>
+                  )}
+                </>
+              );
             })()}
             {threat.relatedMention.platform ? ` (${threat.relatedMention.platform})` : ''}
           </span>
