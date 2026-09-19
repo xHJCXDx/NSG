@@ -21,6 +21,7 @@
 | M06 | ✅ DONE | Frontend | Dashboard con datos en tiempo real (polling/refetch automatico) | DONE |
 | M07 | ✅ DONE | Workflow | Mejorar formato de alertas por email (legible y profesional) | DONE |
 | M08 | ✅ DONE | Workflow | Consolidar alertas en un solo email resumen por ejecucion | DONE |
+| M09 | ✅ DONE | Full-stack | Paginacion en Mentions y Threats (backend + frontend) | DONE |
 
 ---
 
@@ -220,6 +221,37 @@
 
 ---
 
+## M09 — Paginacion en Mentions y Threats
+
+**Prioridad:** HIGH
+**Area:** Full-stack (Backend + Frontend)
+**Estado:** DONE
+
+**Que se hizo:**
+- Backend: reemplazados params `limit`/`offset` por `page`/`page_size` en ambos endpoints
+- Backend: respuesta envuelta en envelope paginado (`data`, `total`, `page`, `page_size`, `total_pages`)
+- Backend: total count respeta filtros activos en threats (criticality_level, review_status, mention_id)
+- Frontend: componente `Pagination` reutilizable con soporte i18n
+- Frontend: hooks de mentions y threats manejan estado de pagina, reset a pagina 1 al cambiar filtros
+- Frontend: se muestran controles Anterior/Siguiente cuando hay mas de una pagina
+
+**Archivos afectados:**
+- `backend/schemas/metrics.py` — nuevo `PaginatedMentionsResponse`
+- `backend/schemas/threat.py` — nuevo `PaginatedThreatsResponse`
+- `backend/routers/metrics.py` — paginacion en `get_recent_mentions`
+- `backend/routers/threats.py` — paginacion en `get_threats`
+- `frontend/src/shared/types.ts` — tipo `PaginatedResponse<T>`
+- `frontend/src/shared/components/Pagination.tsx` — componente reutilizable
+- `frontend/src/shared/i18n/translations.ts` — strings de paginacion EN/ES
+- `frontend/src/features/mentions/` — api, contract, types, hooks, page
+- `frontend/src/features/threats/` — api, contract, types, hooks, page, index
+
+**Commits:**
+- `feat(backend): add pagination to mentions and threats endpoints`
+- `feat(frontend): add pagination controls to mentions and threats pages`
+
+---
+
 ## Orden de implementacion (completado)
 
 1. ✅ **M06** — Dashboard polling
@@ -230,3 +262,4 @@
 6. ✅ **M02** — Idioma con i18n completo
 7. ✅ **M08** — Consolidar emails
 8. ✅ **M07** — Email template profesional
+9. ✅ **M09** — Paginacion mentions y threats
