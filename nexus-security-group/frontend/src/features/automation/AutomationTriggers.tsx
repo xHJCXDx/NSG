@@ -2,8 +2,10 @@ import { AlertTriangle, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
 import { useAuth } from '../auth';
 import { getAutomationStatus } from './api';
 import { useTriggerWorkflow } from './hooks/useTriggerWorkflow';
+import { useTranslation } from '../../shared/i18n/translations';
 
 export function AutomationTriggers() {
+  const t = useTranslation();
   const { hasPermission } = useAuth();
   const status = getAutomationStatus();
   const trigger = useTriggerWorkflow();
@@ -17,8 +19,8 @@ export function AutomationTriggers() {
 
   return (
     <div className="glass-card p-6 mt-8">
-      <h2 className="text-xl font-bold text-white mb-2">{status.title}</h2>
-      <p className="text-gray-400 text-sm mb-6">{status.description}</p>
+      <h2 className="text-xl font-bold text-content-heading mb-2">{t.automation.title}</h2>
+      <p className="text-content-secondary text-sm mb-6">{t.automation.description}</p>
 
       <div className="flex items-center space-x-4">
         <button
@@ -34,18 +36,18 @@ export function AutomationTriggers() {
           ) : (
             <Play className="w-5 h-5 mr-2" />
           )}
-          {isRunning ? 'Running scan...' : status.manualTriggerLabel}
+          {isRunning ? t.automation.runningScan : t.automation.manualTriggerLabel}
         </button>
 
         <div className="flex items-center text-sky-300 bg-sky-500/10 px-4 py-2 rounded-lg border border-sky-500/20">
           <Clock className="w-5 h-5 mr-2" />
-          <span className="text-sm font-medium">{status.scheduleLabel}</span>
+          <span className="text-sm font-medium">{t.automation.scheduleLabel}</span>
         </div>
       </div>
 
       {!canExecuteWorkflow && (
-        <p className="mt-3 text-sm text-amber-200" role="note">
-          Manual execution is hidden behind the workflows:execute permission. The backend remains authoritative.
+        <p className="mt-3 text-sm text-amber-600 dark:text-amber-200" role="note">
+          {t.automation.permissionNote}
         </p>
       )}
 

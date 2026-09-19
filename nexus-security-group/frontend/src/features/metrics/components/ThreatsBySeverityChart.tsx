@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ANALYTICS_COPY } from '../contract';
 import type { CategoryCount } from '../types';
 import { ChartCard } from './ChartCard';
+import { useTranslation } from '../../../shared/i18n/translations';
+import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: '#ef4444',
@@ -15,24 +17,38 @@ interface ThreatsBySeverityChartProps {
 }
 
 export function ThreatsBySeverityChart({ data }: ThreatsBySeverityChartProps) {
+  const t = useTranslation();
+  const { theme } = useTheme();
+
+  const chartColors = useMemo(() => {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      grid: s.getPropertyValue('--color-chart-grid').trim(),
+      axis: s.getPropertyValue('--color-chart-axis').trim(),
+      tooltipBg: s.getPropertyValue('--color-chart-tooltip-bg').trim(),
+      tooltipText: s.getPropertyValue('--color-chart-tooltip-text').trim(),
+      tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
+    };
+  }, [theme]);
+
   if (data.length === 0) {
     return (
-      <ChartCard title={ANALYTICS_COPY.charts.threatsBySeverity}>
-        <div className="flex h-[300px] items-center justify-center text-gray-400">{ANALYTICS_COPY.noData}</div>
+      <ChartCard title={t.analytics.charts.threatsBySeverity}>
+        <div className="flex h-[300px] items-center justify-center text-content-muted">{t.analytics.noData}</div>
       </ChartCard>
     );
   }
 
   return (
-    <ChartCard title={ANALYTICS_COPY.charts.threatsBySeverity}>
+    <ChartCard title={t.analytics.charts.threatsBySeverity}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 60, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-            <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="label" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+            <XAxis type="number" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="label" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
+              contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
               {data.map((entry) => (

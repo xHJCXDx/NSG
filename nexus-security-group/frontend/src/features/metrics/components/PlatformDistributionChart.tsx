@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { ANALYTICS_COPY } from '../contract';
 import type { CategoryCount } from '../types';
 import { ChartCard } from './ChartCard';
+import { useTranslation } from '../../../shared/i18n/translations';
+import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 const PLATFORM_COLORS = ['#0ea5e9', '#8b5cf6', '#f97316', '#22c55e', '#ef4444', '#eab308', '#ec4899'];
 
@@ -10,16 +12,28 @@ interface PlatformDistributionChartProps {
 }
 
 export function PlatformDistributionChart({ data }: PlatformDistributionChartProps) {
+  const t = useTranslation();
+  const { theme } = useTheme();
+
+  const chartColors = useMemo(() => {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      tooltipBg: s.getPropertyValue('--color-chart-tooltip-bg').trim(),
+      tooltipText: s.getPropertyValue('--color-chart-tooltip-text').trim(),
+      tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
+    };
+  }, [theme]);
+
   if (data.length === 0) {
     return (
-      <ChartCard title={ANALYTICS_COPY.charts.platformDistribution}>
-        <div className="flex h-[300px] items-center justify-center text-gray-400">{ANALYTICS_COPY.noData}</div>
+      <ChartCard title={t.analytics.charts.platformDistribution}>
+        <div className="flex h-[300px] items-center justify-center text-content-muted">{t.analytics.noData}</div>
       </ChartCard>
     );
   }
 
   return (
-    <ChartCard title={ANALYTICS_COPY.charts.platformDistribution}>
+    <ChartCard title={t.analytics.charts.platformDistribution}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -39,7 +53,7 @@ export function PlatformDistributionChart({ data }: PlatformDistributionChartPro
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
+              contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
             />
           </PieChart>
         </ResponsiveContainer>

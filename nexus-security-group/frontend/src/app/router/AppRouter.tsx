@@ -14,7 +14,7 @@ const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage').then(m => ({ d
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 function LazyFallback() {
-  return <div className="p-8 text-gray-400">Loading...</div>;
+  return <div className="p-8 text-content-muted">Loading...</div>;
 }
 
 export function AppRouter() {

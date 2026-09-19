@@ -9,6 +9,8 @@ interface State {
   hasError: boolean;
 }
 
+// Class component — hooks cannot be used here.
+// English strings are kept as fallback per i18n conventions.
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -26,9 +28,9 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-surface-primary text-content-primary">
           <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-          <p className="text-gray-400 mb-6">An unexpected error occurred.</p>
+          <p className="text-content-muted mb-6">An unexpected error occurred.</p>
           <button
             type="button"
             onClick={() => window.location.reload()}

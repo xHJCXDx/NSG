@@ -1,31 +1,47 @@
+import { useMemo } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ANALYTICS_COPY } from '../contract';
 import type { CategoryCount } from '../types';
 import { ChartCard } from './ChartCard';
+import { useTranslation } from '../../../shared/i18n/translations';
+import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 interface ThreatCategoriesChartProps {
   data: CategoryCount[];
 }
 
 export function ThreatCategoriesChart({ data }: ThreatCategoriesChartProps) {
+  const t = useTranslation();
+  const { theme } = useTheme();
+
+  const chartColors = useMemo(() => {
+    const s = getComputedStyle(document.documentElement);
+    return {
+      grid: s.getPropertyValue('--color-chart-grid').trim(),
+      axis: s.getPropertyValue('--color-chart-axis').trim(),
+      tooltipBg: s.getPropertyValue('--color-chart-tooltip-bg').trim(),
+      tooltipText: s.getPropertyValue('--color-chart-tooltip-text').trim(),
+      tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
+    };
+  }, [theme]);
+
   if (data.length === 0) {
     return (
-      <ChartCard title={ANALYTICS_COPY.charts.threatCategories}>
-        <div className="flex h-[300px] items-center justify-center text-gray-400">{ANALYTICS_COPY.noData}</div>
+      <ChartCard title={t.analytics.charts.threatCategories}>
+        <div className="flex h-[300px] items-center justify-center text-content-muted">{t.analytics.noData}</div>
       </ChartCard>
     );
   }
 
   return (
-    <ChartCard title={ANALYTICS_COPY.charts.threatCategories}>
+    <ChartCard title={t.analytics.charts.threatCategories}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis dataKey="label" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+            <XAxis dataKey="label" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+            <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
-              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.75rem', color: '#fff' }}
+              contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
             />
             <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
           </BarChart>

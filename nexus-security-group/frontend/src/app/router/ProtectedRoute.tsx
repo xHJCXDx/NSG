@@ -19,9 +19,9 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
 
     if (!hasPermission(resource, action)) {
       return (
-        <div className="glass-card p-6 text-gray-300" role="alert">
-          <h1 className="text-xl font-bold text-white">Access restricted</h1>
-          <p className="mt-2 text-sm text-gray-400">
+        <div className="glass-card p-6 text-content-secondary" role="alert">
+          <h1 className="text-xl font-bold text-content-heading">Access restricted</h1>
+          <p className="mt-2 text-sm text-content-muted">
             Your current session does not include the {requiredPermission} permission. Frontend checks are UX-only; the backend remains authoritative.
           </p>
         </div>

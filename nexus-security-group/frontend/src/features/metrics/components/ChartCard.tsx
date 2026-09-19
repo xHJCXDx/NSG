@@ -9,8 +9,8 @@ export function ChartCard({ title, subtitle, children, className = '' }: ChartCa
   return (
     <div className={`glass-card p-6 ${className}`}>
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        {subtitle && <p className="mt-1 text-sm text-gray-400">{subtitle}</p>}
+        <h3 className="text-lg font-semibold text-content-heading">{title}</h3>
+        {subtitle && <p className="mt-1 text-sm text-content-secondary">{subtitle}</p>}
       </div>
       {children}
     </div>

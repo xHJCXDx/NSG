@@ -1,10 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth';
 import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert, Users } from 'lucide-react';
+import { useTranslation } from '../../shared/i18n/translations';
 
 export function DashboardLayout() {
   const { hasPermission, logout } = useAuth();
   const navigate = useNavigate();
+  const t = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -12,24 +14,24 @@ export function DashboardLayout() {
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
-    { name: 'Mentions', path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
-    { name: 'Threats', path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
-    { name: 'Users', path: '/users', icon: Users, permission: ['users', 'read'] },
-    { name: 'Analytics', path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
-    { name: 'Settings', path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
+    { name: t.nav.dashboard, path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
+    { name: t.nav.mentions, path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
+    { name: t.nav.threats, path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
+    { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
+    { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
+    { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
   ].filter((item) => hasPermission(item.permission[0], item.permission[1]));
 
   return (
-    <div className="min-h-screen bg-dark-900 flex text-gray-100 selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen bg-surface-primary flex text-content-primary selection:bg-brand-500 selection:text-white">
       {/* Sidebar */}
-      <aside aria-label="Sidebar" className="w-64 flex-shrink-0 glass border-r border-white/5 flex flex-col h-screen sticky top-0">
+      <aside aria-label="Sidebar" className="w-64 flex-shrink-0 glass border-r border-edge-card flex flex-col h-screen sticky top-0">
         <div className="p-6 flex items-center space-x-3">
           <div className="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30">
             <Shield aria-hidden="true" className="w-5 h-5 text-brand-400" />
           </div>
           <div>
-            <h2 className="font-bold text-white tracking-tight leading-tight">NSG</h2>
+            <h2 className="font-bold text-content-heading tracking-tight leading-tight">NSG</h2>
             <p className="text-xs text-brand-400 font-medium">Dashboard</p>
           </div>
         </div>
@@ -46,7 +48,7 @@ export function DashboardLayout() {
                   `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
                     isActive
                       ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
-                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                      : 'text-content-muted hover:bg-surface-hover hover:text-content-secondary'
                   }`
                 }
               >
@@ -61,13 +63,13 @@ export function DashboardLayout() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/5">
+        <div className="p-4 border-t border-edge-card">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-content-muted hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all"
           >
             <LogOut aria-hidden="true" className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
+            <span className="font-medium">{t.nav.signOut}</span>
           </button>
         </div>
       </aside>

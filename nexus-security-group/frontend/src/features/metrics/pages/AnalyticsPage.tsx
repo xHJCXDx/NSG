@@ -1,4 +1,3 @@
-import { ANALYTICS_COPY } from '../contract';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { AnalyticsKpiRow } from '../components/AnalyticsKpiRow';
 import { MentionsOverTimeChart } from '../components/MentionsOverTimeChart';
@@ -6,14 +5,16 @@ import { SentimentTrendChart } from '../components/SentimentTrendChart';
 import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
+import { useTranslation } from '../../../shared/i18n/translations';
 
 export function AnalyticsPage() {
+  const t = useTranslation();
   const analytics = useAnalytics();
 
   if (analytics.error) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-red-400">{ANALYTICS_COPY.error}</p>
+        <p className="text-red-400">{t.analytics.error}</p>
       </div>
     );
   }
@@ -21,9 +22,9 @@ export function AnalyticsPage() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">{ANALYTICS_COPY.page.eyebrow}</p>
-        <h1 className="mt-2 text-3xl font-bold text-white">{ANALYTICS_COPY.page.title}</h1>
-        <p className="mt-2 max-w-3xl text-gray-400">{ANALYTICS_COPY.page.description}</p>
+        <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">{t.analytics.eyebrow}</p>
+        <h1 className="mt-2 text-3xl font-bold text-content-heading">{t.analytics.title}</h1>
+        <p className="mt-2 max-w-3xl text-content-secondary">{t.analytics.description}</p>
       </div>
 
       {analytics.isLoading ? (
