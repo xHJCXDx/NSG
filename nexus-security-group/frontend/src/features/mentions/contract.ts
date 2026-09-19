@@ -1,5 +1,5 @@
 export const MENTIONS_ENDPOINT = '/api/metrics/mentions';
-export const MENTIONS_DEFAULT_LIMIT = 50;
+export const MENTIONS_DEFAULT_PAGE_SIZE = 25;
 
 export const MENTIONS_COPY = {
   page: {

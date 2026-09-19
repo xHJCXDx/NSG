@@ -1,5 +1,5 @@
 export const THREATS_ENDPOINT = '/api/threats';
-export const THREATS_DEFAULT_LIMIT = 50;
+export const THREATS_DEFAULT_PAGE_SIZE = 25;
 
 export const THREATS_COPY = {
   page: {

@@ -71,5 +71,6 @@ export interface ThreatFilters {
 }
 
 export interface ThreatsQuery {
-  limit?: number;
+  page?: number;
+  pageSize?: number;
 }

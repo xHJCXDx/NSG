@@ -11,12 +11,22 @@ export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 export function useThreats() {
   const { token, claims } = useAuth();
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
+  const [page, setPage] = useState(1);
 
-  const { data: threats = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['threats', claims.sub],
-    queryFn: () => fetchThreats(token),
+  const setFiltersAndResetPage = (newFilters: ThreatFilters) => {
+    setFilters(newFilters);
+    setPage(1);
+  };
+
+  const { data: response, isLoading, isError, refetch } = useQuery({
+    queryKey: ['threats', claims.sub, page],
+    queryFn: () => fetchThreats(token, { page }),
     enabled: !!token,
   });
+
+  const threats = response?.data ?? [];
+  const total = response?.total ?? 0;
+  const totalPages = response?.total_pages ?? 1;
 
   const reload = () => { refetch(); };
 
@@ -99,9 +109,13 @@ export function useThreats() {
     status: derivedStatus,
     error: isError ? 'Failed to load threats' : null,
     filters,
-    setFilters,
+    setFilters: setFiltersAndResetPage,
     availableFilters,
     emptyReason,
     reload,
+    page,
+    setPage,
+    totalPages,
+    total,
   };
 }

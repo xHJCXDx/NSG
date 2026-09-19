@@ -4,10 +4,11 @@ import { ThreatsList } from '../components/ThreatsList';
 import { ThreatsToolbar } from '../components/ThreatsToolbar';
 import { useThreats } from '../hooks/useThreats';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { Pagination } from '../../../shared/components/Pagination';
 
 export function ThreatsPage() {
   const t = useTranslation();
-  const { filteredThreats, status, error, filters, setFilters, availableFilters, emptyReason, reload } = useThreats();
+  const { filteredThreats, status, error, filters, setFilters, availableFilters, emptyReason, reload, page, setPage, totalPages } = useThreats();
 
   return (
     <section className="space-y-6">
@@ -32,6 +33,10 @@ export function ThreatsPage() {
       {status === 'empty' && <ThreatEmptyState reason={emptyReason} />}
 
       {status === 'success' && <ThreatsList threats={filteredThreats} />}
+
+      {status === 'success' && totalPages > 1 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      )}
     </section>
   );
 }

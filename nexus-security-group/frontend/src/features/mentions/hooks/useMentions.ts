@@ -11,12 +11,17 @@ export type MentionEmptyReason = 'initial-empty' | 'no-results';
 export function useMentions() {
   const { token, claims } = useAuth();
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
+  const [page, setPage] = useState(1);
 
-  const { data: mentions = [], isLoading, isError } = useQuery({
-    queryKey: ['mentions', claims.sub],
-    queryFn: () => fetchMentions(token),
+  const { data: response, isLoading, isError } = useQuery({
+    queryKey: ['mentions', claims.sub, page],
+    queryFn: () => fetchMentions(token, { page }),
     enabled: !!token,
   });
+
+  const mentions = response?.data ?? [];
+  const total = response?.total ?? 0;
+  const totalPages = response?.total_pages ?? 1;
 
   const baseStatus: MentionLoadStatus = isLoading
     ? 'loading'
@@ -61,5 +66,9 @@ export function useMentions() {
     setFilters,
     emptyReason,
     availableFilters,
+    page,
+    setPage,
+    totalPages,
+    total,
   };
 }

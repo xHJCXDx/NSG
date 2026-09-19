@@ -1,16 +1,10 @@
 import { authFetch } from '../../shared/api/apiClient';
-import { THREATS_COPY, THREATS_DEFAULT_LIMIT, THREATS_ENDPOINT } from './contract';
-import type { RawRelatedMention, RawThreat, RawThreatsResponse, RelatedMention, Threat, ThreatsQuery } from './types';
+import { THREATS_COPY, THREATS_DEFAULT_PAGE_SIZE, THREATS_ENDPOINT } from './contract';
+import type { RawRelatedMention, RawThreat, RelatedMention, Threat, ThreatsQuery } from './types';
+import type { PaginatedResponse } from '../../shared/types';
 
 export { THREATS_ENDPOINT } from './contract';
 
-const pickThreatsArray = (payload: RawThreat[] | RawThreatsResponse): RawThreat[] => {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  return payload.threats ?? payload.results ?? payload.data ?? [];
-};
 
 const toOptionalString = (value: string | number | null | undefined) =>
   value === null || value === undefined || value === '' ? undefined : String(value);
@@ -95,14 +89,23 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
   };
 };
 
-export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<Threat[]> {
-  const params = new URLSearchParams({ limit: String(query.limit ?? THREATS_DEFAULT_LIMIT) });
+export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<PaginatedResponse<Threat>> {
+  const params = new URLSearchParams({
+    page: String(query.page ?? 1),
+    page_size: String(query.pageSize ?? THREATS_DEFAULT_PAGE_SIZE),
+  });
   const res = await authFetch(token, `${THREATS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(THREATS_COPY.error.title);
   }
 
-  const payload = (await res.json()) as RawThreat[] | RawThreatsResponse;
-  return pickThreatsArray(payload).map(mapRawThreat);
+  const envelope = (await res.json()) as PaginatedResponse<RawThreat>;
+  return {
+    data: envelope.data.map(mapRawThreat),
+    total: envelope.total,
+    page: envelope.page,
+    page_size: envelope.page_size,
+    total_pages: envelope.total_pages,
+  };
 }

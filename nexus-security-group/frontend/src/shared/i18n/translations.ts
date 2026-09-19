@@ -278,6 +278,12 @@ export const translations = {
         unavailable: 'Unavailable',
       },
     },
+    pagination: {
+      previous: 'Previous',
+      next: 'Next',
+      pageOf: 'Page {page} of {totalPages}',
+      showing: 'Showing {count} of {total}',
+    },
     automation: {
       title: 'Automations',
       description:
@@ -571,6 +577,12 @@ export const translations = {
         connected: 'Conectada',
         unavailable: 'No disponible',
       },
+    },
+    pagination: {
+      previous: 'Anterior',
+      next: 'Siguiente',
+      pageOf: 'Página {page} de {totalPages}',
+      showing: 'Mostrando {count} de {total}',
     },
     automation: {
       title: 'Automatizaciones',

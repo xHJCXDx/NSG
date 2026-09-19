@@ -4,10 +4,11 @@ import { MentionsList } from '../components/MentionsList';
 import { MentionsToolbar } from '../components/MentionsToolbar';
 import { useMentions } from '../hooks/useMentions';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { Pagination } from '../../../shared/components/Pagination';
 
 export function MentionsPage() {
   const t = useTranslation();
-  const { filteredMentions, status, error, filters, setFilters, emptyReason, availableFilters } = useMentions();
+  const { filteredMentions, status, error, filters, setFilters, emptyReason, availableFilters, page, setPage, totalPages } = useMentions();
 
   return (
     <section className="space-y-6">
@@ -32,6 +33,10 @@ export function MentionsPage() {
       {status === 'empty' && <MentionEmptyState reason={emptyReason} />}
 
       {status === 'success' && <MentionsList mentions={filteredMentions} />}
+
+      {status === 'success' && totalPages > 1 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      )}
     </section>
   );
 }
