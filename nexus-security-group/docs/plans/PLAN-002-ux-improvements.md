@@ -22,6 +22,8 @@
 | M07 | ✅ DONE | Workflow | Mejorar formato de alertas por email (legible y profesional) | DONE |
 | M08 | ✅ DONE | Workflow | Consolidar alertas en un solo email resumen por ejecucion | DONE |
 | M09 | ✅ DONE | Full-stack | Paginacion en Mentions y Threats (backend + frontend) | DONE |
+| M10 | ✅ DONE | Full-stack | Filtros server-side y opciones de filtro globales desde backend | DONE |
+| M11 | ✅ DONE | Frontend | Reemplazar tooltips nativos por texto expandible en ThreatCard | DONE |
 
 ---
 
@@ -252,6 +254,55 @@
 
 ---
 
+## M10 — Filtros server-side y opciones de filtro globales
+
+**Prioridad:** HIGH
+**Area:** Full-stack (Backend + Frontend)
+**Estado:** DONE
+
+**Que se hizo:**
+- Backend mentions: nuevo query param `platform` para filtrar server-side; respuesta incluye `available_platforms` con todas las plataformas existentes en la DB
+- Backend threats: respuesta incluye `available_severities` y `available_classifications` con todos los valores existentes en la DB
+- Frontend mentions: dropdown de plataforma usa opciones del backend (globales), no de la pagina actual; cambiar plataforma trigerea nueva query server-side
+- Frontend threats: dropdown de severity usa opciones del backend; cambiar severity trigerea nueva query server-side via `criticality_level`
+- Tests actualizados para reflejar los nuevos response shapes y filtros server-side
+
+**Archivos afectados:**
+- `backend/routers/metrics.py` — filtro `platform` + `available_platforms`
+- `backend/routers/threats.py` — `available_severities` + `available_classifications`
+- `backend/schemas/metrics.py` — campo `available_platforms` en `PaginatedMentionsResponse`
+- `backend/schemas/threat.py` — campos `available_severities`/`available_classifications` en `PaginatedThreatsResponse`
+- `frontend/src/features/mentions/api.ts` — `MentionsPaginatedResponse`, envio de `platform` param
+- `frontend/src/features/mentions/hooks/useMentions.ts` — filtro platform server-side, opciones del backend
+- `frontend/src/features/mentions/types.ts` — `platform` en `MentionsQuery`
+- `frontend/src/features/threats/api.ts` — `ThreatsPaginatedResponse`, envio de `criticality_level` param
+- `frontend/src/features/threats/hooks/useThreats.ts` — filtro severity server-side, opciones del backend
+- `frontend/src/features/threats/types.ts` — `criticality_level` en `ThreatsQuery`
+- Tests: `mentions/api.test.ts`, `mentions/hooks/useMentions.test.tsx`, `threats/api.test.ts`, `threats/hooks/useThreats.test.tsx`
+
+**Commit:** `feat(api): add server-side filters and available filter options to paginated endpoints`
+
+---
+
+## M11 — Reemplazar tooltips nativos por texto expandible en ThreatCard
+
+**Prioridad:** MEDIUM
+**Area:** Frontend
+**Estado:** DONE
+
+**Que se hizo:**
+- Eliminado atributo `title` de evidence pills (generaba tooltip nativo con texto crudo al pasar el mouse)
+- Eliminado atributo `title` del related mention
+- Related mention ahora es expandible con boton show more/show less (truncado a 80 chars por defecto)
+- Consistente con el patron de expand/collapse ya usado en summary y en MentionCard
+
+**Archivos afectados:**
+- `frontend/src/features/threats/components/ThreatCard.tsx`
+
+**Commit:** `fix(frontend): replace native tooltips with expandable text in ThreatCard`
+
+---
+
 ## Orden de implementacion (completado)
 
 1. ✅ **M06** — Dashboard polling
@@ -263,3 +314,5 @@
 7. ✅ **M08** — Consolidar emails
 8. ✅ **M07** — Email template profesional
 9. ✅ **M09** — Paginacion mentions y threats
+10. ✅ **M10** — Filtros server-side y opciones globales
+11. ✅ **M11** — Tooltips a expandible en ThreatCard
