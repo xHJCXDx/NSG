@@ -47,6 +47,11 @@ export function useMentions() {
   const derivedStatus: MentionLoadStatus =
     baseStatus === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : baseStatus;
 
+  const availableFilters = useMemo(() => {
+    const platformOptions = [...new Set(mentions.map((m) => m.platform).filter(Boolean))].sort();
+    return { platformOptions };
+  }, [mentions]);
+
   return {
     mentions,
     filteredMentions,
@@ -55,5 +60,6 @@ export function useMentions() {
     filters,
     setFilters,
     emptyReason,
+    availableFilters,
   };
 }
