@@ -36,23 +36,31 @@ export const mapRawMention = (raw: RawMention): Mention => {
   };
 };
 
-export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<PaginatedResponse<Mention>> {
+export interface MentionsPaginatedResponse extends PaginatedResponse<Mention> {
+  available_platforms: string[];
+}
+
+export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<MentionsPaginatedResponse> {
   const params = new URLSearchParams({
     page: String(query.page ?? 1),
     page_size: String(query.pageSize ?? MENTIONS_DEFAULT_PAGE_SIZE),
   });
+  if (query.platform) {
+    params.set('platform', query.platform);
+  }
   const res = await authFetch(token, `${MENTIONS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(MENTIONS_COPY.error.title);
   }
 
-  const envelope = (await res.json()) as PaginatedResponse<RawMention>;
+  const envelope = await res.json();
   return {
-    data: envelope.data.map(mapRawMention),
+    data: (envelope.data ?? []).map(mapRawMention),
     total: envelope.total,
     page: envelope.page,
     page_size: envelope.page_size,
     total_pages: envelope.total_pages,
+    available_platforms: envelope.available_platforms ?? [],
   };
 }

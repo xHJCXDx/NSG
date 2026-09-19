@@ -13,9 +13,11 @@ export function useMentions() {
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
   const [page, setPage] = useState(1);
 
+  const platformFilter = filters.platform.trim() || undefined;
+
   const { data: response, isLoading, isError } = useQuery({
-    queryKey: ['mentions', claims.sub, page],
-    queryFn: () => fetchMentions(token, { page }),
+    queryKey: ['mentions', claims.sub, page, platformFilter],
+    queryFn: () => fetchMentions(token, { page, platform: platformFilter }),
     enabled: !!token,
   });
 
@@ -33,29 +35,31 @@ export function useMentions() {
 
   const filteredMentions = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
-    const platform = filters.platform.trim().toLowerCase();
 
-    return mentions.filter((mention) => {
-      const matchesSearch =
-        search.length === 0 ||
-        mention.text.toLowerCase().includes(search) ||
-        mention.platform.toLowerCase().includes(search) ||
-        (mention.author?.toLowerCase().includes(search) ?? false);
-      const matchesPlatform = platform.length === 0 || mention.platform.toLowerCase() === platform;
+    if (search.length === 0) return mentions;
 
-      return matchesSearch && matchesPlatform;
-    });
-  }, [filters, mentions]);
+    return mentions.filter((mention) =>
+      mention.text.toLowerCase().includes(search) ||
+      mention.platform.toLowerCase().includes(search) ||
+      (mention.author?.toLowerCase().includes(search) ?? false),
+    );
+  }, [filters.search, mentions]);
 
   const hasActiveFilters = filters.search.trim().length > 0 || filters.platform.trim().length > 0;
   const emptyReason: MentionEmptyReason = mentions.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: MentionLoadStatus =
     baseStatus === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : baseStatus;
 
-  const availableFilters = useMemo(() => {
-    const platformOptions = [...new Set(mentions.map((m) => m.platform).filter(Boolean))].sort();
-    return { platformOptions };
-  }, [mentions]);
+  const availableFilters = useMemo(() => ({
+    platformOptions: response?.available_platforms ?? [],
+  }), [response?.available_platforms]);
+
+  const setFiltersAndResetPage = (newFilters: MentionFilters) => {
+    setFilters(newFilters);
+    if (newFilters.platform !== filters.platform) {
+      setPage(1);
+    }
+  };
 
   return {
     mentions,
@@ -63,7 +67,7 @@ export function useMentions() {
     status: derivedStatus,
     error: isError ? 'Failed to load mentions' : null,
     filters,
-    setFilters,
+    setFilters: setFiltersAndResetPage,
     emptyReason,
     availableFilters,
     page,

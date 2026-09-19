@@ -59,12 +59,17 @@ def get_recent_mentions(
     db: Session = Depends(get_db),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 25,
+    platform: Annotated[str | None, Query()] = None,
     current_user: TokenData = Depends(require_permission("mentions", "read")),
 ):
-    total_count = db.query(func.count(SocialMention.mention_id)).scalar() or 0
+    base_query = db.query(SocialMention)
+    if platform is not None:
+        base_query = base_query.filter(SocialMention.platform == platform)
+
+    total_count = base_query.with_entities(func.count(SocialMention.mention_id)).scalar() or 0
 
     mentions = (
-        db.query(
+        base_query.with_entities(
             SocialMention.mention_id,
             SocialMention.platform,
             SocialMention.text_content,
@@ -76,6 +81,15 @@ def get_recent_mentions(
         .limit(page_size)
         .all()
     )
+
+    available_platforms = [
+        row[0]
+        for row in db.query(func.distinct(SocialMention.platform))
+        .filter(SocialMention.platform.isnot(None))
+        .order_by(SocialMention.platform)
+        .all()
+    ]
+
     data = [
         {
             "id": row.mention_id,
@@ -92,6 +106,7 @@ def get_recent_mentions(
         "page": page,
         "page_size": page_size,
         "total_pages": ceil(total_count / page_size) if total_count > 0 else 1,
+        "available_platforms": available_platforms,
     }
 
 

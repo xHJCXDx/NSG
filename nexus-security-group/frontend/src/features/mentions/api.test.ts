@@ -9,7 +9,7 @@ describe('fetchMentions', () => {
   it('calls the mentions endpoint with page and page_size params', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0 }),
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0, available_platforms: [] }),
     } as Response);
 
     await fetchMentions('fake-jwt', { page: 2, pageSize: 10 });
@@ -69,6 +69,20 @@ describe('fetchMentions', () => {
     ]);
     expect(result.total).toBe(2);
     expect(result.total_pages).toBe(1);
+    expect(result.available_platforms).toEqual([]);
+  });
+
+  it('passes platform filter as query param', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0, available_platforms: ['github'] }),
+    } as Response);
+
+    await fetchMentions('fake-jwt', { page: 1, platform: 'github' });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/metrics/mentions?page=1&page_size=25&platform=github', {
+      headers: { Authorization: 'Bearer fake-jwt' },
+    });
   });
 
   it('returns an empty list for non-ok responses', async () => {

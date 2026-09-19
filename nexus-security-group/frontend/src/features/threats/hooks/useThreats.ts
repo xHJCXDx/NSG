@@ -13,14 +13,18 @@ export function useThreats() {
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
   const [page, setPage] = useState(1);
 
+  const severityFilter = filters.severity.trim() || undefined;
+
   const setFiltersAndResetPage = (newFilters: ThreatFilters) => {
     setFilters(newFilters);
-    setPage(1);
+    if (newFilters.severity !== filters.severity) {
+      setPage(1);
+    }
   };
 
   const { data: response, isLoading, isError, refetch } = useQuery({
-    queryKey: ['threats', claims.sub, page],
-    queryFn: () => fetchThreats(token, { page }),
+    queryKey: ['threats', claims.sub, page, severityFilter],
+    queryFn: () => fetchThreats(token, { page, criticality_level: severityFilter }),
     enabled: !!token,
   });
 
@@ -39,21 +43,15 @@ export function useThreats() {
         : 'empty';
 
   const availableFilters = useMemo(() => {
-    const severityOptions = Array.from(
-      new Set(threats.map((t) => t.severity).filter((s) => s && s !== 'unknown')),
-    ) as string[];
-    const classificationOptions = Array.from(
-      new Set(
-        threats.flatMap((t) => [t.type, t.category ?? ''].filter((v) => v && v !== 'unknown')),
-      ),
-    ) as string[];
+    const severityOptions = response?.available_severities ?? [];
+    const classificationOptions = response?.available_classifications ?? [];
     return {
       severity: severityOptions.length > 0,
       classification: classificationOptions.length > 0,
       severityOptions,
       classificationOptions,
     };
-  }, [threats]);
+  }, [response?.available_severities, response?.available_classifications]);
 
   const filteredThreats = useMemo(() => {
     const search = filters.search.trim().toLowerCase();

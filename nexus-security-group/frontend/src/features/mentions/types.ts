@@ -57,4 +57,5 @@ export type { PaginatedResponse } from '../../shared/types';
 export interface MentionsQuery {
   page?: number;
   pageSize?: number;
+  platform?: string;
 }

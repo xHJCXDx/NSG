@@ -89,23 +89,33 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
   };
 };
 
-export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<PaginatedResponse<Threat>> {
+export interface ThreatsPaginatedResponse extends PaginatedResponse<Threat> {
+  available_severities: string[];
+  available_classifications: string[];
+}
+
+export async function fetchThreats(token: string | null, query: ThreatsQuery = {}): Promise<ThreatsPaginatedResponse> {
   const params = new URLSearchParams({
     page: String(query.page ?? 1),
     page_size: String(query.pageSize ?? THREATS_DEFAULT_PAGE_SIZE),
   });
+  if (query.criticality_level) {
+    params.set('criticality_level', query.criticality_level);
+  }
   const res = await authFetch(token, `${THREATS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(THREATS_COPY.error.title);
   }
 
-  const envelope = (await res.json()) as PaginatedResponse<RawThreat>;
+  const envelope = await res.json();
   return {
-    data: envelope.data.map(mapRawThreat),
+    data: (envelope.data ?? []).map(mapRawThreat),
     total: envelope.total,
     page: envelope.page,
     page_size: envelope.page_size,
     total_pages: envelope.total_pages,
+    available_severities: envelope.available_severities ?? [],
+    available_classifications: envelope.available_classifications ?? [],
   };
 }

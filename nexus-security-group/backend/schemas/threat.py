@@ -114,3 +114,5 @@ class PaginatedThreatsResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    available_severities: list[str] = []
+    available_classifications: list[str] = []

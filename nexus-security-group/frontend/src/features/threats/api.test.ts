@@ -9,7 +9,7 @@ describe('fetchThreats', () => {
   it('calls the threats endpoint with page and page_size params', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0 }),
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0, available_severities: [], available_classifications: [] }),
     } as Response);
 
     await fetchThreats('fake-jwt', { page: 2, pageSize: 10 });
@@ -84,6 +84,21 @@ describe('fetchThreats', () => {
     ]);
     expect(result.total).toBe(2);
     expect(result.total_pages).toBe(1);
+    expect(result.available_severities).toEqual([]);
+    expect(result.available_classifications).toEqual([]);
+  });
+
+  it('passes criticality_level filter as query param', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0, available_severities: ['high'], available_classifications: [] }),
+    } as Response);
+
+    await fetchThreats('fake-jwt', { page: 1, criticality_level: 'high' });
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/threats?page=1&page_size=25&criticality_level=high', {
+      headers: { Authorization: 'Bearer fake-jwt' },
+    });
   });
 
   it('does not invent mention relations when none are provided', () => {

@@ -73,4 +73,5 @@ export interface ThreatFilters {
 export interface ThreatsQuery {
   page?: number;
   pageSize?: number;
+  criticality_level?: string;
 }

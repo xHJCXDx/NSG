@@ -63,3 +63,4 @@ class PaginatedMentionsResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+    available_platforms: list[str] = []

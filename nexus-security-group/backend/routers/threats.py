@@ -83,12 +83,34 @@ def get_threats(
         .limit(page_size)
         .all()
     )
+
+    available_severities = [
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.criticality_level))
+        .filter(ThreatDetection.criticality_level.isnot(None))
+        .order_by(ThreatDetection.criticality_level)
+        .all()
+    ]
+    available_classifications = sorted(set(
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.threat_type))
+        .filter(ThreatDetection.threat_type.isnot(None))
+        .all()
+    ) | set(
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.threat_category))
+        .filter(ThreatDetection.threat_category.isnot(None))
+        .all()
+    ))
+
     return {
         "data": [_map_threat_list_item(threat, mention) for threat, mention in rows],
         "total": total_count,
         "page": page,
         "page_size": page_size,
         "total_pages": ceil(total_count / page_size) if total_count > 0 else 1,
+        "available_severities": available_severities,
+        "available_classifications": available_classifications,
     }
 
 

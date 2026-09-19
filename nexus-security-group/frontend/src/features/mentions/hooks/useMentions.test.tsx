@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import * as mentionsApi from '../api';
+import type { MentionsPaginatedResponse } from '../api';
 import type { Mention } from '../types';
-import type { PaginatedResponse } from '../../../shared/types';
 import { useMentions } from './useMentions';
 
 function createWrapper() {
@@ -36,20 +36,22 @@ const mentions: Mention[] = [
   },
 ];
 
-const paginatedResponse: PaginatedResponse<Mention> = {
+const paginatedResponse: MentionsPaginatedResponse = {
   data: mentions,
   total: 2,
   page: 1,
   page_size: 25,
   total_pages: 1,
+  available_platforms: ['reddit', 'twitter'],
 };
 
-const emptyResponse: PaginatedResponse<Mention> = {
+const emptyResponse: MentionsPaginatedResponse = {
   data: [],
   total: 0,
   page: 1,
   page_size: 25,
   total_pages: 0,
+  available_platforms: ['reddit', 'twitter'],
 };
 
 describe('useMentions', () => {
@@ -87,20 +89,29 @@ describe('useMentions', () => {
     expect(result.current.error).toBe('Failed to load mentions');
   });
 
-  it('filters by text, platform, and author using only loaded fields', async () => {
+  it('filters by text client-side and exposes available platforms from backend', async () => {
     vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));
 
+    expect(result.current.availableFilters.platformOptions).toEqual(['reddit', 'twitter']);
+
     act(() => result.current.setFilters({ search: 'bob', platform: '' }));
     expect(result.current.filteredMentions).toEqual([mentions[1]]);
-
-    act(() => result.current.setFilters({ search: '', platform: 'twitter' }));
-    expect(result.current.filteredMentions).toEqual([mentions[0]]);
 
     act(() => result.current.setFilters({ search: 'missing', platform: '' }));
     expect(result.current.status).toBe('empty');
     expect(result.current.emptyReason).toBe('no-results');
+  });
+
+  it('passes platform filter to the API for server-side filtering', async () => {
+    const fetchSpy = vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(paginatedResponse);
+
+    const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.status).toBe('success'));
+
+    act(() => result.current.setFilters({ search: '', platform: 'twitter' }));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ platform: 'twitter' })));
   });
 });

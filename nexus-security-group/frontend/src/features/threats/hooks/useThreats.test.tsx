@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import * as threatsApi from '../api';
+import type { ThreatsPaginatedResponse } from '../api';
 import type { Threat } from '../types';
-import type { PaginatedResponse } from '../../../shared/types';
 import { useThreats } from './useThreats';
 
 function createWrapper() {
@@ -42,20 +42,24 @@ const threats: Threat[] = [
   },
 ];
 
-const paginatedResponse: PaginatedResponse<Threat> = {
+const paginatedResponse: ThreatsPaginatedResponse = {
   data: threats,
   total: 2,
   page: 1,
   page_size: 25,
   total_pages: 1,
+  available_severities: ['critical', 'high'],
+  available_classifications: ['brand_impersonation', 'credential_leak', 'data exposure'],
 };
 
-const emptyResponse: PaginatedResponse<Threat> = {
+const emptyResponse: ThreatsPaginatedResponse = {
   data: [],
   total: 0,
   page: 1,
   page_size: 25,
   total_pages: 0,
+  available_severities: ['critical', 'high'],
+  available_classifications: ['brand_impersonation', 'credential_leak', 'data exposure'],
 };
 
 describe('useThreats', () => {
@@ -100,17 +104,17 @@ describe('useThreats', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('filters by loaded text, severity, and classification fields', async () => {
+  it('filters by text and classification client-side, exposes backend filter options', async () => {
     vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));
 
+    expect(result.current.availableFilters.severityOptions).toEqual(['critical', 'high']);
+    expect(result.current.availableFilters.classificationOptions).toEqual(['brand_impersonation', 'credential_leak', 'data exposure']);
+
     act(() => result.current.setFilters({ search: 'lookalike', severity: '', classification: '' }));
     expect(result.current.filteredThreats).toEqual([threats[1]]);
-
-    act(() => result.current.setFilters({ search: '', severity: 'high', classification: '' }));
-    expect(result.current.filteredThreats).toEqual([threats[0]]);
 
     act(() => result.current.setFilters({ search: '', severity: '', classification: 'brand_impersonation' }));
     expect(result.current.filteredThreats).toEqual([threats[1]]);
@@ -118,5 +122,15 @@ describe('useThreats', () => {
     act(() => result.current.setFilters({ search: 'missing', severity: '', classification: '' }));
     expect(result.current.status).toBe('empty');
     expect(result.current.emptyReason).toBe('no-results');
+  });
+
+  it('passes severity filter to the API for server-side filtering', async () => {
+    const fetchSpy = vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(paginatedResponse);
+
+    const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
+    await waitFor(() => expect(result.current.status).toBe('success'));
+
+    act(() => result.current.setFilters({ search: '', severity: 'high', classification: '' }));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ criticality_level: 'high' })));
   });
 });
