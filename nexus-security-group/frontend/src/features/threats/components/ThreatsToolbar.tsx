@@ -1,49 +1,65 @@
-import { THREATS_COPY } from '../contract';
 import type { ThreatFilters } from '../types';
+import { useTranslation } from '../../../shared/i18n/translations';
 
 interface ThreatsToolbarProps {
   filters: ThreatFilters;
   availableFilters: {
     severity: boolean;
     classification: boolean;
+    severityOptions: string[];
+    classificationOptions: string[];
   };
   onFiltersChange: (filters: ThreatFilters) => void;
 }
 
 export function ThreatsToolbar({ filters, availableFilters, onFiltersChange }: ThreatsToolbarProps) {
+  const t = useTranslation();
+
   return (
     <div className="glass-card p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-      <label className="flex-1 text-sm text-gray-300">
-        <span className="sr-only">{THREATS_COPY.toolbar.searchLabel}</span>
+      <label className="flex-1 text-sm text-content-secondary">
+        <span className="sr-only">{t.threats.toolbar.searchLabel}</span>
         <input
           value={filters.search}
           onChange={(event) => onFiltersChange({ ...filters, search: event.target.value })}
-          placeholder={THREATS_COPY.toolbar.searchPlaceholder}
-          className="w-full rounded-xl border border-white/10 bg-dark-800/80 px-4 py-3 text-gray-100 placeholder:text-gray-500 focus:border-brand-400 focus:outline-none"
+          placeholder={t.threats.toolbar.searchPlaceholder}
+          className="w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary placeholder:text-content-muted focus:border-brand-400 focus:outline-none"
         />
       </label>
 
       {availableFilters.severity && (
-        <label className="md:w-48 text-sm text-gray-300">
-          <span className="sr-only">{THREATS_COPY.toolbar.severityLabel}</span>
-          <input
+        <label className="md:w-48 text-sm text-content-secondary">
+          <span className="sr-only">{t.threats.toolbar.severityLabel}</span>
+          <select
             value={filters.severity}
             onChange={(event) => onFiltersChange({ ...filters, severity: event.target.value })}
-            placeholder={THREATS_COPY.toolbar.severityPlaceholder}
-            className="w-full rounded-xl border border-white/10 bg-dark-800/80 px-4 py-3 text-gray-100 placeholder:text-gray-500 focus:border-brand-400 focus:outline-none"
-          />
+            className="w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary focus:border-brand-400 focus:outline-none"
+          >
+            <option value="">{t.threats.toolbar.severityPlaceholder}</option>
+            {availableFilters.severityOptions.map((opt) => (
+              <option key={opt} value={opt} className="bg-surface-primary text-content-primary">
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+              </option>
+            ))}
+          </select>
         </label>
       )}
 
       {availableFilters.classification && (
-        <label className="md:w-56 text-sm text-gray-300">
-          <span className="sr-only">{THREATS_COPY.toolbar.classificationLabel}</span>
-          <input
+        <label className="md:w-56 text-sm text-content-secondary">
+          <span className="sr-only">{t.threats.toolbar.classificationLabel}</span>
+          <select
             value={filters.classification}
             onChange={(event) => onFiltersChange({ ...filters, classification: event.target.value })}
-            placeholder={THREATS_COPY.toolbar.classificationPlaceholder}
-            className="w-full rounded-xl border border-white/10 bg-dark-800/80 px-4 py-3 text-gray-100 placeholder:text-gray-500 focus:border-brand-400 focus:outline-none"
-          />
+            className="w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary focus:border-brand-400 focus:outline-none"
+          >
+            <option value="">{t.threats.toolbar.classificationPlaceholder}</option>
+            {availableFilters.classificationOptions.map((opt) => (
+              <option key={opt} value={opt} className="bg-surface-primary text-content-primary">
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+              </option>
+            ))}
+          </select>
         </label>
       )}
     </div>

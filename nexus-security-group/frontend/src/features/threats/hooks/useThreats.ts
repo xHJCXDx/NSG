@@ -28,13 +28,22 @@ export function useThreats() {
         ? 'success'
         : 'empty';
 
-  const availableFilters = useMemo(
-    () => ({
-      severity: threats.some((threat) => threat.severity && threat.severity !== 'unknown'),
-      classification: threats.some((threat) => threat.type && threat.type !== 'unknown'),
-    }),
-    [threats],
-  );
+  const availableFilters = useMemo(() => {
+    const severityOptions = Array.from(
+      new Set(threats.map((t) => t.severity).filter((s) => s && s !== 'unknown')),
+    ) as string[];
+    const classificationOptions = Array.from(
+      new Set(
+        threats.flatMap((t) => [t.type, t.category ?? ''].filter((v) => v && v !== 'unknown')),
+      ),
+    ) as string[];
+    return {
+      severity: severityOptions.length > 0,
+      classification: classificationOptions.length > 0,
+      severityOptions,
+      classificationOptions,
+    };
+  }, [threats]);
 
   const filteredThreats = useMemo(() => {
     const search = filters.search.trim().toLowerCase();

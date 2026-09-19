@@ -115,7 +115,7 @@ describe('ThreatsPage', () => {
     expect(screen.getByText('Lookalike domain found')).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'));
-    await userEvent.type(screen.getByPlaceholderText('Severity'), 'low');
+    await userEvent.type(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'), 'no-match-xyz');
 
     await waitFor(() => expect(screen.getByText('No matching threats')).toBeInTheDocument());
   });
@@ -139,7 +139,7 @@ describe('ThreatsPage', () => {
 
     expect(await screen.findByText('Unclassified signal with no filter criteria in contract')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by evidence, summary, source, or mention')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Severity')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Classification')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /filter by severity/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /filter by classification/i })).not.toBeInTheDocument();
   });
 });
