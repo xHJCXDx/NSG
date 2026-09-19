@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { AuthProvider } from '../../features/auth';
+import { ThemeProvider } from '../../shared/contexts/ThemeContext';
+import { LanguageProvider } from '../../shared/contexts/LanguageContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -18,8 +20,12 @@ export function AppProviders({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
