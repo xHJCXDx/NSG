@@ -6,6 +6,7 @@ import { createTestQueryClient } from '../../../shared/test/createTestQueryClien
 import { AuthProvider } from '../../auth';
 import * as mentionsApi from '../api';
 import type { Mention } from '../types';
+import type { PaginatedResponse } from '../../../shared/types';
 import { useMentions } from './useMentions';
 
 function createWrapper() {
@@ -35,13 +36,29 @@ const mentions: Mention[] = [
   },
 ];
 
+const paginatedResponse: PaginatedResponse<Mention> = {
+  data: mentions,
+  total: 2,
+  page: 1,
+  page_size: 25,
+  total_pages: 1,
+};
+
+const emptyResponse: PaginatedResponse<Mention> = {
+  data: [],
+  total: 0,
+  page: 1,
+  page_size: 25,
+  total_pages: 0,
+};
+
 describe('useMentions', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('loads mentions and exposes success state', async () => {
-    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(mentions);
+    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });
 
@@ -53,7 +70,7 @@ describe('useMentions', () => {
   });
 
   it('uses empty state when the response has no mentions', async () => {
-    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue([]);
+    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(emptyResponse);
 
     const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });
 
@@ -71,7 +88,7 @@ describe('useMentions', () => {
   });
 
   it('filters by text, platform, and author using only loaded fields', async () => {
-    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(mentions);
+    vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));

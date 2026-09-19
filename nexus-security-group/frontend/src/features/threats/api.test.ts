@@ -6,16 +6,16 @@ describe('fetchThreats', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls the replaceable threats endpoint with limit and auth header', async () => {
+  it('calls the threats endpoint with page and page_size params', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ threats: [] }),
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0 }),
     } as Response);
 
-    await fetchThreats('fake-jwt', { limit: 25 });
+    await fetchThreats('fake-jwt', { page: 2, pageSize: 10 });
 
     expect(THREATS_ENDPOINT).toBe('/api/threats');
-    expect(fetchMock).toHaveBeenCalledWith('/api/threats?limit=25', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/threats?page=2&page_size=10', {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });
@@ -24,7 +24,7 @@ describe('fetchThreats', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        results: [
+        data: [
           {
             detection_id: 42,
             mention_id: 'mention-1',
@@ -47,10 +47,15 @@ describe('fetchThreats', () => {
             evidence: 'lookalike domain',
           },
         ],
+        total: 2,
+        page: 1,
+        page_size: 25,
+        total_pages: 1,
       }),
     } as Response);
 
-    await expect(fetchThreats('fake-jwt')).resolves.toEqual([
+    const result = await fetchThreats('fake-jwt');
+    expect(result.data).toEqual([
       {
         id: '42',
         mentionId: 'mention-1',
@@ -77,6 +82,8 @@ describe('fetchThreats', () => {
         evidence: ['lookalike domain'],
       },
     ]);
+    expect(result.total).toBe(2);
+    expect(result.total_pages).toBe(1);
   });
 
   it('does not invent mention relations when none are provided', () => {

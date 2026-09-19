@@ -52,7 +52,7 @@ export interface MentionFilters {
   platform: string;
 }
 
-export type { PaginatedResponse } from '../../../shared/types';
+export type { PaginatedResponse } from '../../shared/types';
 
 export interface MentionsQuery {
   page?: number;

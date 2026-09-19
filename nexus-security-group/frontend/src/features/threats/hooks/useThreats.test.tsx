@@ -6,6 +6,7 @@ import { createTestQueryClient } from '../../../shared/test/createTestQueryClien
 import { AuthProvider } from '../../auth';
 import * as threatsApi from '../api';
 import type { Threat } from '../types';
+import type { PaginatedResponse } from '../../../shared/types';
 import { useThreats } from './useThreats';
 
 function createWrapper() {
@@ -41,13 +42,29 @@ const threats: Threat[] = [
   },
 ];
 
+const paginatedResponse: PaginatedResponse<Threat> = {
+  data: threats,
+  total: 2,
+  page: 1,
+  page_size: 25,
+  total_pages: 1,
+};
+
+const emptyResponse: PaginatedResponse<Threat> = {
+  data: [],
+  total: 0,
+  page: 1,
+  page_size: 25,
+  total_pages: 0,
+};
+
 describe('useThreats', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('loads threats and exposes success state', async () => {
-    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(threats);
+    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
@@ -59,7 +76,7 @@ describe('useThreats', () => {
   });
 
   it('uses empty state when the response has no threats', async () => {
-    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue([]);
+    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(emptyResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
@@ -71,7 +88,7 @@ describe('useThreats', () => {
     const fetchSpy = vi
       .spyOn(threatsApi, 'fetchThreats')
       .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValueOnce(threats);
+      .mockResolvedValueOnce(paginatedResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
 
@@ -84,7 +101,7 @@ describe('useThreats', () => {
   });
 
   it('filters by loaded text, severity, and classification fields', async () => {
-    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(threats);
+    vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));

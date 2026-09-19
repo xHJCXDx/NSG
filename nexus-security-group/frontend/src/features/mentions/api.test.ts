@@ -6,15 +6,15 @@ describe('fetchMentions', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls the replaceable metrics mentions endpoint with limit and auth header', async () => {
+  it('calls the mentions endpoint with page and page_size params', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({ mentions: [] }),
+      json: async () => ({ data: [], total: 0, page: 1, page_size: 25, total_pages: 0 }),
     } as Response);
 
-    await fetchMentions('fake-jwt', { limit: 25 });
+    await fetchMentions('fake-jwt', { page: 2, pageSize: 10 });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/metrics/mentions?limit=25', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/metrics/mentions?page=2&page_size=10', {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });
@@ -23,7 +23,7 @@ describe('fetchMentions', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        mentions: [
+        data: [
           {
             id: 'direct-id',
             platform: 'twitter',
@@ -41,10 +41,15 @@ describe('fetchMentions', () => {
             status: 'processed',
           },
         ],
+        total: 2,
+        page: 1,
+        page_size: 25,
+        total_pages: 1,
       }),
     } as Response);
 
-    await expect(fetchMentions('fake-jwt')).resolves.toEqual([
+    const result = await fetchMentions('fake-jwt');
+    expect(result.data).toEqual([
       {
         id: 'direct-id',
         platform: 'twitter',
@@ -62,6 +67,8 @@ describe('fetchMentions', () => {
         sentiment: 'neutral',
       },
     ]);
+    expect(result.total).toBe(2);
+    expect(result.total_pages).toBe(1);
   });
 
   it('returns an empty list for non-ok responses', async () => {
