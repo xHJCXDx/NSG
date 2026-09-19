@@ -83,7 +83,7 @@ export function UsersPage() {
             name="username"
             className="mt-2 w-full rounded-xl border border-white/10 bg-dark-800 px-4 py-3 text-white outline-none transition focus:border-brand-500"
             value={username}
-            onChange={(event) => { setUsername(event.target.value); setFieldErrors((prev) => ({ ...prev, username: undefined })); }}
+            onChange={(event) => { setUsername(event.target.value); setFieldErrors((prev) => { const { username: _, ...rest } = prev; return rest; }); }}
             autoComplete="username"
           />
           {fieldErrors.username && (
@@ -101,7 +101,7 @@ export function UsersPage() {
             type="password"
             className="mt-2 w-full rounded-xl border border-white/10 bg-dark-800 px-4 py-3 text-white outline-none transition focus:border-brand-500"
             value={password}
-            onChange={(event) => { setPassword(event.target.value); setFieldErrors((prev) => ({ ...prev, password: undefined })); }}
+            onChange={(event) => { setPassword(event.target.value); setFieldErrors((prev) => { const { password: _, ...rest } = prev; return rest; }); }}
             autoComplete="new-password"
           />
           {fieldErrors.password && (

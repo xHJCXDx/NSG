@@ -134,6 +134,7 @@ services:
       - ADMIN_USER=${ADMIN_USER}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - N8N_INTERNAL_URL=${N8N_INTERNAL_URL}
+      - CORS_ORIGINS=${CORS_ORIGINS}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard-api.rule=Host(`localhost`) && PathPrefix(`/api`)"
