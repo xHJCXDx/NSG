@@ -19,7 +19,26 @@ export default {
           500: '#0ea5e9',
           600: '#0284c7',
           accent: '#8b5cf6',
-        }
+        },
+        // Semantic tokens — reference CSS variables so they respond to theme switches
+        surface: {
+          primary: 'var(--color-bg-primary)',
+          secondary: 'var(--color-bg-secondary)',
+          card: 'var(--color-bg-surface)',
+          input: 'var(--color-bg-input)',
+          hover: 'var(--color-bg-hover)',
+        },
+        content: {
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          muted: 'var(--color-text-muted)',
+          heading: 'var(--color-text-heading)',
+        },
+        edge: {
+          DEFAULT: 'var(--color-border)',
+          card: 'var(--color-border-card)',
+          input: 'var(--color-border-input)',
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out forwards',

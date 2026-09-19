@@ -1,6 +1,6 @@
 import { Activity, Database, Globe, Tag } from 'lucide-react';
-import { SETTINGS_COPY } from '../contract';
 import type { HealthResponse } from '../types';
+import { useTranslation } from '../../../shared/i18n/translations';
 
 interface SystemInfoCardProps {
   health: HealthResponse | undefined;
@@ -18,12 +18,12 @@ function StatusDot({ ok }: { ok: boolean }) {
 
 function InfoRow({ icon: Icon, label, value, ok }: { icon: typeof Activity; label: string; value: string; ok?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-      <div className="flex items-center gap-3 text-gray-400">
+    <div className="flex items-center justify-between py-3 border-b border-edge-card last:border-0">
+      <div className="flex items-center gap-3 text-content-secondary">
         <Icon aria-hidden="true" className="h-4 w-4" />
         <span className="text-sm">{label}</span>
       </div>
-      <div className="flex items-center gap-2 text-sm text-white">
+      <div className="flex items-center gap-2 text-sm text-content-primary">
         {ok !== undefined && <StatusDot ok={ok} />}
         {value}
       </div>
@@ -32,14 +32,16 @@ function InfoRow({ icon: Icon, label, value, ok }: { icon: typeof Activity; labe
 }
 
 export function SystemInfoCard({ health, isLoading }: SystemInfoCardProps) {
+  const t = useTranslation();
+  const si = t.settings.systemInfo;
   const apiOk = health?.status === 'healthy';
   const dbOk = health?.db === 'connected';
 
   return (
     <div className="glass-card p-6">
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-white">{SETTINGS_COPY.systemInfo.title}</h2>
-        <p className="mt-1 text-sm text-gray-400">{SETTINGS_COPY.systemInfo.description}</p>
+        <h2 className="text-xl font-bold text-content-heading">{si.title}</h2>
+        <p className="mt-1 text-sm text-content-secondary">{si.description}</p>
       </div>
 
       {isLoading ? (
@@ -48,18 +50,18 @@ export function SystemInfoCard({ health, isLoading }: SystemInfoCardProps) {
         </div>
       ) : (
         <div>
-          <InfoRow icon={Tag} label={SETTINGS_COPY.systemInfo.version} value="1.0.0" />
-          <InfoRow icon={Globe} label={SETTINGS_COPY.systemInfo.environment} value={import.meta.env.MODE} />
+          <InfoRow icon={Tag} label={si.version} value="1.0.0" />
+          <InfoRow icon={Globe} label={si.environment} value={import.meta.env.MODE} />
           <InfoRow
             icon={Activity}
-            label={SETTINGS_COPY.systemInfo.apiStatus}
-            value={apiOk ? SETTINGS_COPY.systemInfo.healthy : SETTINGS_COPY.systemInfo.unavailable}
+            label={si.apiStatus}
+            value={apiOk ? si.healthy : si.unavailable}
             ok={apiOk}
           />
           <InfoRow
             icon={Database}
-            label={SETTINGS_COPY.systemInfo.database}
-            value={dbOk ? SETTINGS_COPY.systemInfo.connected : SETTINGS_COPY.systemInfo.unavailable}
+            label={si.database}
+            value={dbOk ? si.connected : si.unavailable}
             ok={dbOk}
           />
         </div>

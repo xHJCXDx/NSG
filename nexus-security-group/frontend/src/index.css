@@ -2,19 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Backgrounds */
+  --color-bg-primary: #f0f4f8;
+  --color-bg-secondary: #e2e8f0;
+  --color-bg-surface: #ffffff;
+  --color-bg-input: #e2e8f0;
+  --color-bg-card: rgba(255, 255, 255, 0.8);
+  --color-bg-hover: rgba(0, 0, 0, 0.04);
+
+  /* Borders */
+  --color-border: rgba(0, 0, 0, 0.12);
+  --color-border-card: rgba(0, 0, 0, 0.08);
+  --color-border-input: rgba(0, 0, 0, 0.15);
+
+  /* Text */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-text-heading: #0f172a;
+
+  /* Misc */
+  --color-shadow: rgba(0, 0, 0, 0.08);
+
+  /* Chart colors */
+  --color-chart-grid: #cbd5e1;
+  --color-chart-axis: #64748b;
+  --color-chart-tooltip-bg: #ffffff;
+  --color-chart-tooltip-text: #0f172a;
+  --color-chart-tooltip-border: #e2e8f0;
+}
+
+[data-theme="dark"] {
+  /* Backgrounds */
+  --color-bg-primary: #0b0f19;
+  --color-bg-secondary: #111827;
+  --color-bg-surface: #1e293b;
+  --color-bg-input: #1e293b;
+  --color-bg-card: rgba(255, 255, 255, 0.05);
+  --color-bg-hover: rgba(255, 255, 255, 0.05);
+
+  /* Borders */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-card: rgba(255, 255, 255, 0.1);
+  --color-border-input: rgba(255, 255, 255, 0.1);
+
+  /* Text */
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-text-heading: #ffffff;
+
+  /* Misc */
+  --color-shadow: rgba(0, 0, 0, 0.2);
+
+  /* Chart colors */
+  --color-chart-grid: #334155;
+  --color-chart-axis: #94a3b8;
+  --color-chart-tooltip-bg: #1e293b;
+  --color-chart-tooltip-text: #ffffff;
+  --color-chart-tooltip-border: rgba(255, 255, 255, 0.1);
+}
+
 @layer base {
   body {
-    @apply bg-dark-900 text-gray-100 antialiased selection:bg-brand-500 selection:text-white;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    @apply antialiased selection:bg-brand-500 selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 @layer utilities {
   .glass {
-    @apply bg-white/5 backdrop-blur-md border border-white/10;
+    background-color: var(--color-bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--color-border-card);
   }
   .glass-card {
-    @apply glass rounded-2xl shadow-xl shadow-black/20;
+    @apply glass rounded-2xl;
+    box-shadow: 0 20px 25px -5px var(--color-shadow), 0 8px 10px -6px var(--color-shadow);
   }
   .glass-panel {
     @apply glass rounded-xl;
