@@ -10,12 +10,23 @@ from database import get_db
 from main import app
 
 from routers.metrics import (
+    get_mentions_over_time,
     get_metrics_summary,
+    get_platform_distribution,
     get_recent_mentions,
+    get_sentiment_over_time,
+    get_threat_categories,
+    get_threats_by_severity,
     router,
 )
 from schemas.auth import TokenData
-from schemas.metrics import MetricsSummaryEndpointResponse, RecentMentionResponse
+from schemas.metrics import (
+    CategoryCount,
+    MetricsSummaryEndpointResponse,
+    RecentMentionResponse,
+    SentimentTimeSeriesPoint,
+    TimeSeriesPoint,
+)
 
 
 class FakeQuery:
@@ -39,6 +50,12 @@ class FakeQuery:
 
     def limit(self, value):
         self.limit_value = value
+        return self
+
+    def filter(self, *args):
+        return self
+
+    def join(self, *args, **kwargs):
         return self
 
     def all(self):
@@ -269,3 +286,276 @@ def test_recent_mentions_rejects_invalid_limit_before_querying_db():
     response = TestClient(app).get("/api/metrics/mentions", params={"limit": 0})
 
     assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# mentions-over-time
+# ---------------------------------------------------------------------------
+
+def test_mentions_over_time_maps_orm_rows_to_time_series_points():
+    row = SimpleNamespace(date="2026-07-05", count=4)
+    fake_db = FakeDb([FakeQuery(all_result=[row])])
+
+    result = get_mentions_over_time(db=fake_db, days=30, current_user=object())
+
+    assert result == [TimeSeriesPoint(date="2026-07-05", count=4)]
+
+
+def test_mentions_over_time_returns_empty_list_when_no_data():
+    fake_db = FakeDb([FakeQuery(all_result=[])])
+
+    result = get_mentions_over_time(db=fake_db, days=7, current_user=object())
+
+    assert result == []
+
+
+def test_mentions_over_time_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    row = SimpleNamespace(date="2026-07-05", count=3)
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(all_result=[row])])
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/mentions-over-time?days=30",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["date"] == "2026-07-05"
+    assert data[0]["count"] == 3
+
+
+def test_mentions_over_time_rejects_days_zero_before_querying_db():
+    isolated_app = FastAPI()
+    isolated_app.include_router(router)
+    isolated_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        permissions=["metrics:read"],
+    )
+
+    response = TestClient(isolated_app).get(
+        "/api/metrics/mentions-over-time", params={"days": 0}
+    )
+
+    assert response.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# sentiment-over-time
+# ---------------------------------------------------------------------------
+
+def test_sentiment_over_time_pivots_rows_into_per_day_points():
+    rows = [
+        SimpleNamespace(date="2026-07-05", sentiment_label="positive", count=5),
+        SimpleNamespace(date="2026-07-05", sentiment_label="negative", count=2),
+        SimpleNamespace(date="2026-07-05", sentiment_label="neutral", count=1),
+    ]
+    fake_db = FakeDb([FakeQuery(all_result=rows)])
+
+    result = get_sentiment_over_time(db=fake_db, days=30, current_user=object())
+
+    assert len(result) == 1
+    point = result[0]
+    assert point.date == "2026-07-05"
+    assert point.positive == 5
+    assert point.negative == 2
+    assert point.neutral == 1
+
+
+def test_sentiment_over_time_returns_empty_list_when_no_data():
+    fake_db = FakeDb([FakeQuery(all_result=[])])
+
+    result = get_sentiment_over_time(db=fake_db, days=7, current_user=object())
+
+    assert result == []
+
+
+def test_sentiment_over_time_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    rows = [
+        SimpleNamespace(date="2026-07-05", sentiment_label="positive", count=3),
+        SimpleNamespace(date="2026-07-05", sentiment_label="neutral", count=1),
+    ]
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(all_result=rows)])
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/sentiment-over-time?days=30",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    item = data[0]
+    assert {"date", "positive", "neutral", "negative"} <= item.keys()
+    assert isinstance(item["date"], str)
+    assert isinstance(item["positive"], int)
+    assert isinstance(item["neutral"], int)
+    assert isinstance(item["negative"], int)
+
+
+# ---------------------------------------------------------------------------
+# threats-by-severity
+# ---------------------------------------------------------------------------
+
+def test_threats_by_severity_maps_orm_rows_to_category_counts():
+    rows = [
+        SimpleNamespace(label="critical", count=3),
+        SimpleNamespace(label="high", count=7),
+    ]
+    fake_db = FakeDb([FakeQuery(all_result=rows)])
+
+    result = get_threats_by_severity(db=fake_db, current_user=object())
+
+    assert result == [
+        CategoryCount(label="critical", count=3),
+        CategoryCount(label="high", count=7),
+    ]
+
+
+def test_threats_by_severity_returns_empty_list_when_no_data():
+    fake_db = FakeDb([FakeQuery(all_result=[])])
+
+    result = get_threats_by_severity(db=fake_db, current_user=object())
+
+    assert result == []
+
+
+def test_threats_by_severity_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    rows = [SimpleNamespace(label="high", count=5)]
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(all_result=rows)])
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/threats-by-severity",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["label"] == "high"
+    assert data[0]["count"] == 5
+
+
+# ---------------------------------------------------------------------------
+# platform-distribution
+# ---------------------------------------------------------------------------
+
+def test_platform_distribution_maps_orm_rows_to_category_counts():
+    rows = [
+        SimpleNamespace(label="github", count=10),
+        SimpleNamespace(label="twitter", count=4),
+    ]
+    fake_db = FakeDb([FakeQuery(all_result=rows)])
+
+    result = get_platform_distribution(db=fake_db, current_user=object())
+
+    assert result == [
+        CategoryCount(label="github", count=10),
+        CategoryCount(label="twitter", count=4),
+    ]
+
+
+def test_platform_distribution_returns_empty_list_when_no_data():
+    fake_db = FakeDb([FakeQuery(all_result=[])])
+
+    result = get_platform_distribution(db=fake_db, current_user=object())
+
+    assert result == []
+
+
+def test_platform_distribution_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    rows = [
+        SimpleNamespace(label="github", count=10),
+        SimpleNamespace(label="twitter", count=4),
+    ]
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(all_result=rows)])
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/platform-distribution",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+    assert {"label", "count"} <= data[0].keys()
+    assert isinstance(data[0]["label"], str)
+    assert isinstance(data[0]["count"], int)
+
+
+# ---------------------------------------------------------------------------
+# threat-categories
+# ---------------------------------------------------------------------------
+
+def test_threat_categories_maps_orm_rows_to_category_counts():
+    rows = [
+        SimpleNamespace(label="malware", count=6),
+        SimpleNamespace(label="uncategorized", count=2),
+    ]
+    fake_db = FakeDb([FakeQuery(all_result=rows)])
+
+    result = get_threat_categories(db=fake_db, current_user=object())
+
+    assert result == [
+        CategoryCount(label="malware", count=6),
+        CategoryCount(label="uncategorized", count=2),
+    ]
+
+
+def test_threat_categories_returns_empty_list_when_no_data():
+    fake_db = FakeDb([FakeQuery(all_result=[])])
+
+    result = get_threat_categories(db=fake_db, current_user=object())
+
+    assert result == []
+
+
+def test_threat_categories_allows_authenticated_user_with_metrics_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["metrics:read"]}
+    )
+    rows = [
+        SimpleNamespace(label="malware", count=6),
+        SimpleNamespace(label="uncategorized", count=2),
+    ]
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(all_result=rows)])
+    try:
+        response = TestClient(app).get(
+            "/api/metrics/threat-categories",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+    assert {"label", "count"} <= data[0].keys()
+    assert isinstance(data[0]["label"], str)
+    assert isinstance(data[0]["count"], int)
