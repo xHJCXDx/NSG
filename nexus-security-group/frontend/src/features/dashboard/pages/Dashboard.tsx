@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Activity, Bell, KeyRound, ListChecks, ShieldAlert, Zap } from 'lucide-react';
 import { DASHBOARD_COPY } from '../contract';
-import { KpiCard } from '../components/KpiCard';
+import { KpiCard } from '../../../shared/components/KpiCard';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
 
 export function Dashboard() {

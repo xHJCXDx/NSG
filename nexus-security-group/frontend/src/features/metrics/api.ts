@@ -1,23 +1,46 @@
-// NOTE: This module provides API functions for the metrics feature. The corresponding hook and UI components are planned for a future release.
 import { authFetch } from '../../shared/api/apiClient';
-import { METRICS_SUMMARY_ENDPOINT } from './contract';
+import {
+  MENTIONS_OVER_TIME_ENDPOINT,
+  METRICS_SUMMARY_ENDPOINT,
+  PLATFORM_DISTRIBUTION_ENDPOINT,
+  SENTIMENT_OVER_TIME_ENDPOINT,
+  THREAT_CATEGORIES_ENDPOINT,
+  THREATS_BY_SEVERITY_ENDPOINT,
+} from './contract';
+import type { CategoryCount, MetricsSummary, SentimentTimeSeriesPoint, TimeSeriesPoint } from './types';
 
-export interface MetricsSummary {
-  total_mentions: number;
-  sentiment_distribution: {
-    positive?: number;
-    neutral?: number;
-    negative?: number;
-  };
-  alerts_count: number;
+export async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary> {
+  const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);
+  if (!res.ok) throw new Error(`Failed to fetch metrics summary: ${res.status}`);
+  return res.json() as Promise<MetricsSummary>;
 }
 
-export async function fetchMetricsSummary(token: string | null) {
-  const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);
+export async function fetchMentionsOverTime(token: string | null, days = 30): Promise<TimeSeriesPoint[]> {
+  const res = await authFetch(token, `${MENTIONS_OVER_TIME_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch mentions over time: ${res.status}`);
+  return res.json() as Promise<TimeSeriesPoint[]>;
+}
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch metrics summary: ${res.status}`);
-  }
+export async function fetchSentimentOverTime(token: string | null, days = 30): Promise<SentimentTimeSeriesPoint[]> {
+  const res = await authFetch(token, `${SENTIMENT_OVER_TIME_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch sentiment trends: ${res.status}`);
+  return res.json() as Promise<SentimentTimeSeriesPoint[]>;
+}
 
-  return res.json() as Promise<MetricsSummary>;
+export async function fetchThreatsBySeverity(token: string | null): Promise<CategoryCount[]> {
+  const res = await authFetch(token, THREATS_BY_SEVERITY_ENDPOINT);
+  if (!res.ok) throw new Error(`Failed to fetch threats by severity: ${res.status}`);
+  return res.json() as Promise<CategoryCount[]>;
+}
+
+export async function fetchPlatformDistribution(token: string | null): Promise<CategoryCount[]> {
+  const res = await authFetch(token, PLATFORM_DISTRIBUTION_ENDPOINT);
+  if (!res.ok) throw new Error(`Failed to fetch platform distribution: ${res.status}`);
+  return res.json() as Promise<CategoryCount[]>;
+}
+
+export async function fetchThreatCategories(token: string | null): Promise<CategoryCount[]> {
+  const res = await authFetch(token, THREAT_CATEGORIES_ENDPOINT);
+  if (!res.ok) throw new Error(`Failed to fetch threat categories: ${res.status}`);
+  return res.json() as Promise<CategoryCount[]>;
 }
