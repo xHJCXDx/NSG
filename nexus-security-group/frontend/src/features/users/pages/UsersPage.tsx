@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Shield, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { CreateUserError, UpdatePermissionsError } from '../api';
 import { USER_ROLE_OPTIONS } from '../contract';
@@ -10,6 +10,11 @@ import { useUsersQuery } from '../hooks/useUsersQuery';
 import { PermissionMatrix } from '../components/PermissionMatrix';
 import { useTranslation } from '../../../shared/i18n/translations';
 import type { RoleName, UserResponse, UserRole } from '../types';
+
+const ROLE_BADGE: Record<string, string> = {
+  admin: 'border-brand-400/30 bg-brand-500/10 text-brand-300',
+  analyst: 'border-cyan-400/30 bg-cyan-500/10 text-cyan-300',
+};
 
 export function UsersPage() {
   const t = useTranslation();
@@ -59,6 +64,7 @@ export function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
+  const [createFormOpen, setCreateFormOpen] = useState(false);
 
   const isSubmitting = createUserMutation.isPending;
   const canSubmit = canCreateUsers && username.trim().length > 0 && password.length > 0 && !isSubmitting;
@@ -89,7 +95,11 @@ export function UsersPage() {
         is_active: isActive,
       });
       setCreatedUser(user);
+      setUsername('');
       setPassword('');
+      setRole('analyst');
+      setIsActive(true);
+      setCreateFormOpen(false);
     } catch (caughtError) {
       setError(caughtError instanceof CreateUserError ? caughtError.message : t.users.errors.createFallback);
     }
@@ -113,105 +123,43 @@ export function UsersPage() {
         </div>
       )}
 
-      <form className="glass-card max-w-2xl space-y-5 p-6" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-content-secondary" htmlFor="username">
-            {t.users.form.usernameLabel}
-          </label>
-          <input
-            id="username"
-            name="username"
-            className="mt-2 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary outline-none transition focus:border-brand-500"
-            value={username}
-            onChange={(event) => { setUsername(event.target.value); setFieldErrors((prev) => { const { username: _, ...rest } = prev; return rest; }); }}
-            autoComplete="username"
-          />
-          {fieldErrors.username && (
-            <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.username}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-content-secondary" htmlFor="password">
-            {t.users.form.passwordLabel}
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="mt-2 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary outline-none transition focus:border-brand-500"
-            value={password}
-            onChange={(event) => { setPassword(event.target.value); setFieldErrors((prev) => { const { password: _, ...rest } = prev; return rest; }); }}
-            autoComplete="new-password"
-          />
-          {fieldErrors.password && (
-            <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.password}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-content-secondary" htmlFor="role">
-            {t.users.form.roleLabel}
-          </label>
-          <select
-            id="role"
-            name="role"
-            className="mt-2 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary outline-none transition focus:border-brand-500"
-            value={role}
-            onChange={(event) => setRole(event.target.value as UserRole)}
-          >
-            {USER_ROLE_OPTIONS.map((option) => (
-              <option key={option} value={option} className="bg-surface-primary text-content-primary">
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <label className="flex items-center gap-3 text-sm text-content-secondary">
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={(event) => setIsActive(event.target.checked)}
-            className="h-4 w-4 rounded border-edge bg-surface-input text-brand-500"
-          />
-          {t.users.form.activeLabel}
-        </label>
-
-        {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200" role="alert">
-            {error}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="rounded-xl bg-brand-500 px-5 py-3 font-semibold text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting ? t.users.form.submittingLabel : t.users.form.submitLabel}
-        </button>
-      </form>
-
       {createdUser && (
-        <div className="glass-card max-w-2xl border-brand-500/20 bg-brand-500/5 p-6" role="status">
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-400">
+        <div className="glass-card max-w-2xl border-emerald-500/20 bg-emerald-500/5 p-5" role="status">
+          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-400">
             {t.users.confirmation.eyebrow}
           </p>
-          <h2 className="mt-2 text-xl font-bold text-content-heading">{t.users.confirmation.title}</h2>
-          <p className="mt-2 text-content-secondary">
+          <h2 className="mt-1 text-lg font-bold text-content-heading">{t.users.confirmation.title}</h2>
+          <p className="mt-1 text-content-secondary">
             {t.users.confirmation.detail(createdUser.username, createdUser.role)}
           </p>
         </div>
       )}
 
+      {/* ── User Directory ── */}
       <section className="glass-card overflow-hidden p-6">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-content-heading">{t.users.directory.title}</h2>
-            <p className="mt-1 text-sm text-content-secondary">{t.users.directory.description}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10">
+              <Users aria-hidden="true" className="h-5 w-5 text-brand-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-content-heading">{t.users.directory.title}</h2>
+              <p className="text-sm text-content-secondary">{t.users.directory.description}</p>
+            </div>
           </div>
-          {isLoadingUsers && <span className="text-sm text-content-secondary">{t.users.directory.loading}</span>}
+          <div className="flex items-center gap-3">
+            {isLoadingUsers && <span className="text-sm text-content-muted animate-pulse">{t.users.directory.loading}</span>}
+            {canCreateUsers && (
+              <button
+                type="button"
+                onClick={() => setCreateFormOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600"
+              >
+                <UserPlus aria-hidden="true" className="h-4 w-4" />
+                {t.users.form.submitLabel}
+              </button>
+            )}
+          </div>
         </div>
 
         {listErrorMessage && (
@@ -220,68 +168,187 @@ export function UsersPage() {
           </div>
         )}
 
+        {/* Inline Create User Form */}
+        {createFormOpen && (
+          <form className="mt-5 rounded-xl border border-edge-card bg-surface-secondary p-5 space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-content-secondary" htmlFor="username">
+                  {t.users.form.usernameLabel}
+                </label>
+                <input
+                  id="username"
+                  name="username"
+                  className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
+                  value={username}
+                  onChange={(event) => { setUsername(event.target.value); setFieldErrors((prev) => { const { username: _, ...rest } = prev; return rest; }); }}
+                  autoComplete="username"
+                />
+                {fieldErrors.username && (
+                  <p className="mt-1 text-xs text-red-400" role="alert">{fieldErrors.username}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-content-secondary" htmlFor="password">
+                  {t.users.form.passwordLabel}
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
+                  value={password}
+                  onChange={(event) => { setPassword(event.target.value); setFieldErrors((prev) => { const { password: _, ...rest } = prev; return rest; }); }}
+                  autoComplete="new-password"
+                />
+                {fieldErrors.password && (
+                  <p className="mt-1 text-xs text-red-400" role="alert">{fieldErrors.password}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3 items-end">
+              <div>
+                <label className="block text-sm font-medium text-content-secondary" htmlFor="role">
+                  {t.users.form.roleLabel}
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
+                  value={role}
+                  onChange={(event) => setRole(event.target.value as UserRole)}
+                >
+                  {USER_ROLE_OPTIONS.map((option) => (
+                    <option key={option} value={option} className="bg-surface-primary text-content-primary">
+                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="flex items-center gap-3 text-sm text-content-secondary pb-1">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(event) => setIsActive(event.target.checked)}
+                  className="h-4 w-4 rounded border-edge bg-surface-input text-brand-500"
+                />
+                {t.users.form.activeLabel}
+              </label>
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setCreateFormOpen(false)}
+                  className="rounded-xl border border-edge px-4 py-2.5 text-sm font-medium text-content-secondary transition hover:bg-surface-hover"
+                >
+                  {t.users.form.cancelLabel}
+                </button>
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmitting ? t.users.form.submittingLabel : t.users.form.submitLabel}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200" role="alert">
+                {error}
+              </div>
+            )}
+          </form>
+        )}
+
         {!isLoadingUsers && !listErrorMessage && users.length === 0 && (
           <p className="mt-4 text-sm text-content-secondary">{t.users.directory.empty}</p>
         )}
 
         {users.length > 0 && (
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full divide-y divide-edge text-sm">
+          <div className="mt-5 overflow-x-auto">
+            <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-content-muted">
+                <tr className="border-b border-edge text-left text-content-muted">
                   <th className="py-3 pr-4 font-medium">{t.users.directory.columns.username}</th>
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.role}</th>
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.status}</th>
                   <th className="pl-4 py-3 font-medium">{t.users.directory.columns.createdAt}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-edge-card text-content-primary">
-                {users.map((user) => (
-                  <tr key={user.user_id}>
-                    <td className="py-3 pr-4 font-medium text-content-heading">{user.username}</td>
-                    <td className="px-4 py-3 capitalize">{user.role}</td>
-                    <td className="px-4 py-3">
-                      {user.is_active ? t.users.directory.active : t.users.directory.inactive}
-                    </td>
-                    <td className="pl-4 py-3 text-content-secondary">{new Date(user.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-edge-card">
+                {users.map((user) => {
+                  const roleBadge = ROLE_BADGE[user.role] ?? ROLE_BADGE.analyst;
+                  return (
+                    <tr key={user.user_id} className="transition-colors hover:bg-surface-hover">
+                      <td className="py-3.5 pr-4">
+                        <span className="font-medium text-content-heading">{user.username}</span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-block rounded-full border px-3 py-0.5 text-xs font-semibold capitalize ${roleBadge}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`inline-block h-2 w-2 rounded-full ${user.is_active ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                          <span className={user.is_active ? 'text-emerald-400' : 'text-red-400'}>
+                            {user.is_active ? t.users.directory.active : t.users.directory.inactive}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="pl-4 py-3.5 text-content-muted">{new Date(user.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </section>
 
-      <section>
+      {/* ── Role Permissions ── */}
+      <section className="glass-card overflow-hidden">
         <button
           type="button"
           onClick={() => setPermissionsOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded-xl border border-edge bg-surface-hover px-6 py-4 text-left transition hover:bg-surface-secondary"
+          className="flex w-full items-center justify-between gap-4 p-6 text-left transition hover:bg-surface-hover"
         >
-          <span className="text-lg font-semibold text-content-heading">{t.users.permissions.sectionTitle}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+              <Shield aria-hidden="true" className="h-5 w-5 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-content-heading">{t.users.permissions.sectionTitle}</h2>
+              <p className="text-sm text-content-secondary">{t.users.permissions.matrix.description}</p>
+            </div>
+          </div>
           {permissionsOpen ? (
-            <ChevronDown aria-hidden="true" className="h-5 w-5 text-content-muted" />
+            <ChevronDown aria-hidden="true" className="h-5 w-5 text-content-muted shrink-0" />
           ) : (
-            <ChevronRight aria-hidden="true" className="h-5 w-5 text-content-muted" />
+            <ChevronRight aria-hidden="true" className="h-5 w-5 text-content-muted shrink-0" />
           )}
         </button>
 
         {permissionsOpen && (
-          <div className="mt-4 space-y-4">
+          <div className="border-t border-edge px-6 pb-6 pt-4 space-y-4">
             {permissionsError && (
-              <div className="glass-card border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300" role="alert">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300" role="alert">
                 {permissionsError instanceof Error ? permissionsError.message : t.users.errors.fetchFallback}
               </div>
             )}
 
             {permissionsSuccess && (
-              <div className="glass-card border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-300" role="status">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-300" role="status">
                 {permissionsSuccess}
               </div>
             )}
 
             {permissionsErrorMessage && (
-              <div className="glass-card border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300" role="alert">
+              <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300" role="alert">
                 {permissionsErrorMessage}
               </div>
             )}

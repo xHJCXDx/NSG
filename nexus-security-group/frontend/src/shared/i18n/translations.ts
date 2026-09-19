@@ -183,6 +183,7 @@ export const translations = {
         activeLabel: 'Active user',
         submitLabel: 'Create user',
         submittingLabel: 'Creating user...',
+        cancelLabel: 'Cancel',
       },
       validation: {
         usernameRequired: 'Username is required',
@@ -483,6 +484,7 @@ export const translations = {
         activeLabel: 'Usuario activo',
         submitLabel: 'Crear usuario',
         submittingLabel: 'Creando usuario...',
+        cancelLabel: 'Cancelar',
       },
       validation: {
         usernameRequired: 'El nombre de usuario es obligatorio',

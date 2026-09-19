@@ -10,6 +10,30 @@ interface PermissionMatrixProps {
   isSaving: boolean;
 }
 
+function Toggle({ checked, disabled, onChange, label }: { checked: boolean; disabled: boolean; onChange: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 focus:ring-offset-surface-primary ${
+        disabled
+          ? 'cursor-not-allowed opacity-40'
+          : 'cursor-pointer'
+      } ${checked ? 'bg-brand-500' : 'bg-surface-hover border-edge'}`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+          checked ? 'translate-x-5' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  );
+}
+
 export function PermissionMatrix({ data, canWrite, onSave, isSaving }: PermissionMatrixProps) {
   const t = useTranslation();
 
@@ -52,61 +76,65 @@ export function PermissionMatrix({ data, canWrite, onSave, isSaving }: Permissio
   const resources = Object.keys(grouped).sort();
 
   return (
-    <div className="glass-card p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-content-heading">{t.users.permissions.matrix.title}</h2>
-        <p className="mt-1 text-sm text-content-secondary">{t.users.permissions.matrix.description}</p>
-      </div>
-
-      <div className="overflow-x-auto">
+    <div className="space-y-5">
+      <div className="overflow-x-auto rounded-xl border border-edge-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-edge">
-              <th className="pb-3 pr-4 text-left font-medium text-content-muted">{t.users.permissions.matrix.columnPermission}</th>
-              <th className="pb-3 px-4 text-center font-medium text-content-muted">
+            <tr className="bg-surface-secondary">
+              <th className="py-3 px-5 text-left font-medium text-content-muted">{t.users.permissions.matrix.columnPermission}</th>
+              <th className="py-3 px-5 text-center font-medium text-content-muted">
                 <span className="inline-flex items-center gap-1.5">
                   {t.users.permissions.matrix.columnAdmin}
-                  <Lock aria-hidden="true" className="h-3.5 w-3.5 text-content-muted" />
+                  <Lock aria-hidden="true" className="h-3.5 w-3.5" />
                 </span>
               </th>
-              <th className="pb-3 pl-4 text-center font-medium text-content-muted">{t.users.permissions.matrix.columnAnalyst}</th>
+              <th className="py-3 px-5 text-center font-medium text-content-muted">{t.users.permissions.matrix.columnAnalyst}</th>
             </tr>
           </thead>
           <tbody>
             {resources.map((resource) => (
               <Fragment key={resource}>
                 <tr>
-                  <td colSpan={3} className="pt-4 pb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-brand-400">
+                  <td colSpan={3} className="pt-4 pb-2 px-5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
                       {resource}
                     </span>
                   </td>
                 </tr>
-                {grouped[resource].map((entry) => (
-                  <tr key={entry.permission} className="border-b border-edge-card hover:bg-surface-hover transition-colors">
-                    <td className="py-2.5 pr-4 text-content-secondary pl-4">{entry.action}</td>
-                    <td className="py-2.5 px-4 text-center">
-                      <input
-                        type="checkbox"
-                        checked
-                        readOnly
-                        disabled
-                        className="h-4 w-4 rounded border-edge bg-surface-hover text-brand-500 cursor-not-allowed opacity-50"
-                        aria-label={`${t.users.permissions.matrix.columnAdmin} ${entry.permission}`}
-                      />
-                    </td>
-                    <td className="py-2.5 pl-4 text-center">
-                      <input
-                        type="checkbox"
-                        checked={analystPermissions.has(entry.permission)}
-                        disabled={!canWrite || isSaving}
-                        onChange={() => handleToggle(entry.permission)}
-                        className="h-4 w-4 rounded border-edge bg-surface-hover text-brand-500 focus:ring-brand-500 focus:ring-offset-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                        aria-label={`${t.users.permissions.matrix.columnAnalyst} ${entry.permission}`}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                {grouped[resource].map((entry) => {
+                  const isChanged = analystPermissions.has(entry.permission) !== originalSet.has(entry.permission);
+                  return (
+                    <tr
+                      key={entry.permission}
+                      className={`border-b border-edge-card transition-colors ${
+                        isChanged ? 'bg-amber-500/5' : 'hover:bg-surface-hover'
+                      }`}
+                    >
+                      <td className="py-3 px-5 pl-8 text-content-secondary">
+                        <span className="capitalize">{entry.action}</span>
+                        {isChanged && (
+                          <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        )}
+                      </td>
+                      <td className="py-3 px-5 text-center">
+                        <Toggle
+                          checked
+                          disabled
+                          onChange={() => {}}
+                          label={`${t.users.permissions.matrix.columnAdmin} ${entry.permission}`}
+                        />
+                      </td>
+                      <td className="py-3 px-5 text-center">
+                        <Toggle
+                          checked={analystPermissions.has(entry.permission)}
+                          disabled={!canWrite || isSaving}
+                          onChange={() => handleToggle(entry.permission)}
+                          label={`${t.users.permissions.matrix.columnAnalyst} ${entry.permission}`}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </Fragment>
             ))}
           </tbody>
@@ -114,9 +142,12 @@ export function PermissionMatrix({ data, canWrite, onSave, isSaving }: Permissio
       </div>
 
       {canWrite && (
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3">
           {isDirty && (
-            <span className="text-sm text-yellow-400">{t.users.permissions.matrix.unsavedChanges}</span>
+            <span className="flex items-center gap-1.5 text-sm text-amber-400">
+              <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+              {t.users.permissions.matrix.unsavedChanges}
+            </span>
           )}
           <button
             type="button"
