@@ -1,9 +1,10 @@
 import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, Shield, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../auth';
-import { CreateUserError, UpdatePermissionsError, UpdateUserError } from '../api';
+import { CreateUserError, DeleteUserError, UpdatePermissionsError, UpdateUserError } from '../api';
 import { USER_ROLE_OPTIONS } from '../contract';
 import { useCreateUserMutation } from '../hooks/useCreateUserMutation';
+import { useDeleteUserMutation } from '../hooks/useDeleteUserMutation';
 import { usePermissionsQuery } from '../hooks/usePermissionsQuery';
 import { useUpdateRoleMutation } from '../hooks/useUpdateRoleMutation';
 import { useUpdateUserMutation } from '../hooks/useUpdateUserMutation';
@@ -19,12 +20,14 @@ const ROLE_BADGE: Record<string, string> = {
 
 export function UsersPage() {
   const t = useTranslation();
-  const { hasPermission } = useAuth();
+  const { claims, hasPermission } = useAuth();
   const { data: users = [], isLoading: isLoadingUsers, error: listError } = useUsersQuery();
   const createUserMutation = useCreateUserMutation();
   const updateUserMutation = useUpdateUserMutation();
+  const deleteUserMutation = useDeleteUserMutation();
   const canCreateUsers = hasPermission('users', 'write');
   const canEditUsers = canCreateUsers;
+  const canDeleteUsers = hasPermission('users', 'delete');
   const canWritePermissions = hasPermission('permissions', 'write');
 
   const { data: permissionsData, isLoading: isLoadingPermissions, error: permissionsError } = usePermissionsQuery();
@@ -75,6 +78,9 @@ export function UsersPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [editPasswordError, setEditPasswordError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<{ userId: number; message: string } | null>(null);
+  const [confirmingDeleteUserId, setConfirmingDeleteUserId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<{ userId: number; message: string } | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState<{ userId: number; message: string } | null>(null);
 
   const isSubmitting = createUserMutation.isPending;
   const canSubmit = canCreateUsers && username.trim().length > 0 && password.length > 0 && !isSubmitting;
@@ -131,6 +137,22 @@ export function UsersPage() {
     setEditPassword('');
     setEditError(null);
     setEditPasswordError(null);
+  };
+
+  const handleDeleteUser = async (user: UserResponse) => {
+    setDeleteError(null);
+    setDeleteSuccess(null);
+
+    try {
+      const updatedUser = await deleteUserMutation.mutateAsync(user.user_id);
+      setConfirmingDeleteUserId(null);
+      setDeleteSuccess({ userId: user.user_id, message: t.users.directory.delete.success(updatedUser.username) });
+    } catch (caughtError) {
+      setDeleteError({
+        userId: user.user_id,
+        message: caughtError instanceof DeleteUserError ? caughtError.message : t.users.errors.deleteUserFallback,
+      });
+    }
   };
 
   const getEditPayload = (user: UserResponse): UpdateUserPayload => {
@@ -350,7 +372,7 @@ export function UsersPage() {
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.role}</th>
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.status}</th>
                   <th className="pl-4 py-3 font-medium">{t.users.directory.columns.createdAt}</th>
-                  {canEditUsers && <th className="pl-4 py-3 font-medium">{t.users.directory.columns.actions}</th>}
+                  {(canEditUsers || canDeleteUsers) && <th className="pl-4 py-3 font-medium">{t.users.directory.columns.actions}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-edge-card">
@@ -360,6 +382,9 @@ export function UsersPage() {
                   const editPayload = isEditing ? getEditPayload(user) : {};
                   const hasEditChanges = Object.keys(editPayload).length > 0;
                   const isSavingThisUser = updateUserMutation.isPending && isEditing;
+                  const isConfirmingDelete = confirmingDeleteUserId === user.user_id;
+                  const isDeletingThisUser = deleteUserMutation.isPending && isConfirmingDelete;
+                  const isCurrentUser = claims.user_id !== undefined && claims.user_id === user.user_id;
                   return (
                     <Fragment key={user.user_id}>
                       <tr className="transition-colors hover:bg-surface-hover">
@@ -380,23 +405,96 @@ export function UsersPage() {
                           </span>
                         </td>
                         <td className="pl-4 py-3.5 text-content-muted">{new Date(user.created_at).toLocaleDateString()}</td>
-                        {canEditUsers && (
+                        {(canEditUsers || canDeleteUsers) && (
                           <td className="pl-4 py-3.5">
-                            <button
-                              type="button"
-                              onClick={() => startEditing(user)}
-                              disabled={updateUserMutation.isPending}
-                              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              {t.users.directory.edit.button}
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                              {canEditUsers && (
+                                <button
+                                  type="button"
+                                  onClick={() => startEditing(user)}
+                                  disabled={updateUserMutation.isPending || deleteUserMutation.isPending}
+                                  className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t.users.directory.edit.button}
+                                </button>
+                              )}
+                              {canDeleteUsers && !user.is_active && (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-muted opacity-60"
+                                >
+                                  {t.users.directory.delete.inactive}
+                                </button>
+                              )}
+                              {canDeleteUsers && user.is_active && isCurrentUser && (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-muted opacity-60"
+                                >
+                                  {t.users.directory.delete.self}
+                                </button>
+                              )}
+                              {canDeleteUsers && user.is_active && !isCurrentUser && (
+                                <button
+                                  type="button"
+                                  onClick={() => { cancelEditing(); setDeleteError(null); setDeleteSuccess(null); setConfirmingDeleteUserId(user.user_id); }}
+                                  disabled={deleteUserMutation.isPending}
+                                  className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t.users.directory.delete.button}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         )}
                       </tr>
+                      {(canEditUsers || canDeleteUsers) && deleteSuccess?.userId === user.user_id && !isConfirmingDelete && (
+                        <tr>
+                          <td colSpan={5} className="px-4 pb-3 text-sm text-emerald-400" role="status">
+                            {deleteSuccess.message}
+                          </td>
+                        </tr>
+                      )}
                       {canEditUsers && editSuccess?.userId === user.user_id && !isEditing && (
                         <tr>
                           <td colSpan={5} className="px-4 pb-3 text-sm text-emerald-400" role="status">
                             {editSuccess.message}
+                          </td>
+                        </tr>
+                      )}
+                      {canDeleteUsers && isConfirmingDelete && (
+                        <tr className="bg-surface-secondary/60">
+                          <td colSpan={5} className="p-4">
+                            <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                              <p className="text-sm font-semibold text-content-heading">
+                                {t.users.directory.delete.confirming(user.username)}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { setConfirmingDeleteUserId(null); setDeleteError(null); }}
+                                  disabled={isDeletingThisUser}
+                                  className="rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t.users.directory.delete.cancel}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteUser(user)}
+                                  disabled={isDeletingThisUser}
+                                  className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {isDeletingThisUser ? t.users.directory.delete.deleting : t.users.directory.delete.confirm}
+                                </button>
+                              </div>
+                              {deleteError?.userId === user.user_id && (
+                                <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
+                                  {deleteError.message}
+                                </div>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )}

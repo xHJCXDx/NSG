@@ -11,6 +11,7 @@ const encodePayload = (payload: unknown) =>
   btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
 const adminToken = `header.${encodePayload({ role: 'admin', auth_source: 'database', permissions: ['users:read', 'users:write'] })}.signature`;
+const deleteToken = `header.${encodePayload({ user_id: 1, role: 'admin', auth_source: 'database', permissions: ['users:read', 'users:delete'] })}.signature`;
 
 const permissionsResponse = {
   permissions: [],
@@ -220,5 +221,80 @@ describe('UsersPage', () => {
       }));
     });
     expect(await screen.findByText('bob updated successfully.')).toBeInTheDocument();
+  });
+
+  it('shows deactivate action only with users:delete and hides it without the permission', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [bobUser] } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => permissionsResponse } as Response);
+
+    renderUsersPage(deleteToken);
+
+    expect(await screen.findByRole('button', { name: 'Deactivate' })).toBeInTheDocument();
+    cleanup();
+    vi.restoreAllMocks();
+    localStorage.clear();
+
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [bobUser] } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => permissionsResponse } as Response);
+
+    renderUsersPage(adminToken);
+
+    expect(await screen.findByText('bob')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
+  });
+
+  it('requires confirmation before calling DELETE', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [bobUser] } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => permissionsResponse } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...bobUser, is_active: false }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => [{ ...bobUser, is_active: false }] } as Response);
+
+    renderUsersPage(deleteToken);
+
+    await user.click(await screen.findByRole('button', { name: 'Deactivate' }));
+
+    expect(screen.getByText('Deactivate bob?')).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await user.click(screen.getByRole('button', { name: 'Confirm deactivate' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/users/2', expect.objectContaining({ method: 'DELETE' }));
+    });
+    expect(await screen.findByText('bob deactivated successfully.')).toBeInTheDocument();
+  });
+
+  it('disables self-delete and inactive users in the UI', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [
+        { ...bobUser, user_id: 1, username: 'admin' },
+        { ...bobUser, user_id: 3, username: 'inactive-user', is_active: false },
+      ] } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => permissionsResponse } as Response);
+
+    renderUsersPage(deleteToken);
+
+    expect(await screen.findByRole('button', { name: 'Current user' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Inactive' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
+  });
+
+  it('displays backend delete errors', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => [bobUser] } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => permissionsResponse } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ detail: 'Cannot deactivate the last active admin user' }) } as Response);
+
+    renderUsersPage(deleteToken);
+
+    await user.click(await screen.findByRole('button', { name: 'Deactivate' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm deactivate' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot deactivate the last active admin user');
   });
 });

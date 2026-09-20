@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createUser, CreateUserError, fetchPermissions, FetchPermissionsError, listUsers, ListUsersError, updateRolePermissions, UpdatePermissionsError, updateUser, UpdateUserError } from './api';
+import { createUser, CreateUserError, deleteUser, DeleteUserError, fetchPermissions, FetchPermissionsError, listUsers, ListUsersError, updateRolePermissions, UpdatePermissionsError, updateUser, UpdateUserError } from './api';
 import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
 import type { CreateUserPayload, PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload } from './types';
 
@@ -147,6 +147,46 @@ describe('updateUser', () => {
 
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
     await expect(updateUser('fake-jwt', 2, { role: 'admin' })).rejects.toThrow(USERS_COPY.errors.serviceUnavailable);
+  });
+});
+
+describe('deleteUser', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('calls DELETE with auth headers and returns the backend soft-deleted user', async () => {
+    const response = {
+      user_id: 2,
+      username: 'bob',
+      role: 'analyst',
+      is_active: false,
+      created_at: '2026-07-16T10:00:00Z',
+      updated_at: '2026-07-16T11:00:00Z',
+    };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => response } as Response);
+
+    await expect(deleteUser('fake-jwt', 2)).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(`${USERS_ENDPOINT}/2`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer fake-jwt' },
+    });
+  });
+
+  it('fails before calling fetch when the token is missing', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    await expect(deleteUser(null, 2)).rejects.toThrow(USERS_COPY.errors.deleteUserWithoutToken);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps backend detail and network failures to delete errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ detail: 'Cannot deactivate the last active admin user' }) } as Response);
+    await expect(deleteUser('fake-jwt', 2)).rejects.toMatchObject(new DeleteUserError('Cannot deactivate the last active admin user', 409));
+
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
+    await expect(deleteUser('fake-jwt', 2)).rejects.toThrow(USERS_COPY.errors.serviceUnavailable);
   });
 });
 

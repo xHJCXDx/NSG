@@ -34,6 +34,16 @@ export class UpdateUserError extends Error {
   }
 }
 
+export class DeleteUserError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'DeleteUserError';
+  }
+}
+
 export class FetchPermissionsError extends Error {
   constructor(message: string, public readonly status?: number) {
     super(message);
@@ -153,6 +163,31 @@ export async function updateUser(token: string | null, userId: number, payload: 
     }
 
     throw new UpdateUserError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function deleteUser(token: string | null, userId: number): Promise<UserResponse> {
+  if (!token) {
+    throw new DeleteUserError(USERS_COPY.errors.deleteUserWithoutToken);
+  }
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new DeleteUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+
+    return (await response.json()) as UserResponse;
+  } catch (error) {
+    if (error instanceof DeleteUserError) {
+      throw error;
+    }
+
+    throw new DeleteUserError(USERS_COPY.errors.serviceUnavailable);
   }
 }
 
