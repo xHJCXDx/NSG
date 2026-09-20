@@ -31,7 +31,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 
 | # | Prioridad | Área | Descripción | Estado |
 |---|---|---|---|---|
-| M01 | HIGH | Frontend Auth | Sincronización multi-pestaña de login/logout/token | PENDING |
+| M01 | HIGH | Frontend Auth | Sincronización multi-pestaña de login/logout/token | DONE |
 | M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | PENDING |
 | M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | PENDING |
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | PENDING |
@@ -46,7 +46,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 
 **Prioridad:** HIGH  
 **Área:** Frontend Auth  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -79,6 +79,36 @@ Que login/logout/token removal se refleje entre pestañas abiertas sin requerir 
 
 ```txt
 fix(frontend): sync auth state across browser tabs
+```
+
+### Resultado
+
+- `TOKEN_STORAGE_KEY` exportado desde `frontend/src/shared/storage/tokenStorage.ts` para evitar duplicar strings mágicos.
+- `AuthContext` ahora inicializa sesión desde un token almacenado válido y elimina tokens expirados desde el arranque.
+- `AuthContext` escucha eventos `storage`:
+  - `nsg:auth:token` agregado/cambiado → actualiza sesión local.
+  - `nsg:auth:token` eliminado → deja la pestaña como anónima.
+  - `localStorage.clear()` en otra pestaña → re-sincroniza desde storage.
+  - cambios no relacionados, como `theme`, se ignoran.
+- Tests agregados para login/logout multi-pestaña y cambios no relacionados.
+
+### Archivos modificados
+
+- `frontend/src/features/auth/AuthContext.tsx`
+- `frontend/src/features/auth/AuthContext.test.tsx`
+- `frontend/src/shared/storage/tokenStorage.ts`
+- `frontend/src/shared/storage/tokenStorage.test.ts`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `npm run typecheck` desde `frontend/` → PASS.
+- `npm test -- src/features/auth/AuthContext.test.tsx src/shared/storage/tokenStorage.test.ts` desde `frontend/` → PASS, 2 files / 11 tests.
+
+### Commit
+
+```txt
+99a8f8e fix(frontend): sync auth state across browser tabs
 ```
 
 ---
