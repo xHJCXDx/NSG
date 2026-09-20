@@ -1,6 +1,6 @@
 import { authFetch } from '../../shared/api/apiClient';
 import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
-import type { ApiErrorResponse, CreateUserPayload, PermissionMatrixResponse, RoleName, RolePermissionsResponse, RolePermissionsUpdate, UserResponse } from './types';
+import type { ApiErrorResponse, CreateUserPayload, PermissionMatrixResponse, RoleName, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload, UserResponse } from './types';
 
 export { USERS_ENDPOINT } from './contract';
 
@@ -24,6 +24,16 @@ export class ListUsersError extends Error {
   }
 }
 
+export class UpdateUserError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'UpdateUserError';
+  }
+}
+
 export class FetchPermissionsError extends Error {
   constructor(message: string, public readonly status?: number) {
     super(message);
@@ -38,7 +48,7 @@ export class UpdatePermissionsError extends Error {
   }
 }
 
-const fallbackMessageByStatus = (status: number): string => {
+const fallbackMessageByStatus = (status: number, fallback = USERS_COPY.errors.createFallback): string => {
   if (status === 401) {
     return USERS_COPY.errors.unauthenticated;
   }
@@ -55,7 +65,7 @@ const fallbackMessageByStatus = (status: number): string => {
     return USERS_COPY.errors.validation;
   }
 
-  return USERS_COPY.errors.createFallback;
+  return fallback;
 };
 
 const readErrorDetail = async (response: Response): Promise<string | undefined> => {
@@ -116,6 +126,33 @@ export async function listUsers(token: string | null): Promise<UserResponse[]> {
     }
 
     throw new ListUsersError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function updateUser(token: string | null, userId: number, payload: UpdateUserPayload): Promise<UserResponse> {
+  if (!token) {
+    throw new UpdateUserError(USERS_COPY.errors.updateUserWithoutToken);
+  }
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new UpdateUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.updateUserFallback), response.status);
+    }
+
+    return (await response.json()) as UserResponse;
+  } catch (error) {
+    if (error instanceof UpdateUserError) {
+      throw error;
+    }
+
+    throw new UpdateUserError(USERS_COPY.errors.serviceUnavailable);
   }
 }
 

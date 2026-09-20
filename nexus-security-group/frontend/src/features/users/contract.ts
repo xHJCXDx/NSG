@@ -62,6 +62,7 @@ export const USERS_COPY = {
   errors: {
     createWithoutToken: 'Sign in before creating users.',
     listWithoutToken: 'Sign in before listing users.',
+    updateUserWithoutToken: 'Sign in before updating users.',
     fetchWithoutToken: 'Authentication required to view permissions.',
     updateWithoutToken: 'Authentication required to update permissions.',
     unauthenticated: 'Your session could not be authenticated. Please sign in again.',
@@ -72,6 +73,7 @@ export const USERS_COPY = {
     listFallback: 'Users could not be loaded.',
     fetchFallback: 'Failed to load permissions.',
     updateFallback: 'Failed to update permissions.',
+    updateUserFallback: 'User could not be updated. Please try again.',
     badRequest: 'Invalid permission configuration.',
     serviceUnavailable: 'User service is unavailable. Please try again.',
   },

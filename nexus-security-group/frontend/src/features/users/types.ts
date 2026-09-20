@@ -9,6 +9,12 @@ export interface CreateUserPayload {
   is_active: boolean;
 }
 
+export interface UpdateUserPayload {
+  role?: UserRole;
+  is_active?: boolean;
+  password?: string;
+}
+
 export interface UserResponse {
   user_id: number;
   username: string;

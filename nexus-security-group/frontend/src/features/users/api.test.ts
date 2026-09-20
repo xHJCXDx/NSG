@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createUser, CreateUserError, fetchPermissions, FetchPermissionsError, listUsers, ListUsersError, updateRolePermissions, UpdatePermissionsError } from './api';
+import { createUser, CreateUserError, fetchPermissions, FetchPermissionsError, listUsers, ListUsersError, updateRolePermissions, UpdatePermissionsError, updateUser, UpdateUserError } from './api';
 import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
-import type { CreateUserPayload, PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate } from './types';
+import type { CreateUserPayload, PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload } from './types';
 
 const payload: CreateUserPayload = {
   username: 'alice',
@@ -105,6 +105,48 @@ describe('listUsers', () => {
 
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
     await expect(listUsers('fake-jwt')).rejects.toThrow('User service is unavailable. Please try again.');
+  });
+});
+
+describe('updateUser', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('patches a user with partial JSON payload and auth headers', async () => {
+    const updatePayload: UpdateUserPayload = { role: 'admin', is_active: false, password: 'new-secret' };
+    const response = {
+      user_id: 2,
+      username: 'bob',
+      role: 'admin',
+      is_active: false,
+      created_at: '2026-07-16T10:00:00Z',
+      updated_at: '2026-07-16T11:00:00Z',
+    };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => response } as Response);
+
+    await expect(updateUser('fake-jwt', 2, updatePayload)).resolves.toEqual(response);
+
+    expect(fetchMock).toHaveBeenCalledWith(`${USERS_ENDPOINT}/2`, {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer fake-jwt', 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatePayload),
+    });
+  });
+
+  it('fails before calling fetch when the token is missing', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    await expect(updateUser(null, 2, { role: 'analyst' })).rejects.toThrow(USERS_COPY.errors.updateUserWithoutToken);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps backend detail and network failures to update errors', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
+    await expect(updateUser('fake-jwt', 2, { is_active: false })).rejects.toMatchObject(new UpdateUserError('Forbidden', 403));
+
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('offline'));
+    await expect(updateUser('fake-jwt', 2, { role: 'admin' })).rejects.toThrow(USERS_COPY.errors.serviceUnavailable);
   });
 });
 

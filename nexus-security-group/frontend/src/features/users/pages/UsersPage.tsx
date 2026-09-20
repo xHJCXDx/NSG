@@ -1,15 +1,16 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, Shield, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../auth';
-import { CreateUserError, UpdatePermissionsError } from '../api';
+import { CreateUserError, UpdatePermissionsError, UpdateUserError } from '../api';
 import { USER_ROLE_OPTIONS } from '../contract';
 import { useCreateUserMutation } from '../hooks/useCreateUserMutation';
 import { usePermissionsQuery } from '../hooks/usePermissionsQuery';
 import { useUpdateRoleMutation } from '../hooks/useUpdateRoleMutation';
+import { useUpdateUserMutation } from '../hooks/useUpdateUserMutation';
 import { useUsersQuery } from '../hooks/useUsersQuery';
 import { PermissionMatrix } from '../components/PermissionMatrix';
 import { useTranslation } from '../../../shared/i18n/translations';
-import type { RoleName, UserResponse, UserRole } from '../types';
+import type { RoleName, UpdateUserPayload, UserResponse, UserRole } from '../types';
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'border-brand-400/30 bg-brand-500/10 text-brand-300',
@@ -21,7 +22,9 @@ export function UsersPage() {
   const { hasPermission } = useAuth();
   const { data: users = [], isLoading: isLoadingUsers, error: listError } = useUsersQuery();
   const createUserMutation = useCreateUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
   const canCreateUsers = hasPermission('users', 'write');
+  const canEditUsers = canCreateUsers;
   const canWritePermissions = hasPermission('permissions', 'write');
 
   const { data: permissionsData, isLoading: isLoadingPermissions, error: permissionsError } = usePermissionsQuery();
@@ -65,6 +68,13 @@ export function UsersPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
   const [createFormOpen, setCreateFormOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editRole, setEditRole] = useState<UserRole>('analyst');
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editPasswordError, setEditPasswordError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState<{ userId: number; message: string } | null>(null);
 
   const isSubmitting = createUserMutation.isPending;
   const canSubmit = canCreateUsers && username.trim().length > 0 && password.length > 0 && !isSubmitting;
@@ -102,6 +112,69 @@ export function UsersPage() {
       setCreateFormOpen(false);
     } catch (caughtError) {
       setError(caughtError instanceof CreateUserError ? caughtError.message : t.users.errors.createFallback);
+    }
+  };
+
+  const startEditing = (user: UserResponse) => {
+    setCreateFormOpen(false);
+    setEditingUserId(user.user_id);
+    setEditRole(user.role);
+    setEditIsActive(user.is_active);
+    setEditPassword('');
+    setEditError(null);
+    setEditPasswordError(null);
+    setEditSuccess(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingUserId(null);
+    setEditPassword('');
+    setEditError(null);
+    setEditPasswordError(null);
+  };
+
+  const getEditPayload = (user: UserResponse): UpdateUserPayload => {
+    const payload: UpdateUserPayload = {};
+    if (editRole !== user.role) payload.role = editRole;
+    if (editIsActive !== user.is_active) payload.is_active = editIsActive;
+    if (editPassword.length > 0) payload.password = editPassword;
+    return payload;
+  };
+
+  const validateEditPassword = () => {
+    if (editPassword.length === 0) {
+      setEditPasswordError(null);
+      return true;
+    }
+    if (editPassword.length < 8) {
+      setEditPasswordError(t.users.validation.passwordMinLength);
+      return false;
+    }
+    if (editPassword.length > 255) {
+      setEditPasswordError(t.users.validation.passwordMaxLength);
+      return false;
+    }
+    setEditPasswordError(null);
+    return true;
+  };
+
+  const handleSaveUser = async (user: UserResponse) => {
+    setEditError(null);
+    setEditSuccess(null);
+    if (!validateEditPassword()) return;
+
+    const payload = getEditPayload(user);
+    if (Object.keys(payload).length === 0) {
+      setEditError(t.users.directory.edit.noChanges);
+      return;
+    }
+
+    try {
+      const updatedUser = await updateUserMutation.mutateAsync({ userId: user.user_id, payload });
+      setEditSuccess({ userId: user.user_id, message: t.users.directory.edit.success(updatedUser.username) });
+      cancelEditing();
+    } catch (caughtError) {
+      setEditError(caughtError instanceof UpdateUserError ? caughtError.message : t.users.errors.updateUserFallback);
     }
   };
 
@@ -152,7 +225,7 @@ export function UsersPage() {
             {canCreateUsers && (
               <button
                 type="button"
-                onClick={() => setCreateFormOpen((prev) => !prev)}
+                onClick={() => { cancelEditing(); setCreateFormOpen((prev) => !prev); }}
                 className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600"
               >
                 <UserPlus aria-hidden="true" className="h-4 w-4" />
@@ -277,31 +350,142 @@ export function UsersPage() {
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.role}</th>
                   <th className="px-4 py-3 font-medium">{t.users.directory.columns.status}</th>
                   <th className="pl-4 py-3 font-medium">{t.users.directory.columns.createdAt}</th>
+                  {canEditUsers && <th className="pl-4 py-3 font-medium">{t.users.directory.columns.actions}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-edge-card">
                 {users.map((user) => {
                   const roleBadge = ROLE_BADGE[user.role] ?? ROLE_BADGE.analyst;
+                  const isEditing = editingUserId === user.user_id;
+                  const editPayload = isEditing ? getEditPayload(user) : {};
+                  const hasEditChanges = Object.keys(editPayload).length > 0;
+                  const isSavingThisUser = updateUserMutation.isPending && isEditing;
                   return (
-                    <tr key={user.user_id} className="transition-colors hover:bg-surface-hover">
-                      <td className="py-3.5 pr-4">
-                        <span className="font-medium text-content-heading">{user.username}</span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className={`inline-block rounded-full border px-3 py-0.5 text-xs font-semibold capitalize ${roleBadge}`}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3.5">
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className={`inline-block h-2 w-2 rounded-full ${user.is_active ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                          <span className={user.is_active ? 'text-emerald-400' : 'text-red-400'}>
-                            {user.is_active ? t.users.directory.active : t.users.directory.inactive}
+                    <Fragment key={user.user_id}>
+                      <tr className="transition-colors hover:bg-surface-hover">
+                        <td className="py-3.5 pr-4">
+                          <span className="font-medium text-content-heading">{user.username}</span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className={`inline-block rounded-full border px-3 py-0.5 text-xs font-semibold capitalize ${roleBadge}`}>
+                            {user.role}
                           </span>
-                        </span>
-                      </td>
-                      <td className="pl-4 py-3.5 text-content-muted">{new Date(user.created_at).toLocaleDateString()}</td>
-                    </tr>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className={`inline-block h-2 w-2 rounded-full ${user.is_active ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                            <span className={user.is_active ? 'text-emerald-400' : 'text-red-400'}>
+                              {user.is_active ? t.users.directory.active : t.users.directory.inactive}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="pl-4 py-3.5 text-content-muted">{new Date(user.created_at).toLocaleDateString()}</td>
+                        {canEditUsers && (
+                          <td className="pl-4 py-3.5">
+                            <button
+                              type="button"
+                              onClick={() => startEditing(user)}
+                              disabled={updateUserMutation.isPending}
+                              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {t.users.directory.edit.button}
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                      {canEditUsers && editSuccess?.userId === user.user_id && !isEditing && (
+                        <tr>
+                          <td colSpan={5} className="px-4 pb-3 text-sm text-emerald-400" role="status">
+                            {editSuccess.message}
+                          </td>
+                        </tr>
+                      )}
+                      {canEditUsers && isEditing && (
+                        <tr className="bg-surface-secondary/60">
+                          <td colSpan={5} className="p-4">
+                            <div className="rounded-xl border border-edge-card bg-surface-secondary p-4">
+                              <h3 className="text-sm font-semibold text-content-heading">{t.users.directory.edit.title(user.username)}</h3>
+                              <div className="mt-4 grid gap-4 md:grid-cols-4 md:items-end">
+                                <div>
+                                  <label className="block text-xs font-medium text-content-secondary" htmlFor={`edit-role-${user.user_id}`}>
+                                    {t.users.form.roleLabel}
+                                  </label>
+                                  <select
+                                    id={`edit-role-${user.user_id}`}
+                                    className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500"
+                                    value={editRole}
+                                    onChange={(event) => setEditRole(event.target.value as UserRole)}
+                                    disabled={isSavingThisUser}
+                                  >
+                                    {USER_ROLE_OPTIONS.map((option) => (
+                                      <option key={option} value={option} className="bg-surface-primary text-content-primary">
+                                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <label className="flex items-center gap-3 pb-2 text-sm text-content-secondary">
+                                  <input
+                                    type="checkbox"
+                                    checked={editIsActive}
+                                    onChange={(event) => setEditIsActive(event.target.checked)}
+                                    disabled={isSavingThisUser}
+                                    className="h-4 w-4 rounded border-edge bg-surface-input text-brand-500"
+                                  />
+                                  {t.users.form.activeLabel}
+                                </label>
+
+                                <div>
+                                  <label className="block text-xs font-medium text-content-secondary" htmlFor={`edit-password-${user.user_id}`}>
+                                    {t.users.directory.edit.passwordLabel}
+                                  </label>
+                                  <input
+                                    id={`edit-password-${user.user_id}`}
+                                    type="password"
+                                    className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500"
+                                    value={editPassword}
+                                    onChange={(event) => { setEditPassword(event.target.value); setEditPasswordError(null); setEditError(null); }}
+                                    placeholder={t.users.directory.edit.passwordPlaceholder}
+                                    autoComplete="new-password"
+                                    disabled={isSavingThisUser}
+                                  />
+                                  {editPasswordError && <p className="mt-1 text-xs text-red-400" role="alert">{editPasswordError}</p>}
+                                </div>
+
+                                <div className="flex gap-2 md:justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditing}
+                                    disabled={isSavingThisUser}
+                                    className="rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {t.users.directory.edit.cancel}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveUser(user)}
+                                    disabled={!hasEditChanges || isSavingThisUser}
+                                    className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {isSavingThisUser ? t.users.directory.edit.saving : t.users.directory.edit.save}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {!hasEditChanges && !editError && (
+                                <p className="mt-3 text-xs text-content-muted">{t.users.directory.edit.noChanges}</p>
+                              )}
+                              {editError && (
+                                <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
+                                  {editError}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
