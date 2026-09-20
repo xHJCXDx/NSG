@@ -1,6 +1,6 @@
 # PLAN-003: Interacciones de Menú para Permisos RBAC Pendientes
 
-**Estado:** PENDIENTE  
+**Estado:** COMPLETADO  
 **Prioridad:** HIGH -> MEDIUM  
 **Origen:** Revisión de permisos backend vs navegación/interacciones frontend luego de completar Keywords UI.  
 **Arquitectura de referencia:** `docs/SYSTEM-ARCHITECTURE.md`  
@@ -52,7 +52,7 @@
 | M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | DONE |
 | M04 | MEDIUM | Frontend + Backend | Delete Users: borrado seguro de usuarios existentes | DONE |
 | M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | DONE |
-| M06 | MEDIUM | Docs + Tests | Matriz final permiso → menú → acción → tests | PENDING |
+| M06 | MEDIUM | Docs + Tests | Matriz final permiso → menú → acción → tests | DONE |
 
 ---
 
@@ -584,7 +584,7 @@ PENDING — orchestrator will commit after verification.
 
 **Prioridad:** MEDIUM  
 **Área:** Docs + Tests  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -597,9 +597,9 @@ Agregar una tabla final:
 | Permiso | Ruta/Menu | Acción UI | Test esperado |
 |---|---|---|---|
 | `workflows:execute` | Automation | Run scan | botón visible solo con permiso |
-| `alerts:write` | Alerts | revisar/resolver | acción visible solo con permiso |
-| `logs:read` | Logs | ver logs | ruta protegida |
-| `users:delete` | Users | delete user | confirmación requerida |
+| `alerts:write` | Alerts | acknowledge | acción visible solo con permiso |
+| `logs:read` | Logs | ver logs/activity | ruta protegida |
+| `users:delete` | Users | desactivar usuario | confirmación requerida |
 
 ### Criterios de aceptación
 
@@ -613,6 +613,44 @@ Agregar una tabla final:
 ```txt
 docs: add final RBAC menu interaction matrix
 ```
+
+### Matriz final verificada
+
+| Permiso | Ruta/Menu | Acción UI | Cobertura de test |
+|---|---|---|---|
+| `dashboard:read` | Overview → Dashboard `/` | Ver resumen operacional | `DashboardLayout.test.tsx`, `AppRouter.test.tsx` |
+| `metrics:read` | Overview → Analytics `/analytics` | Ver métricas/charts | `DashboardLayout.test.tsx`, `AppRouter.test.tsx` |
+| `mentions:read` | OSINT → Mentions `/mentions` | Ver menciones recolectadas | `DashboardLayout.test.tsx`, `AppRouter.test.tsx` |
+| `threats:read` | OSINT → Threats `/threats` | Ver amenazas detectadas | `DashboardLayout.test.tsx`, `AppRouter.test.tsx` |
+| `keywords:read` | OSINT → Keywords `/keywords` | Ver keywords monitoreadas | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `KeywordsPage.test.tsx` |
+| `keywords:write` | Keywords `/keywords` | Crear, editar y activar/desactivar keywords | `KeywordsPage.test.tsx`, `keywords/api.test.ts` |
+| `keywords:delete` | Keywords `/keywords` | Borrar keyword con confirmación | `KeywordsPage.test.tsx`, `keywords/api.test.ts` |
+| `workflows:read` | Operations → Automation `/automation` | Ver panel de automatización | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `AutomationTriggers.test.tsx` |
+| `workflows:execute` | Automation `/automation` | Ejecutar scan OSINT manual | `AutomationTriggers.test.tsx` |
+| `alerts:read` | Operations → Alerts `/alerts` | Ver alertas, filtros y paginación simple | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `AlertsPage.test.tsx` |
+| `alerts:write` | Alerts `/alerts` | Acknowledge de alerta | `AlertsPage.test.tsx`, `alerts/api.test.ts` |
+| `logs:read` | Operations → Logs `/logs` | Ver execution logs y user activity | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `LogsPage.test.tsx`, `logs/api.test.ts` |
+| `users:read` | Administration → Users `/users` | Ver directorio de usuarios | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `UsersPage.test.tsx` |
+| `users:write` | Users `/users` | Crear usuario y editar rol/estado/password | `UsersPage.test.tsx`, `users/api.test.ts` |
+| `users:delete` | Users `/users` | Desactivar usuario con confirmación; backend soft-delete | `UsersPage.test.tsx`, `users/api.test.ts`, `backend/tests/test_users_router.py`, `backend/tests/test_route_auth_contract.py` |
+| `permissions:read` | Administration → Settings `/settings`; Users permissions section | Ver matriz de permisos | `DashboardLayout.test.tsx`, `AppRouter.test.tsx`, `UsersPage.test.tsx` |
+| `permissions:write` | Users permissions section | Editar permisos de `analyst`; `admin` bloqueado por diseño | `UsersPage.test.tsx`, `users/api.test.ts` |
+
+### Verificación final
+
+- TypeScript:
+  - `npm run typecheck` desde `frontend/` → PASS.
+- Navegación/rutas/features RBAC principales:
+  - `npm test -- src/app/layouts/DashboardLayout.test.tsx src/app/router/AppRouter.test.tsx src/features/automation/AutomationTriggers.test.tsx src/features/alerts/api.test.ts src/features/alerts/pages/AlertsPage.test.tsx src/features/logs/api.test.ts src/features/logs/pages/LogsPage.test.tsx src/features/keywords/api.test.ts src/features/keywords/pages/KeywordsPage.test.tsx src/features/users/api.test.ts src/features/users/pages/UsersPage.test.tsx src/architecture.test.ts` → PASS.
+- Backend user delete contract:
+  - `python -m pytest tests/test_users_router.py tests/test_route_auth_contract.py` desde `backend/` usando venv del entorno → PASS.
+
+### Resultado
+
+- Todos los permisos funcionales definidos en el catálogo actual tienen una ruta, menú, acción o restricción UX documentada.
+- Las acciones destructivas quedan respaldadas por backend, no solo por ocultamiento frontend.
+- `admin` conserva permisos completos por diseño; sus permisos no se editan desde UI.
+- PLAN-003 queda cerrado.
 
 ---
 
