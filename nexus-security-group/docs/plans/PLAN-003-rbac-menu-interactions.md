@@ -49,7 +49,7 @@
 |---|-----------|------|-------------|--------|
 | M01 | HIGH | Frontend | Automation / Workflows: ver estado y ejecutar OSINT scan | DONE |
 | M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | DONE |
-| M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | PENDING |
+| M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | DONE |
 | M04 | MEDIUM | Frontend + posible Backend | Delete Users: borrado seguro de usuarios existentes | PENDING |
 | M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | PENDING |
 | M06 | MEDIUM | Docs + Tests | Matriz final permiso → menú → acción → tests | PENDING |
@@ -280,7 +280,7 @@ PENDING — orchestrator will commit after verification.
 
 **Prioridad:** MEDIUM  
 **Área:** Frontend + posible Backend  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Problema
 
@@ -356,8 +356,43 @@ o dos menús separados. Preferencia inicial: **una sola pantalla** para no satur
 ### Commit sugerido
 
 ```txt
-feat(frontend): add operational logs view
+PENDING — orchestrator will commit after verification.
 ```
+
+### Implementación verificada
+
+- Ruta agregada: `/logs`, protegida por `logs:read`.
+- Menú agregado: `Logs`, visible solo con `logs:read`.
+- Backend contract usado:
+  - `GET /api/logs` con `limit`, `offset`, `status`, `workflow_name`; respuesta `ExecutionLogResponse[]` sin envelope ni total.
+  - `GET /api/activity` con `limit`, `username`, `activity_type`; respuesta `UserActivityResponse[]` sin offset ni total.
+  - Ambos endpoints protegidos por `logs:read`.
+  - Estados de ejecución soportados: `success`, `partial_success`, `error`, `warning`, `timeout`.
+- UX implementada:
+  - Página única `Logs & Activity` con tabs `Executions` y `User Activity`.
+  - Tab `Executions`: tabla con workflow, status, contadores, started/completed y duración; filtros por `status` y `workflow_name`; paginación simple Previous/Next con `hasNext = results.length === limit`.
+  - Tab `User Activity`: tabla con username, rol, tipo, descripción, IDs relacionados y timestamp; filtros por `username`, `activity_type` y selector de `limit`; sin Previous/Next porque backend no soporta `offset`.
+  - Estados loading, empty y error para ambos tabs.
+  - Campos sensibles de actividad (`ip_address`, `user_agent`, `session_id`, `activity_data`) no se muestran por defecto.
+- Archivos afectados:
+  - `frontend/src/features/logs/types.ts`
+  - `frontend/src/features/logs/contract.ts`
+  - `frontend/src/features/logs/api.ts`
+  - `frontend/src/features/logs/hooks/useExecutionLogsQuery.ts`
+  - `frontend/src/features/logs/hooks/useUserActivityQuery.ts`
+  - `frontend/src/features/logs/pages/LogsPage.tsx`
+  - `frontend/src/features/logs/index.ts`
+  - `frontend/src/features/logs/api.test.ts`
+  - `frontend/src/features/logs/pages/LogsPage.test.tsx`
+  - `frontend/src/app/router/AppRouter.tsx`
+  - `frontend/src/app/router/AppRouter.test.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.test.tsx`
+  - `frontend/src/shared/i18n/translations.ts`
+  - `frontend/src/architecture.test.ts`
+- Verificación:
+  - `npm run typecheck` → PASS.
+  - `npm test -- src/features/logs/api.test.ts src/features/logs/pages/LogsPage.test.tsx src/app/router/AppRouter.test.tsx src/app/layouts/DashboardLayout.test.tsx src/architecture.test.ts` → PASS, 5 files / 30 tests.
 
 ---
 
