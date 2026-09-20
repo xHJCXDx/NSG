@@ -47,6 +47,7 @@ PERMISSION_PROTECTED_ROUTES = {
     ("/api/users", "GET"): "users:read",
     ("/api/users", "POST"): "users:write",
     ("/api/users/{user_id}", "PATCH"): "users:write",
+    ("/api/users/{user_id}", "DELETE"): "users:delete",
 }
 
 ADMIN_ONLY_ROUTES = set()
@@ -191,3 +192,7 @@ def test_users_routes_reject_authenticated_user_without_permission():
     response = client.patch("/api/users/1", json={"role": "admin"})
     assert response.status_code == 403
     assert "users:write" in response.json()["detail"]
+
+    response = client.delete("/api/users/1")
+    assert response.status_code == 403
+    assert "users:delete" in response.json()["detail"]

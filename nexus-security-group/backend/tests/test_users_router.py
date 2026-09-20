@@ -8,15 +8,16 @@ from sqlalchemy.exc import IntegrityError
 from auth import get_current_user, hash_password, require_permission
 from database import get_db
 from main import app
-from routers.users import create_user, list_users, router, update_user
+from routers.users import create_user, delete_user, list_users, router, update_user
 from schemas.auth import TokenData
 from schemas.user import UserCreate, UserResponse, UserUpdate
 
 
 class FakeQuery:
-    def __init__(self, first_result=None, all_result=None):
+    def __init__(self, first_result=None, all_result=None, count_result=0):
         self.first_result = first_result
         self.all_result = all_result or []
+        self.count_result = count_result
         self.filter_args = []
 
     def filter(self, *args):
@@ -32,12 +33,17 @@ class FakeQuery:
     def all(self):
         return self.all_result
 
+    def count(self):
+        return self.count_result
+
 
 class FakeDb:
-    def __init__(self, first_result=None, all_result=None, commit_exception=None):
-        self.query_obj = FakeQuery(first_result=first_result, all_result=all_result)
+    def __init__(self, first_result=None, all_result=None, commit_exception=None, count_result=0, query_results=None):
+        self.query_obj = FakeQuery(first_result=first_result, all_result=all_result, count_result=count_result)
+        self.query_results = list(query_results or [])
         self.query_args = []
         self.added = []
+        self.deleted = []
         self.committed = False
         self.rolled_back = False
         self.refreshed = []
@@ -45,10 +51,15 @@ class FakeDb:
 
     def query(self, *args):
         self.query_args.append(args)
+        if self.query_results:
+            return self.query_results.pop(0)
         return self.query_obj
 
     def add(self, obj):
         self.added.append(obj)
+
+    def delete(self, obj):
+        self.deleted.append(obj)
 
     def commit(self):
         if self.commit_exception is not None:
@@ -71,6 +82,7 @@ def test_main_registers_api_users_post_route():
     assert "post" in paths["/api/users"]
     assert "get" in paths["/api/users"]
     assert "patch" in paths["/api/users/{user_id}"]
+    assert "delete" in paths["/api/users/{user_id}"]
 
 
 def test_user_routes_declare_response_models_and_admin_dependency():
@@ -80,11 +92,13 @@ def test_user_routes_declare_response_models_and_admin_dependency():
     create_route = route_for("/api/users", "POST")
     list_route = route_for("/api/users", "GET")
     update_route = route_for("/api/users/{user_id}", "PATCH")
+    delete_route = route_for("/api/users/{user_id}", "DELETE")
 
     assert create_route.response_model is UserResponse
     assert create_route.status_code == 201
     assert list_route.response_model == list[UserResponse]
     assert update_route.response_model is UserResponse
+    assert delete_route.response_model is UserResponse
     assert any(
         getattr(dep.call, "required_permission", None) == "users:write"
         for dep in create_route.dependant.dependencies
@@ -97,10 +111,14 @@ def test_user_routes_declare_response_models_and_admin_dependency():
         getattr(dep.call, "required_permission", None) == "users:write"
         for dep in update_route.dependant.dependencies
     )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "users:delete"
+        for dep in delete_route.dependant.dependencies
+    )
 
 
-def test_user_router_has_no_physical_delete_route():
-    assert all("DELETE" not in route.methods for route in router.routes)
+def test_user_router_delete_route_is_soft_delete_only():
+    assert any("DELETE" in route.methods for route in router.routes)
 
 
 def test_admin_creates_user_hashes_password_and_response_has_no_secret():
@@ -140,6 +158,23 @@ def test_user_without_users_write_cannot_create_users():
 
     assert response.status_code == 403
     assert "users:write" in response.json()["detail"]
+
+
+def test_user_without_users_delete_cannot_delete_users():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["users:read", "users:write"],
+    )
+
+    response = TestClient(authz_app).delete("/api/users/2")
+
+    assert response.status_code == 403
+    assert "users:delete" in response.json()["detail"]
 
 
 def test_duplicate_username_returns_409_and_does_not_commit():
@@ -229,6 +264,103 @@ def test_patch_missing_user_returns_404():
     assert exc_info.value.status_code == 404
 
 
+def test_delete_missing_user_returns_404():
+    fake_db = FakeDb(first_result=None)
+    admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
+
+    with pytest.raises(HTTPException) as exc_info:
+        delete_user(user_id=999, db=fake_db, current_user=admin)
+
+    assert exc_info.value.status_code == 404
+
+
+def test_delete_blocks_current_authenticated_user():
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    user = type("User", (), {
+        "user_id": 1,
+        "username": "root",
+        "role": "admin",
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+    })()
+    fake_db = FakeDb(first_result=user)
+    admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
+
+    with pytest.raises(HTTPException) as exc_info:
+        delete_user(user_id=1, db=fake_db, current_user=admin)
+
+    assert exc_info.value.status_code == 400
+    assert "own user" in exc_info.value.detail
+    assert user.is_active is True
+    assert fake_db.committed is False
+
+
+def test_delete_blocks_last_active_admin():
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    target = type("User", (), {
+        "user_id": 2,
+        "username": "only-admin",
+        "role": "admin",
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+    })()
+    fake_db = FakeDb(first_result=target, count_result=1)
+    admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
+
+    with pytest.raises(HTTPException) as exc_info:
+        delete_user(user_id=2, db=fake_db, current_user=admin)
+
+    assert exc_info.value.status_code == 409
+    assert "last active admin" in exc_info.value.detail
+    assert target.is_active is True
+    assert fake_db.committed is False
+
+
+def test_delete_inactive_user_is_idempotent_noop():
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    target = type("User", (), {
+        "user_id": 2,
+        "username": "bob",
+        "role": "analyst",
+        "is_active": False,
+        "created_at": now,
+        "updated_at": now,
+    })()
+    fake_db = FakeDb(first_result=target)
+    admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
+
+    result = delete_user(user_id=2, db=fake_db, current_user=admin)
+
+    assert result is target
+    assert target.is_active is False
+    assert fake_db.committed is False
+    assert fake_db.deleted == []
+
+
+def test_valid_delete_soft_deactivates_and_does_not_physically_remove_user():
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    target = type("User", (), {
+        "user_id": 2,
+        "username": "bob",
+        "role": "analyst",
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+    })()
+    fake_db = FakeDb(first_result=target)
+    admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
+
+    result = delete_user(user_id=2, db=fake_db, current_user=admin)
+
+    assert result is target
+    assert target.is_active is False
+    assert fake_db.committed is True
+    assert fake_db.refreshed == [target]
+    assert fake_db.deleted == []
+
+
 def test_user_routes_reject_invalid_create_and_empty_patch_payloads():
     validation_app = FastAPI()
     validation_app.include_router(router)
@@ -257,7 +389,7 @@ def test_user_routes_reject_invalid_create_and_empty_patch_payloads():
 def test_users_routes_reject_missing_bearer_token():
     client = TestClient(app)
 
-    for method, path in [("GET", "/api/users"), ("POST", "/api/users"), ("PATCH", "/api/users/1")]:
+    for method, path in [("GET", "/api/users"), ("POST", "/api/users"), ("PATCH", "/api/users/1"), ("DELETE", "/api/users/1")]:
         response = client.request(method, path, json={"username": "x", "password": "x"} if method != "GET" else None)
         assert response.status_code == 401, f"{method} {path} should reject without token"
         assert response.json()["detail"] == "Not authenticated"

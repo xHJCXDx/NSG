@@ -71,3 +71,38 @@ def update_user(
     db.refresh(user)
     logger.info("User updated: id=%s by %s", user_id, current_user.username)
     return user
+
+
+@router.delete("/{user_id}", response_model=UserResponse)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_permission("users", "delete")),
+):
+    user = db.query(SystemUser).filter(SystemUser.user_id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if current_user.user_id is not None and current_user.user_id == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot deactivate your own user")
+
+    if not user.is_active:
+        return user
+
+    if user.role == "admin":
+        active_admin_count = (
+            db.query(SystemUser)
+            .filter(SystemUser.role == "admin", SystemUser.is_active.is_(True))
+            .count()
+        )
+        if active_admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot deactivate the last active admin user",
+            )
+
+    user.is_active = False
+    db.commit()
+    db.refresh(user)
+    logger.info("User deactivated: id=%s by %s", user_id, current_user.username)
+    return user
