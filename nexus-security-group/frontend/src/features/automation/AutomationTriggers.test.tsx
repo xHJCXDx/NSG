@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestQueryClient } from '../../shared/test/createTestQueryClient';
+import { LanguageProvider } from '../../shared/contexts/LanguageContext';
 import { AuthProvider } from '../auth';
 import { AUTOMATION_COPY } from './contract';
 import { getAutomationStatus } from './api';
@@ -17,9 +18,11 @@ const renderWithAuth = (token = makeToken(['workflows:execute'])) => {
   localStorage.setItem('nsg:auth:token', token);
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <AuthProvider>
-        <AutomationTriggers />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AutomationTriggers />
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>,
   );
 };

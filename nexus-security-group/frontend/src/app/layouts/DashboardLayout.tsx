@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth';
-import { Activity, KeyRound, LayoutDashboard, LogOut, MessageSquare, Settings, ShieldAlert, Users } from 'lucide-react';
+import { Activity, KeyRound, LayoutDashboard, LogOut, MessageSquare, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react';
 import { useTranslation } from '../../shared/i18n/translations';
 
 export function DashboardLayout() {
@@ -18,6 +18,7 @@ export function DashboardLayout() {
     { name: t.nav.mentions, path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
     { name: t.nav.threats, path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
     { name: t.nav.keywords, path: '/keywords', icon: KeyRound, permission: ['keywords', 'read'] },
+    { name: t.nav.automation, path: '/automation', icon: PlayCircle, permission: ['workflows', 'read'] },
     { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
     { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
     { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },

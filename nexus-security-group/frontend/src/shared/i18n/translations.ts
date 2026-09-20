@@ -7,6 +7,7 @@ export const translations = {
       mentions: 'Mentions',
       threats: 'Threats',
       keywords: 'Keywords',
+      automation: 'Automation',
       users: 'Users',
       analytics: 'Analytics',
       settings: 'Settings',
@@ -369,7 +370,10 @@ export const translations = {
       showing: 'Showing {count} of {total}',
     },
     automation: {
+      eyebrow: 'Operations',
       title: 'Automations',
+      pageDescription:
+        'Monitor the OSINT workflow and trigger an authorized manual run through the protected backend proxy.',
       description:
         'The OSINT workflow runs on a 15-minute schedule. You can also trigger a full scan manually from this panel.',
       scheduleLabel: 'Scheduled every 15 minutes',
@@ -391,6 +395,7 @@ export const translations = {
       mentions: 'Menciones',
       threats: 'Amenazas',
       keywords: 'Palabras clave',
+      automation: 'Automatización',
       users: 'Usuarios',
       analytics: 'Analítica',
       settings: 'Configuración',
@@ -753,7 +758,10 @@ export const translations = {
       showing: 'Mostrando {count} de {total}',
     },
     automation: {
+      eyebrow: 'Operaciones',
       title: 'Automatizaciones',
+      pageDescription:
+        'Monitoreá el flujo OSINT y ejecutá una corrida manual autorizada a través del proxy protegido del backend.',
       description:
         'El flujo OSINT corre cada 15 minutos. También podés disparar un escaneo completo manualmente desde este panel.',
       scheduleLabel: 'Programado cada 15 minutos',

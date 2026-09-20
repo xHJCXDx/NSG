@@ -32,6 +32,10 @@ vi.mock('../../features/keywords', () => ({
   KeywordsPage: () => <div>Keywords page</div>,
 }));
 
+vi.mock('../../features/automation', () => ({
+  AutomationPage: () => <div>Automation page</div>,
+}));
+
 vi.mock('../../features/users', () => ({
   UsersPage: () => <div>Users page</div>,
 }));
@@ -96,6 +100,16 @@ describe('AppRouter', () => {
     expect(await screen.findByText('Keywords page')).toBeInTheDocument();
   });
 
+  it('keeps the automation route inside the protected dashboard layout', async () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['workflows:read']));
+    window.history.pushState({}, '', '/automation');
+
+    renderRouter();
+
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(await screen.findByText('Automation page')).toBeInTheDocument();
+  });
+
   it('redirects unauthenticated users away from the users route', () => {
     window.history.pushState({}, '', '/users');
 
@@ -123,5 +137,15 @@ describe('AppRouter', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('keywords:read');
     expect(screen.queryByText('Keywords page')).not.toBeInTheDocument();
+  });
+
+  it('blocks authenticated users from automation when workflows:read is missing', () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
+    window.history.pushState({}, '', '/automation');
+
+    renderRouter();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('workflows:read');
+    expect(screen.queryByText('Automation page')).not.toBeInTheDocument();
   });
 });
