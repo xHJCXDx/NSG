@@ -1,4 +1,4 @@
-const TOKEN_STORAGE_KEY = 'nsg:auth:token';
+export const TOKEN_STORAGE_KEY = 'nsg:auth:token';
 
 export function getToken() {
   return localStorage.getItem(TOKEN_STORAGE_KEY);

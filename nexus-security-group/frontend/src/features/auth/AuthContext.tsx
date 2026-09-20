@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { decodeTokenClaims, type TokenClaims } from '../../shared/auth/decodeTokenClaims';
-import { getToken, removeToken, setToken as saveToken } from '../../shared/storage/tokenStorage';
+import { getToken, removeToken, setToken as saveToken, TOKEN_STORAGE_KEY } from '../../shared/storage/tokenStorage';
 
 interface AuthContextType {
   token: string | null;
@@ -22,8 +22,17 @@ function isTokenExpired(claims: TokenClaims): boolean {
   return Date.now() >= claims.exp * 1000;
 }
 
+function getValidStoredToken(): string | null {
+  const storedToken = getToken();
+  if (storedToken && isTokenExpired(decodeTokenClaims(storedToken))) {
+    removeToken();
+    return null;
+  }
+  return storedToken;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(getToken());
+  const [token, setToken] = useState<string | null>(getValidStoredToken());
   const claims = decodeTokenClaims(token);
   const permissions = claims.permissions ?? [];
   const hasPermission = (resource: string, action: string) => permissions.includes(`${resource}:${action}`);
@@ -34,6 +43,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(null);
     }
   }, [token]);
+
+  useEffect(() => {
+    const syncTokenFromStorage = (event: StorageEvent) => {
+      if (event.key !== TOKEN_STORAGE_KEY && event.key !== null) return;
+
+      const nextToken = event.key === null ? getToken() : event.newValue;
+      if (nextToken && isTokenExpired(decodeTokenClaims(nextToken))) {
+        removeToken();
+        setToken(null);
+        return;
+      }
+
+      setToken(nextToken);
+    };
+
+    window.addEventListener('storage', syncTokenFromStorage);
+    return () => window.removeEventListener('storage', syncTokenFromStorage);
+  }, []);
 
   const login = (newToken: string) => {
     saveToken(newToken);
