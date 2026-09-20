@@ -50,7 +50,7 @@
 | M01 | HIGH | Frontend | Automation / Workflows: ver estado y ejecutar OSINT scan | DONE |
 | M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | DONE |
 | M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | DONE |
-| M04 | MEDIUM | Frontend + posible Backend | Delete Users: borrado seguro de usuarios existentes | PENDING |
+| M04 | MEDIUM | Frontend + Backend | Delete Users: borrado seguro de usuarios existentes | DONE |
 | M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | PENDING |
 | M06 | MEDIUM | Docs + Tests | Matriz final permiso → menú → acción → tests | PENDING |
 
@@ -400,7 +400,7 @@ PENDING — orchestrator will commit after verification.
 
 **Prioridad:** MEDIUM  
 **Área:** Frontend + posible Backend  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Problema
 
@@ -460,15 +460,41 @@ Revisar antes de implementar:
 ### Commit sugerido
 
 ```txt
-feat(frontend): add safe user deletion controls
+PENDING — orchestrator will commit after verification.
 ```
 
-Si requiere backend:
+### Implementación verificada
 
-```txt
-feat(api): add safe user deletion endpoint
-feat(frontend): add safe user deletion controls
-```
+- Backend contract implementado:
+  - `DELETE /api/users/{user_id}` agregado en `backend/routers/users.py`.
+  - Protegido por `users:delete` vía `require_permission("users", "delete")`.
+  - Soft-delete únicamente: marca `is_active = False`, hace `commit`/`refresh` y devuelve `UserResponse`.
+  - No realiza eliminación física de `system_users`.
+  - Reglas backend:
+    - usuario inexistente → `404 User not found`;
+    - usuario actual autenticado → `400 You cannot deactivate your own user`;
+    - último admin activo → `409 Cannot deactivate the last active admin user`;
+    - usuario ya inactivo → respuesta exitosa idempotente sin commit.
+- Frontend UX implementada:
+  - `deleteUser()` llama `DELETE /api/users/{user_id}`.
+  - `useDeleteUserMutation()` invalida la query `['users']`.
+  - Users muestra `Deactivate` solo con `users:delete`, requiere confirmación inline, deshabilita usuario actual si `claims.user_id` coincide y muestra `Inactive` deshabilitado para usuarios ya inactivos.
+  - Feedback de éxito/error con mensajes backend.
+- Archivos afectados:
+  - `backend/routers/users.py`
+  - `backend/tests/test_users_router.py`
+  - `backend/tests/test_route_auth_contract.py`
+  - `frontend/src/features/users/api.ts`
+  - `frontend/src/features/users/api.test.ts`
+  - `frontend/src/features/users/hooks/useDeleteUserMutation.ts`
+  - `frontend/src/features/users/pages/UsersPage.tsx`
+  - `frontend/src/features/users/pages/UsersPage.test.tsx`
+  - `frontend/src/features/users/contract.ts`
+  - `frontend/src/shared/i18n/translations.ts`
+- Verificación:
+  - `"/tmp/opencode/nsg-backend-venv/bin/python" -m pytest tests/test_users_router.py tests/test_route_auth_contract.py` desde `backend/` → PASS, 23 tests.
+  - `npm run typecheck` desde `frontend/` → PASS.
+  - `npm test -- src/features/users/api.test.ts src/features/users/pages/UsersPage.test.tsx` desde `frontend/` → PASS, 2 files / 40 tests.
 
 ---
 
