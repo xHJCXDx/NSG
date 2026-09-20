@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, User, Loader2 } from 'lucide-react';
+import { Lock, User, Loader2 } from 'lucide-react';
 import { loginWithCredentials } from './api';
 import { useAuth } from './AuthContext';
 import { useTranslation } from '../../shared/i18n/translations';
@@ -50,9 +50,11 @@ export function LoginView() {
       <div className="w-full max-w-md animate-fade-in relative z-10">
         <div className="glass-card p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-brand-500/20 rounded-2xl flex items-center justify-center mb-4 border border-brand-500/30">
-              <Shield className="w-8 h-8 text-brand-400" />
-            </div>
+            <img
+              src="/nsg-logo-full.png"
+              alt="Nexus Security Group"
+              className="mb-6 h-auto w-full max-w-[300px] object-contain drop-shadow-[0_0_24px_rgba(168,85,247,0.22)]"
+            />
             <h1 className="text-2xl font-bold text-content-heading tracking-tight">{t.auth.title}</h1>
             <p className="text-content-muted text-sm mt-2">{t.auth.subtitle}</p>
           </div>

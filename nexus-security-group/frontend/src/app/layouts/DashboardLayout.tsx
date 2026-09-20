@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth';
-import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, Shield, ShieldAlert, Users } from 'lucide-react';
+import { Activity, LayoutDashboard, LogOut, MessageSquare, Settings, ShieldAlert, Users } from 'lucide-react';
 import { useTranslation } from '../../shared/i18n/translations';
 
 export function DashboardLayout() {
@@ -27,9 +27,12 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <aside aria-label="Sidebar" className="w-64 flex-shrink-0 glass border-r border-edge-card flex flex-col h-screen sticky top-0">
         <div className="p-6 flex items-center space-x-3">
-          <div className="w-10 h-10 bg-brand-500/20 rounded-xl flex items-center justify-center border border-brand-500/30">
-            <Shield aria-hidden="true" className="w-5 h-5 text-brand-400" />
-          </div>
+          <img
+            src="/nsg-symbol.png"
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-10 rounded-xl object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.28)]"
+          />
           <div>
             <h2 className="font-bold text-content-heading tracking-tight leading-tight">NSG</h2>
             <p className="text-xs text-brand-400 font-medium">Dashboard</p>
