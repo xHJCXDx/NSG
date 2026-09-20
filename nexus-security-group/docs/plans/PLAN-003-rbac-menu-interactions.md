@@ -48,7 +48,7 @@
 | # | Prioridad | Área | Descripción | Estado |
 |---|-----------|------|-------------|--------|
 | M01 | HIGH | Frontend | Automation / Workflows: ver estado y ejecutar OSINT scan | DONE |
-| M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | PENDING |
+| M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | DONE |
 | M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | PENDING |
 | M04 | MEDIUM | Frontend + posible Backend | Delete Users: borrado seguro de usuarios existentes | PENDING |
 | M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | PENDING |
@@ -165,7 +165,7 @@ PENDING — orchestrator will commit after verification.
 
 **Prioridad:** HIGH  
 **Área:** Frontend + posible Backend  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Problema
 
@@ -236,8 +236,43 @@ Si backend solo permite lectura, implementar M02 en dos pasos:
 ### Commit sugerido
 
 ```txt
-feat(frontend): add alerts center
+PENDING — orchestrator will commit after verification.
 ```
+
+### Implementación verificada
+
+- Ruta agregada: `/alerts`, protegida por `alerts:read`.
+- Menú agregado: `Alerts`, visible solo con `alerts:read`.
+- Backend contract usado:
+  - `GET /api/alerts` con `limit`, `offset`, `delivery_status`, `acknowledged`; respuesta `AlertResponse[]` sin envelope paginado ni total.
+  - `PATCH /api/alerts/{alert_id}/acknowledge` sin body, protegido por `alerts:write`, respuesta `AlertResponse`.
+  - Estados de entrega soportados: `pending`, `sent`, `delivered`, `failed`.
+  - Acción write soportada: solo `acknowledge`; no se implementaron resolve/reopen/change severity/comments.
+- UX implementada:
+  - Página Alerts Center con loading, empty y error state.
+  - Tabla con título, severidad, mensaje, canales, delivery status, estado de reconocimiento, timestamps de creación/envío/reconocimiento.
+  - Filtros solo por parámetros soportados por backend: `delivery_status` y `acknowledged`.
+  - Paginación simple Previous/Next con `hasNext = results.length === limit`, sin total pages.
+  - Botón `Acknowledge` visible solo con `alerts:write` y solo si `acknowledged === false`; refresca la query tras éxito.
+- Archivos afectados:
+  - `frontend/src/features/alerts/types.ts`
+  - `frontend/src/features/alerts/contract.ts`
+  - `frontend/src/features/alerts/api.ts`
+  - `frontend/src/features/alerts/hooks/useAlertsQuery.ts`
+  - `frontend/src/features/alerts/hooks/useAcknowledgeAlertMutation.ts`
+  - `frontend/src/features/alerts/pages/AlertsPage.tsx`
+  - `frontend/src/features/alerts/index.ts`
+  - `frontend/src/features/alerts/api.test.ts`
+  - `frontend/src/features/alerts/pages/AlertsPage.test.tsx`
+  - `frontend/src/app/router/AppRouter.tsx`
+  - `frontend/src/app/router/AppRouter.test.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.test.tsx`
+  - `frontend/src/shared/i18n/translations.ts`
+  - `frontend/src/architecture.test.ts`
+- Verificación:
+  - `npm run typecheck` → PASS.
+  - `npm test -- src/features/alerts/api.test.ts src/features/alerts/pages/AlertsPage.test.tsx src/app/router/AppRouter.test.tsx src/app/layouts/DashboardLayout.test.tsx src/architecture.test.ts` → PASS, 5 files / 29 tests.
 
 ---
 
