@@ -25,6 +25,7 @@
 | M10 | ✅ DONE | Full-stack | Filtros server-side y opciones de filtro globales desde backend | DONE |
 | M11 | ✅ DONE | Frontend | Reemplazar tooltips nativos por texto expandible en ThreatCard | DONE |
 | M12 | ✅ DONE | Frontend | Rediseño UX de la página de Users y permisos de roles | DONE |
+| M13 | ✅ DONE | Frontend | Edición de usuarios existentes: rol, estado y contraseña opcional | DONE |
 
 ---
 
@@ -341,3 +342,33 @@
 10. ✅ **M10** — Filtros server-side y opciones globales
 11. ✅ **M11** — Tooltips a expandible en ThreatCard
 12. ✅ **M12** — Rediseño UX Users y permisos
+13. ✅ **M13** — Edición de usuarios existentes
+
+---
+
+## M13 — Edición de usuarios existentes: rol, estado y contraseña opcional
+
+**Prioridad:** MEDIUM
+**Area:** Frontend
+**Estado:** DONE
+
+**Que se hizo:**
+- Agregado contrato frontend para `PATCH /api/users/{user_id}` con payload parcial: `role`, `is_active`, `password` opcional.
+- Agregado hook `useUpdateUserMutation` que reutiliza la convención de invalidación de query `['users']`.
+- User directory ahora muestra columna Actions solo con `users:write` y permite editar cada fila inline.
+- Controles de edición: selector de rol `analyst`/`admin`, checkbox de estado activo, nueva contraseña opcional, Save/Cancel, estado sin cambios, disabled mientras guarda y feedback inline de éxito/error.
+- La contraseña opcional mantiene las mismas restricciones frontend que create: mínimo 8, máximo 255 cuando se informa.
+- Usuarios sin `users:write` no ven controles de creación/edición; el backend sigue siendo la autoridad para aceptar/rechazar el PATCH.
+
+**Archivos afectados:**
+- `frontend/src/features/users/api.ts` — agregado `UpdateUserError` y `updateUser` con PATCH.
+- `frontend/src/features/users/types.ts` — agregado `UpdateUserPayload`.
+- `frontend/src/features/users/hooks/useUpdateUserMutation.ts` — NUEVO hook de mutación e invalidación.
+- `frontend/src/features/users/pages/UsersPage.tsx` — acciones y editor inline por fila.
+- `frontend/src/shared/i18n/translations.ts` — copy EN/ES para edición.
+- `frontend/src/features/users/api.test.ts` — test de contrato PATCH.
+- `frontend/src/features/users/pages/UsersPage.test.tsx` — tests de visibilidad/interacción de edición.
+
+**Tests:** `npm test -- src/features/users/api.test.ts src/features/users/pages/UsersPage.test.tsx` — PASS (33 tests).
+
+**Commit:** No commit aún.
