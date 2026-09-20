@@ -48,7 +48,7 @@ export class UpdatePermissionsError extends Error {
   }
 }
 
-const fallbackMessageByStatus = (status: number, fallback = USERS_COPY.errors.createFallback): string => {
+const fallbackMessageByStatus = (status: number, fallback: string = USERS_COPY.errors.createFallback): string => {
   if (status === 401) {
     return USERS_COPY.errors.unauthenticated;
   }

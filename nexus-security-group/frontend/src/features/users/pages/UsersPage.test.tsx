@@ -88,7 +88,8 @@ describe('UsersPage', () => {
     renderUsersPage();
 
     await user.click(screen.getByRole('button', { name: 'Create user' }));
-    const submit = screen.getAllByRole('button', { name: 'Create user' }).at(-1)!;
+    const createButtons = screen.getAllByRole('button', { name: 'Create user' });
+    const submit = createButtons[createButtons.length - 1];
     expect(submit).toBeDisabled();
 
     await user.type(screen.getByLabelText('Username'), ' alice ');
@@ -137,7 +138,8 @@ describe('UsersPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create user' }));
     await user.type(screen.getByLabelText('Username'), 'alice');
     await user.type(screen.getByLabelText('Password'), 'secret-pw');
-    await user.click(screen.getAllByRole('button', { name: 'Create user' }).at(-1)!);
+    const createButtons = screen.getAllByRole('button', { name: 'Create user' });
+    await user.click(createButtons[createButtons.length - 1]);
 
     expect(await screen.findByRole('alert')).toHaveTextContent(detail);
     expect(screen.queryByText('User created')).not.toBeInTheDocument();
@@ -166,7 +168,8 @@ describe('UsersPage', () => {
     await user.click(screen.getByRole('button', { name: 'Create user' }));
     await user.type(screen.getByLabelText('Username'), 'alice');
     await user.type(screen.getByLabelText('Password'), 'short');
-    await user.click(screen.getAllByRole('button', { name: 'Create user' }).at(-1)!);
+    const createButtons = screen.getAllByRole('button', { name: 'Create user' });
+    await user.click(createButtons[createButtons.length - 1]);
 
     expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
