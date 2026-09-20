@@ -13,8 +13,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        464,
-        464
+        -176,
+        480
       ]
     },
     {
@@ -29,15 +29,15 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        464,
-        784
+        -176,
+        816
       ]
     },
     {
       "parameters": {
         "content": "## 🧠 Stage 2: Analysis\n- Sentiment via ensemble API (VADER + TextBlob)\n- Threat classification by keyword heuristics",
-        "height": 250,
-        "width": 500,
+        "height": 458,
+        "width": 1124,
         "color": 5
       },
       "id": "e2b54eb6-25fb-4a3b-9e4f-2e9350115e1e",
@@ -45,15 +45,15 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1568,
-        992
+        944,
+        800
       ]
     },
     {
       "parameters": {
         "content": "## 🗄️ Stage 3: Storage\n- INSERT social_mentions (ON CONFLICT upsert)\n- INSERT sentiment_analysis\n- INSERT threat_detections\n- Enrich pipeline: Prep → Insert → Enrich (carry _original)",
-        "height": 250,
-        "width": 1450,
+        "height": 458,
+        "width": 1194,
         "color": 3
       },
       "id": "b432b490-3174-44a1-aae2-c7dcf3ea2bf4",
@@ -61,8 +61,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1920,
-        992
+        2112,
+        800
       ]
     },
     {
@@ -77,14 +77,14 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        3312,
-        752
+        3472,
+        688
       ]
     },
     {
       "parameters": {
         "content": "## 📝 Stage 5: Logging\n- Aggregate pipeline counters\n- Log execution to DB (success/failure)",
-        "height": 250,
+        "height": 282,
         "width": 500
       },
       "id": "e79814e4-1dec-4a19-ba31-965e6d006515",
@@ -92,8 +92,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        4048,
-        1072
+        3568,
+        1552
       ]
     },
     {
@@ -112,8 +112,8 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
       "position": [
-        560,
-        1088
+        -96,
+        1056
       ]
     },
     {
@@ -127,8 +127,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        560,
-        1344
+        -96,
+        1312
       ],
       "webhookId": "osint-trigger"
     },
@@ -153,8 +153,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        960,
-        880
+        304,
+        848
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -187,8 +187,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        960,
-        1088
+        304,
+        1056
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -216,8 +216,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        960,
-        1280
+        304,
+        1248
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -233,8 +233,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1168,
-        880
+        512,
+        848
       ]
     },
     {
@@ -246,21 +246,21 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1168,
-        1088
+        512,
+        1056
       ]
     },
     {
       "parameters": {
-        "functionCode": "try {\n  const response = $input.item.json;\n  if (!response) return [];\n  const items = response.items || [];\n  if (items.length === 0) return [];\n  return items.map(issue => ({\n    json: {\n      platform: 'github',\n      external_id: String(issue.id || issue.url || 'unknown'),\n      text_content: issue.body || issue.title || '',\n      language: 'en',\n      created_at: issue.created_at || new Date().toISOString(),\n      author_username: issue.user?.login || 'github-user',\n      author_id: String(issue.user?.id || 'unknown'),\n      author_verified: true,\n      author_followers_count: issue.user?.followers || 0,\n      author_description: issue.user?.bio || null,\n      likes_count: issue.reactions?.['+1'] || 0,\n      shares_count: 0,\n      replies_count: issue.comments || 0,\n      views_count: 0,\n      urls: issue.html_url ? [issue.html_url] : [],\n      hashtags: [], mentions: [],\n      has_media: !!issue.body?.includes('!['),\n      is_reply: false, is_quote: false,\n      reply_to_id: null,\n      conversation_id: issue.repository_url || null,\n      raw_data: issue\n    }\n  }));\n} catch (error) {\n  console.error('Parse GitHub ERROR:', error.message);\n  return [];\n}"
+        "functionCode": "try {\n  const response = $input.item.json;\n  if (!response) return [];\n  const items = response.items || [];\n  if (items.length === 0) return [];\n\n  const truncateText = (value, max = 4000) => {\n    const text = String(value || '').replace(/\u0000/g, '').trim();\n    return text.length > max ? text.slice(0, max) + '…' : text;\n  };\n\n  const compactUser = (user) => user ? {\n    id: user.id,\n    login: user.login,\n    type: user.type,\n    html_url: user.html_url\n  } : null;\n\n  const compactIssue = (issue) => ({\n    id: issue.id,\n    number: issue.number,\n    url: issue.url,\n    html_url: issue.html_url,\n    repository_url: issue.repository_url,\n    title: truncateText(issue.title, 500),\n    body_preview: truncateText(issue.body, 1200),\n    state: issue.state,\n    state_reason: issue.state_reason,\n    comments: issue.comments,\n    created_at: issue.created_at,\n    updated_at: issue.updated_at,\n    closed_at: issue.closed_at,\n    user: compactUser(issue.user),\n    reactions: issue.reactions ? {\n      total_count: issue.reactions.total_count,\n      '+1': issue.reactions['+1'],\n      '-1': issue.reactions['-1'],\n      laugh: issue.reactions.laugh,\n      hooray: issue.reactions.hooray,\n      confused: issue.reactions.confused,\n      heart: issue.reactions.heart,\n      rocket: issue.reactions.rocket,\n      eyes: issue.reactions.eyes\n    } : null,\n    score: issue.score\n  });\n\n  return items.map(issue => {\n    const combinedText = [issue.title, issue.body].filter(Boolean).join('\n\n');\n    return {\n      json: {\n        platform: 'github',\n        external_id: String(issue.id || issue.url || 'unknown'),\n        text_content: truncateText(combinedText || issue.title || '', 4000),\n        language: 'en',\n        created_at: issue.created_at || new Date().toISOString(),\n        author_username: issue.user?.login || 'github-user',\n        author_id: String(issue.user?.id || 'unknown'),\n        author_verified: true,\n        author_followers_count: issue.user?.followers || 0,\n        author_description: issue.user?.bio ? truncateText(issue.user.bio, 500) : null,\n        likes_count: issue.reactions?.['+1'] || 0,\n        shares_count: 0,\n        replies_count: issue.comments || 0,\n        views_count: 0,\n        urls: issue.html_url ? [issue.html_url] : [],\n        hashtags: [], mentions: [],\n        has_media: !!issue.body?.includes('!['),\n        is_reply: false, is_quote: false,\n        reply_to_id: null,\n        conversation_id: issue.repository_url || null,\n        raw_data: compactIssue(issue)\n      }\n    };\n  });\n} catch (error) {\n  console.error('Parse GitHub ERROR:', error.message);\n  return [];\n}"
       },
       "id": "310a2da4-dd2d-443b-b2ee-c4231dd52715",
       "name": "Parse GitHub Issues",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1168,
-        1280
+        512,
+        1248
       ]
     },
     {
@@ -272,8 +272,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1456,
-        1376
+        752,
+        1056
       ]
     },
     {
@@ -285,8 +285,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1408,
-        640
+        976,
+        1104
       ]
     },
     {
@@ -300,8 +300,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.2,
       "position": [
-        1488,
-        864
+        1184,
+        1104
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -321,8 +321,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1648,
-        720
+        1392,
+        1104
       ]
     },
     {
@@ -356,8 +356,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1840,
-        768
+        1584,
+        1104
       ],
       "retryOnFail": true,
       "maxTries": 3,
@@ -373,21 +373,21 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1760,
-        1088
+        1776,
+        1104
       ]
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Mention Insert\n// Builds deterministic SQL for social_mentions INSERT.\n// Avoids Postgres queryReplacement for external OSINT text,\n// arrays and JSON metadata by validating and escaping here.\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst validPlatforms = ['twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'hackernews', 'other'];\n\n// SQL string escaping: remove null bytes and double single quotes.\n// Values are inserted as single-quoted SQL literals below.\nconst cleanString = (val, fallback = '') => String(val ?? fallback).replace(/\\0/g, '');\nconst sqlString = (val, fallback = '') => cleanString(val, fallback).replace(/'/g, \"''\");\nconst sqlText = (val, fallback = null, maxLen = null) => {\n  if (val == null && fallback == null) return 'NULL';\n  const raw = cleanString(val, fallback ?? '');\n  const bounded = maxLen ? raw.slice(0, maxLen) : raw;\n  return \"'\" + sqlString(bounded) + \"'\";\n};\nconst sqlBool = (val) => val === true ? 'TRUE' : 'FALSE';\nconst sqlNonNegativeInt = (val) => {\n  const n = Number(val);\n  return Number.isFinite(n) && n > 0 ? String(Math.floor(n)) : '0';\n};\nconst sqlTimestamp = (val) => {\n  const date = new Date(val || Date.now());\n  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;\n  return \"'\" + safeDate.toISOString() + \"'\";\n};\nconst sqlTextArray = (val, maxLen = null) => {\n  if (!Array.isArray(val) || val.length === 0) return 'NULL';\n  const values = val\n    .filter(v => v != null)\n    .map(v => {\n      const clean = cleanString(v);\n      return maxLen ? clean.slice(0, maxLen) : clean;\n    })\n    .filter(v => v.length > 0);\n  return values.length > 0\n    ? 'ARRAY[' + values.map(v => \"'\" + sqlString(v) + \"'\").join(', ') + ']'\n    : 'NULL';\n};\nconst sqlJsonb = (val) => {\n  let json = '{}';\n  try {\n    json = JSON.stringify(val && typeof val === 'object' ? val : {});\n  } catch (e) {\n    console.warn('Prep Mention Insert: raw_data was not JSON-serializable, storing empty object');\n  }\n  return \"'\" + sqlString(json) + \"'::jsonb\";\n};\n\nfor (const item of items) {\n  const d = item.json;\n\n  const platformRaw = String(d.platform || 'other').trim().toLowerCase();\n  const platform = validPlatforms.includes(platformRaw) ? platformRaw : 'other';\n  const externalId = cleanString(d.external_id || 'unknown').slice(0, 255) || 'unknown';\n  const language = cleanString(d.language || 'en').slice(0, 10) || 'en';\n\n  const createdAtDate = new Date(d.created_at || Date.now());\n  const safeCreatedAt = Number.isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate;\n\n  const query = [\n    'INSERT INTO social_mentions (',\n    '  platform, external_id, text_content, language, created_at,',\n    '  author_username, author_id, author_verified, author_followers_count, author_description,',\n    '  likes_count, shares_count, replies_count, views_count,',\n    '  urls, hashtags, mentions,',\n    '  has_media, is_reply, is_quote, reply_to_id, conversation_id,',\n    '  raw_data, processing_status',\n    ') VALUES (',\n    '  ' + sqlText(platform) + ',',\n    '  ' + sqlText(externalId) + ',',\n    '  ' + sqlText(d.text_content || '') + ',',\n    '  ' + sqlText(language) + ',',\n    '  ' + sqlTimestamp(d.created_at) + ',',\n    '  ' + sqlText(d.author_username || 'unknown', 'unknown', 255) + ',',\n    '  ' + sqlText(d.author_id || 'unknown', 'unknown', 255) + ',',\n    '  ' + sqlBool(d.author_verified) + ',',\n    '  ' + sqlNonNegativeInt(d.author_followers_count) + ',',\n    '  ' + sqlText(d.author_description, null) + ',',\n    '  ' + sqlNonNegativeInt(d.likes_count) + ',',\n    '  ' + sqlNonNegativeInt(d.shares_count) + ',',\n    '  ' + sqlNonNegativeInt(d.replies_count) + ',',\n    '  ' + sqlNonNegativeInt(d.views_count) + ',',\n    '  ' + sqlTextArray(d.urls) + ',',\n    '  ' + sqlTextArray(d.hashtags, 100) + ',',\n    '  ' + sqlTextArray(d.mentions, 100) + ',',\n    '  ' + sqlBool(d.has_media) + ',',\n    '  ' + sqlBool(d.is_reply) + ',',\n    '  ' + sqlBool(d.is_quote) + ',',\n    '  ' + sqlText(d.reply_to_id, null, 255) + ',',\n    '  ' + sqlText(d.conversation_id, null, 255) + ',',\n    '  ' + sqlJsonb(d.raw_data) + ',',\n    \"  'processed'\",\n    ')',\n    'ON CONFLICT (platform, external_id) DO UPDATE SET',\n    '  likes_count = EXCLUDED.likes_count,',\n    '  shares_count = EXCLUDED.shares_count,',\n    '  replies_count = EXCLUDED.replies_count,',\n    '  views_count = EXCLUDED.views_count,',\n    \"  processing_status = 'processed',\",\n    '  last_updated = NOW()',\n    'RETURNING mention_id;'\n  ].join(String.fromCharCode(10));\n\n  result.push({\n    json: {\n      query,\n\n      // Carry forward sanitized helpers for observability/backwards compatibility\n      p_platform: platform,\n      p_external_id: externalId,\n      p_text_content: d.text_content || '',\n      p_language: language,\n      p_created_at: safeCreatedAt.toISOString(),\n      p_author_username: d.author_username || 'unknown',\n      p_author_id: d.author_id || 'unknown',\n      p_author_verified: d.author_verified === true,\n      p_author_followers_count: Number(sqlNonNegativeInt(d.author_followers_count)),\n      p_author_description: d.author_description || null,\n      p_likes_count: Number(sqlNonNegativeInt(d.likes_count)),\n      p_shares_count: Number(sqlNonNegativeInt(d.shares_count)),\n      p_replies_count: Number(sqlNonNegativeInt(d.replies_count)),\n      p_views_count: Number(sqlNonNegativeInt(d.views_count)),\n      p_urls_literal: sqlTextArray(d.urls),\n      p_hashtags_literal: sqlTextArray(d.hashtags, 100),\n      p_mentions_literal: sqlTextArray(d.mentions, 100),\n      p_has_media: d.has_media === true,\n      p_is_reply: d.is_reply === true,\n      p_is_quote: d.is_quote === true,\n      p_reply_to_id: d.reply_to_id || null,\n      p_conversation_id: d.conversation_id || null,\n      p_raw_data: d.raw_data || {},\n\n      // Carry forward full original data for downstream nodes\n      _original: d\n    }\n  });\n}\n\nreturn result;"
+        "functionCode": "// =============================================\n// Prep Mention Insert\n// Builds deterministic SQL for social_mentions INSERT.\n// Avoids Postgres queryReplacement for external OSINT text,\n// arrays and JSON metadata by validating and escaping here.\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst validPlatforms = ['twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'hackernews', 'other'];\n\n// SQL string escaping: remove null bytes and double single quotes.\n// Values are inserted as single-quoted SQL literals below.\nconst cleanString = (val, fallback = '') => String(val ?? fallback).replace(/\\0/g, '');\nconst sqlString = (val, fallback = '') => cleanString(val, fallback).replace(/'/g, \"''\");\nconst sqlText = (val, fallback = null, maxLen = null) => {\n  if (val == null && fallback == null) return 'NULL';\n  const raw = cleanString(val, fallback ?? '');\n  const bounded = maxLen ? raw.slice(0, maxLen) : raw;\n  return \"'\" + sqlString(bounded) + \"'\";\n};\nconst sqlBool = (val) => val === true ? 'TRUE' : 'FALSE';\nconst sqlNonNegativeInt = (val) => {\n  const n = Number(val);\n  return Number.isFinite(n) && n > 0 ? String(Math.floor(n)) : '0';\n};\nconst sqlTimestamp = (val) => {\n  const date = new Date(val || Date.now());\n  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;\n  return \"'\" + safeDate.toISOString() + \"'\";\n};\nconst sqlTextArray = (val, maxLen = null) => {\n  if (!Array.isArray(val) || val.length === 0) return 'NULL';\n  const values = val\n    .filter(v => v != null)\n    .map(v => {\n      const clean = cleanString(v);\n      return maxLen ? clean.slice(0, maxLen) : clean;\n    })\n    .filter(v => v.length > 0);\n  return values.length > 0\n    ? 'ARRAY[' + values.map(v => \"'\" + sqlString(v) + \"'\").join(', ') + ']'\n    : 'NULL';\n};\nconst sqlJsonb = (val, maxLen = 8000) => {\n  let json = '{}';\n  try {\n    json = JSON.stringify(val && typeof val === 'object' ? val : {});\n  } catch (e) {\n    console.warn('Prep Mention Insert: raw_data was not JSON-serializable, storing empty object');\n  }\n  if (json.length > maxLen) {\n    json = JSON.stringify({\n      truncated: true,\n      preview: json.slice(0, Math.max(0, maxLen - 200))\n    });\n  }\n  return \"'\" + sqlString(json) + \"'::jsonb\";\n};\n\nfor (const item of items) {\n  const d = item.json;\n\n  const platformRaw = String(d.platform || 'other').trim().toLowerCase();\n  const platform = validPlatforms.includes(platformRaw) ? platformRaw : 'other';\n  const externalId = cleanString(d.external_id || 'unknown').slice(0, 255) || 'unknown';\n  const language = cleanString(d.language || 'en').slice(0, 10) || 'en';\n\n  const createdAtDate = new Date(d.created_at || Date.now());\n  const safeCreatedAt = Number.isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate;\n\n  const query = [\n    'INSERT INTO social_mentions (',\n    '  platform, external_id, text_content, language, created_at,',\n    '  author_username, author_id, author_verified, author_followers_count, author_description,',\n    '  likes_count, shares_count, replies_count, views_count,',\n    '  urls, hashtags, mentions,',\n    '  has_media, is_reply, is_quote, reply_to_id, conversation_id,',\n    '  raw_data, processing_status',\n    ') VALUES (',\n    '  ' + sqlText(platform) + ',',\n    '  ' + sqlText(externalId) + ',',\n    '  ' + sqlText(d.text_content || '', '', 4000) + ',',\n    '  ' + sqlText(language) + ',',\n    '  ' + sqlTimestamp(d.created_at) + ',',\n    '  ' + sqlText(d.author_username || 'unknown', 'unknown', 255) + ',',\n    '  ' + sqlText(d.author_id || 'unknown', 'unknown', 255) + ',',\n    '  ' + sqlBool(d.author_verified) + ',',\n    '  ' + sqlNonNegativeInt(d.author_followers_count) + ',',\n    '  ' + sqlText(d.author_description, null) + ',',\n    '  ' + sqlNonNegativeInt(d.likes_count) + ',',\n    '  ' + sqlNonNegativeInt(d.shares_count) + ',',\n    '  ' + sqlNonNegativeInt(d.replies_count) + ',',\n    '  ' + sqlNonNegativeInt(d.views_count) + ',',\n    '  ' + sqlTextArray(d.urls) + ',',\n    '  ' + sqlTextArray(d.hashtags, 100) + ',',\n    '  ' + sqlTextArray(d.mentions, 100) + ',',\n    '  ' + sqlBool(d.has_media) + ',',\n    '  ' + sqlBool(d.is_reply) + ',',\n    '  ' + sqlBool(d.is_quote) + ',',\n    '  ' + sqlText(d.reply_to_id, null, 255) + ',',\n    '  ' + sqlText(d.conversation_id, null, 255) + ',',\n    '  ' + sqlJsonb(d.raw_data, 8000) + ',',\n    \"  'processed'\",\n    ')',\n    'ON CONFLICT (platform, external_id) DO UPDATE SET',\n    '  likes_count = EXCLUDED.likes_count,',\n    '  shares_count = EXCLUDED.shares_count,',\n    '  replies_count = EXCLUDED.replies_count,',\n    '  views_count = EXCLUDED.views_count,',\n    \"  processing_status = 'processed',\",\n    '  last_updated = NOW()',\n    'RETURNING mention_id;'\n  ].join(String.fromCharCode(10));\n\n  result.push({\n    json: {\n      query,\n\n      // Carry forward sanitized helpers for observability/backwards compatibility\n      p_platform: platform,\n      p_external_id: externalId,\n      p_text_content: d.text_content || '',\n      p_language: language,\n      p_created_at: safeCreatedAt.toISOString(),\n      p_author_username: d.author_username || 'unknown',\n      p_author_id: d.author_id || 'unknown',\n      p_author_verified: d.author_verified === true,\n      p_author_followers_count: Number(sqlNonNegativeInt(d.author_followers_count)),\n      p_author_description: d.author_description || null,\n      p_likes_count: Number(sqlNonNegativeInt(d.likes_count)),\n      p_shares_count: Number(sqlNonNegativeInt(d.shares_count)),\n      p_replies_count: Number(sqlNonNegativeInt(d.replies_count)),\n      p_views_count: Number(sqlNonNegativeInt(d.views_count)),\n      p_urls_literal: sqlTextArray(d.urls),\n      p_hashtags_literal: sqlTextArray(d.hashtags, 100),\n      p_mentions_literal: sqlTextArray(d.mentions, 100),\n      p_has_media: d.has_media === true,\n      p_is_reply: d.is_reply === true,\n      p_is_quote: d.is_quote === true,\n      p_reply_to_id: d.reply_to_id || null,\n      p_conversation_id: d.conversation_id || null,\n      p_raw_data: d.raw_data || {},\n\n      // Carry forward full original data for downstream nodes\n      _original: d\n    }\n  });\n}\n\nreturn result;"
       },
       "id": "4facefcf-66ac-4837-991d-32edf22f7db2",
       "name": "Prep Mention Insert",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1968,
-        1088
+        1952,
+        1104
       ]
     },
     {
@@ -537,8 +537,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3360,
-        1008
+        3520,
+        944
       ]
     },
     {
@@ -550,8 +550,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3464,
-        896
+        3696,
+        832
       ]
     },
     {
@@ -563,8 +563,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3672,
-        896
+        3872,
+        832
       ]
     },
     {
@@ -587,14 +587,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        3760,
-        816
+        4064,
+        720
       ]
     },
     {
       "parameters": {
-        "fromEmail": "NSG Demo <your-gmail-address@gmail.com>",
-        "toEmail": "recipient@example.com",
+        "fromEmail": "NSG Demo <22.cruzhiro@gmail.com>",
+        "toEmail": "22.cruzhiro@gmail.com",
         "subject": "={{ $json.email_subject }}",
         "html": "={{ $json.email_html }}",
         "options": {}
@@ -604,8 +604,8 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        3808,
-        992
+        4080,
+        928
       ],
       "webhookId": "79e2e096-a580-4f4a-8333-9b6ba905154d",
       "credentials": {
@@ -617,15 +617,15 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Alert Insert\n// Builds deterministic SQL for alerts insert.\n// Avoid queryReplacement with external alert text.\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst sqlString = (val) => String(val ?? '')\n  .replace(/\u0000/g, '')\n  .replace(/'/g, \"''\");\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Validate required FK before building SQL.\n  const detectionId = Number(d.detection_id);\n  if (!Number.isInteger(detectionId) || detectionId <= 0) {\n    console.warn('Prep Alert Insert: skipping alert with invalid detection_id=' + d.detection_id);\n    continue;\n  }\n\n  // Validate alert_severity against DB constraint.\n  const validSeverities = ['info', 'warning', 'high', 'critical'];\n  const severity = validSeverities.includes(d.alert_severity) ? d.alert_severity : 'info';\n  const title = 'Amenaza ' + severity + ' detectada';\n  const message = d.alert_message || '';\n\n  const query = [\n    'INSERT INTO alerts (',\n    '  detection_id, alert_title, alert_message, alert_severity,',\n    '  channels_sent, slack_channel, sent_at, delivery_status',\n    ') VALUES (',\n    '  ' + detectionId + ',',\n    \"  '\" + sqlString(title) + \"',\",\n    \"  '\" + sqlString(message) + \"',\",\n    \"  '\" + severity + \"',\",\n    \"  ARRAY['slack', 'email'],\",\n    \"  '#security-alerts',\",\n    '  NOW(),',\n    \"  'sent'\",\n    ')',\n    'RETURNING alert_id;'\n  ].join(String.fromCharCode(10));\n\n  result.push({\n    json: {\n      p_detection_id: detectionId,\n      p_alert_title: title,\n      p_alert_message: message,\n      p_alert_severity: severity,\n      query,\n\n      // Carry forward for Log Execution\n      _original: d\n    }\n  });\n}\n\nreturn result;"
+        "functionCode": "// =============================================\n// Prep Alert Insert\n// Builds deterministic SQL for alerts insert.\n// Avoid queryReplacement with external alert text.\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst sqlString = (val) => String(val ?? '')\n  .replace(/\u0000/g, '')\n  .replace(/'/g, \"''\");\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Validate required FK before building SQL.\n  const detectionId = Number(d.detection_id);\n  if (!Number.isInteger(detectionId) || detectionId <= 0) {\n    console.warn('Prep Alert Insert: skipping alert with invalid detection_id=' + d.detection_id);\n    continue;\n  }\n\n  // Map detection criticality to alert severity.\n  // The IF node sends Enrich After Threat items directly to this node,\n  // so d.alert_severity is usually absent. Falling back to 'info'\n  // incorrectly logs high/critical detections as informational alerts.\n  const validSeverities = ['info', 'warning', 'high', 'critical'];\n  const detectedLevel = d.alert_severity || d.criticality_level || (d.threat || {}).criticality_level;\n  const severity = validSeverities.includes(detectedLevel) ? detectedLevel : 'warning';\n  const title = 'Amenaza ' + severity + ' detectada';\n  const message = d.alert_message || '';\n\n  const query = [\n    'INSERT INTO alerts (',\n    '  detection_id, alert_title, alert_message, alert_severity,',\n    '  channels_sent, slack_channel, sent_at, delivery_status',\n    ') VALUES (',\n    '  ' + detectionId + ',',\n    \"  '\" + sqlString(title) + \"',\",\n    \"  '\" + sqlString(message) + \"',\",\n    \"  '\" + severity + \"',\",\n    \"  ARRAY['slack', 'email'],\",\n    \"  '#security-alerts',\",\n    '  NOW(),',\n    \"  'sent'\",\n    ')',\n    'RETURNING alert_id;'\n  ].join(String.fromCharCode(10));\n\n  result.push({\n    json: {\n      p_detection_id: detectionId,\n      p_alert_title: title,\n      p_alert_message: message,\n      p_alert_severity: severity,\n      query,\n\n      // Carry forward for Log Execution\n      _original: d\n    }\n  });\n}\n\nreturn result;"
       },
       "id": "d19f115b-dc6b-4b2b-8e09-21cce1824765",
       "name": "Prep Alert Insert",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        3760,
-        1280
+        3920,
+        1184
       ]
     },
     {
@@ -639,8 +639,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.2,
       "position": [
-        3968,
-        1280
+        4128,
+        1184
       ],
       "credentials": {
         "postgres": {
@@ -658,8 +658,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        3504,
-        1248
+        3664,
+        1152
       ]
     },
     {
@@ -671,8 +671,8 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        4160,
-        1184
+        3680,
+        1664
       ]
     },
     {
@@ -688,8 +688,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.2,
       "position": [
-        4384,
-        1200
+        3904,
+        1664
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -1039,7 +1039,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "1dd7842d-67a0-4988-b9db-573f9f0f53ab",
+  "versionId": "c2b2ad65-673c-4a7d-b840-075b7121b041",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "bf7e1a196ef54928007db0016ea25ab4e38a98bbdd791cd2d035d278ad7fa4c1"
