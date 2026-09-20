@@ -39,6 +39,56 @@ describe('DashboardLayout navigation', () => {
     expect(screen.getByText('Keywords content')).toBeInTheDocument();
   });
 
+  it('groups permitted destinations under readable headings without turning headings into links', () => {
+    localStorage.setItem(
+      'nsg:auth:token',
+      makeToken([
+        'dashboard:read',
+        'metrics:read',
+        'mentions:read',
+        'threats:read',
+        'keywords:read',
+        'workflows:read',
+        'alerts:read',
+        'logs:read',
+        'users:read',
+        'permissions:read',
+      ]),
+    );
+
+    render(
+      <AuthProvider>
+        <LanguageProvider>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route path="/" element={<DashboardLayout />}>
+                <Route index element={<div>Dashboard content</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </LanguageProvider>
+      </AuthProvider>,
+    );
+
+    expect(screen.getByRole('heading', { name: /Overview/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /OSINT/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Operations/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Administration/i })).toBeInTheDocument();
+
+    expect(screen.queryByRole('link', { name: /Overview/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Operations/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Dashboard/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: /Analytics/i })).toHaveAttribute('href', '/analytics');
+    expect(screen.getByRole('link', { name: /Mentions/i })).toHaveAttribute('href', '/mentions');
+    expect(screen.getByRole('link', { name: /Threats/i })).toHaveAttribute('href', '/threats');
+    expect(screen.getByRole('link', { name: /Keywords/i })).toHaveAttribute('href', '/keywords');
+    expect(screen.getByRole('link', { name: /Automation/i })).toHaveAttribute('href', '/automation');
+    expect(screen.getByRole('link', { name: /Alerts/i })).toHaveAttribute('href', '/alerts');
+    expect(screen.getByRole('link', { name: /Logs/i })).toHaveAttribute('href', '/logs');
+    expect(screen.getByRole('link', { name: /Users/i })).toHaveAttribute('href', '/users');
+    expect(screen.getByRole('link', { name: /Settings/i })).toHaveAttribute('href', '/settings');
+  });
+
   it('hides destinations missing from JWT permissions', () => {
     localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
 
@@ -57,11 +107,15 @@ describe('DashboardLayout navigation', () => {
     );
 
     expect(screen.getByRole('link', { name: /Dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Overview/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Users/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Keywords/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Automation/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Alerts/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Logs/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /OSINT/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Operations/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Administration/i })).not.toBeInTheDocument();
   });
 
   it('shows the Automation destination only when workflows:read is present', () => {

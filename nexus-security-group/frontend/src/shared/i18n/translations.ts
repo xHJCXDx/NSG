@@ -3,6 +3,12 @@ import { useLanguage } from '../contexts/LanguageContext';
 export const translations = {
   en: {
     nav: {
+      groups: {
+        overview: 'Overview',
+        osint: 'OSINT',
+        operations: 'Operations',
+        administration: 'Administration',
+      },
       dashboard: 'Dashboard',
       mentions: 'Mentions',
       threats: 'Threats',
@@ -574,6 +580,12 @@ export const translations = {
   },
   es: {
     nav: {
+      groups: {
+        overview: 'Resumen',
+        osint: 'OSINT',
+        operations: 'Operaciones',
+        administration: 'Administración',
+      },
       dashboard: 'Panel',
       mentions: 'Menciones',
       threats: 'Amenazas',

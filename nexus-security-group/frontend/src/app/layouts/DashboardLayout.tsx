@@ -3,6 +3,18 @@ import { useAuth } from '../../features/auth';
 import { Activity, BellRing, KeyRound, LayoutDashboard, ListTree, LogOut, MessageSquare, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react';
 import { useTranslation } from '../../shared/i18n/translations';
 
+type NavItem = {
+  name: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  permission: [string, string];
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
 export function DashboardLayout() {
   const { hasPermission, logout } = useAuth();
   const navigate = useNavigate();
@@ -13,18 +25,45 @@ export function DashboardLayout() {
     navigate('/login');
   };
 
-  const navItems = [
-    { name: t.nav.dashboard, path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
-    { name: t.nav.mentions, path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
-    { name: t.nav.threats, path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
-    { name: t.nav.keywords, path: '/keywords', icon: KeyRound, permission: ['keywords', 'read'] },
-    { name: t.nav.automation, path: '/automation', icon: PlayCircle, permission: ['workflows', 'read'] },
-    { name: t.nav.alerts, path: '/alerts', icon: BellRing, permission: ['alerts', 'read'] },
-    { name: t.nav.logs, path: '/logs', icon: ListTree, permission: ['logs', 'read'] },
-    { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
-    { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
-    { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
-  ].filter((item) => hasPermission(item.permission[0], item.permission[1]));
+  const navGroupsConfig: NavGroup[] = [
+    {
+      label: t.nav.groups.overview,
+      items: [
+        { name: t.nav.dashboard, path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
+        { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.osint,
+      items: [
+        { name: t.nav.mentions, path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
+        { name: t.nav.threats, path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
+        { name: t.nav.keywords, path: '/keywords', icon: KeyRound, permission: ['keywords', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.operations,
+      items: [
+        { name: t.nav.automation, path: '/automation', icon: PlayCircle, permission: ['workflows', 'read'] },
+        { name: t.nav.alerts, path: '/alerts', icon: BellRing, permission: ['alerts', 'read'] },
+        { name: t.nav.logs, path: '/logs', icon: ListTree, permission: ['logs', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.administration,
+      items: [
+        { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
+        { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
+      ],
+    },
+  ];
+
+  const navGroups = navGroupsConfig
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(item.permission[0], item.permission[1])),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <div className="min-h-screen bg-surface-primary flex text-content-primary selection:bg-brand-500 selection:text-white">
@@ -43,31 +82,43 @@ export function DashboardLayout() {
           </div>
         </div>
 
-        <nav aria-label="Main navigation" className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.name}
-                to={item.path}
-                end={item.path === '/'}
-                className={({ isActive }) =>
-                  `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
-                    isActive
-                      ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
-                      : 'text-content-muted hover:bg-surface-hover hover:text-content-secondary'
-                  }`
-                }
+        <nav aria-label="Main navigation" className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+          {navGroups.map((group) => (
+            <section key={group.label} aria-labelledby={`nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`}>
+              <h3
+                id={`nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`}
+                className="px-4 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-content-muted/70"
               >
-                {({ isActive }) => (
-                  <>
-                    <Icon aria-hidden="true" className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
-                    <span className="font-medium">{item.name}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
+                {group.label}
+              </h3>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.path}
+                      end={item.path === '/'}
+                      className={({ isActive }) =>
+                        `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                          isActive
+                            ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
+                            : 'text-content-muted hover:bg-surface-hover hover:text-content-secondary'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon aria-hidden="true" className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
+                          <span className="font-medium">{item.name}</span>
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </nav>
 
         <div className="p-4 border-t border-edge-card">
