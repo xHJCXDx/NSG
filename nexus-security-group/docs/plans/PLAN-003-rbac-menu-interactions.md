@@ -47,7 +47,7 @@
 
 | # | Prioridad | Área | Descripción | Estado |
 |---|-----------|------|-------------|--------|
-| M01 | HIGH | Frontend | Automation / Workflows: ver estado y ejecutar OSINT scan | PENDING |
+| M01 | HIGH | Frontend | Automation / Workflows: ver estado y ejecutar OSINT scan | DONE |
 | M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | PENDING |
 | M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | PENDING |
 | M04 | MEDIUM | Frontend + posible Backend | Delete Users: borrado seguro de usuarios existentes | PENDING |
@@ -60,7 +60,7 @@
 
 **Prioridad:** HIGH  
 **Área:** Frontend  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Problema
 
@@ -135,8 +135,29 @@ No crear backend nuevo si ya existe un endpoint operativo.
 ### Commit sugerido
 
 ```txt
-feat(frontend): add automation workflow controls
+PENDING — orchestrator will commit after verification.
 ```
+
+### Implementación verificada
+
+- Ruta agregada: `/automation`, protegida por `workflows:read`.
+- Menú agregado: `Automation`, visible solo con `workflows:read`.
+- Panel operacional reutilizado: `frontend/src/features/automation/AutomationTriggers.tsx`.
+- Ejecución manual: botón `Run OSINT scan` / `Ejecutar escaneo OSINT` habilitado solo con `workflows:execute`; usuarios read-only ven nota clara y botón deshabilitado.
+- Backend usado: `POST /api/n8n/webhook/osint-trigger` vía `backend/routers/n8n.py`, protegido por `workflows:execute`.
+- Archivos afectados:
+  - `frontend/src/app/layouts/DashboardLayout.tsx`
+  - `frontend/src/app/router/AppRouter.tsx`
+  - `frontend/src/features/automation/AutomationPage.tsx`
+  - `frontend/src/features/automation/AutomationTriggers.test.tsx`
+  - `frontend/src/features/automation/index.ts`
+  - `frontend/src/features/dashboard/pages/DashboardPage.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.test.tsx`
+  - `frontend/src/app/router/AppRouter.test.tsx`
+  - `frontend/src/shared/i18n/translations.ts`
+- Verificación:
+  - `npm run typecheck` → PASS.
+  - `npm test -- src/features/automation/AutomationTriggers.test.tsx src/app/router/AppRouter.test.tsx src/app/layouts/DashboardLayout.test.tsx` → PASS, 3 files / 20 tests.
 
 ---
 
