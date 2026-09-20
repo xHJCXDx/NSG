@@ -3,19 +3,22 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getToken, removeToken } from '../../shared/storage/tokenStorage';
+import { LanguageProvider } from '../../shared/contexts/LanguageContext';
 import { AuthProvider } from './AuthContext';
 import { LoginView } from './LoginView';
 
 function renderLoginRoute() {
   return render(
-    <AuthProvider>
-      <MemoryRouter initialEntries={['/login']}>
-        <Routes>
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/" element={<div>Dashboard route</div>} />
-        </Routes>
-      </MemoryRouter>
-    </AuthProvider>,
+    <LanguageProvider>
+      <AuthProvider>
+        <MemoryRouter initialEntries={['/login']}>
+          <Routes>
+            <Route path="/login" element={<LoginView />} />
+            <Route path="/" element={<div>Dashboard route</div>} />
+          </Routes>
+        </MemoryRouter>
+      </AuthProvider>
+    </LanguageProvider>,
   );
 }
 
@@ -24,6 +27,16 @@ describe('LoginView', () => {
     cleanup();
     removeToken();
     vi.restoreAllMocks();
+  });
+
+  it('shows the NSG logo without the dashboard title and discourages direct logo dragging', () => {
+    renderLoginRoute();
+
+    const logo = screen.getByAltText('Nexus Security Group');
+
+    expect(logo).toBeInTheDocument();
+    expect(logo).toHaveAttribute('draggable', 'false');
+    expect(screen.queryByRole('heading', { name: 'NSG Dashboard' })).not.toBeInTheDocument();
   });
 
   it('submits credentials through auth API, persists the token via context, and navigates home', async () => {

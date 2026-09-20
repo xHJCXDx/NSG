@@ -53,9 +53,10 @@ export function LoginView() {
             <img
               src="/nsg-logo-full.png"
               alt="Nexus Security Group"
-              className="mb-6 h-auto w-full max-w-[300px] object-contain drop-shadow-[0_0_24px_rgba(168,85,247,0.22)]"
+              draggable={false}
+              onContextMenu={(event) => event.preventDefault()}
+              className="mb-6 h-auto w-full max-w-[300px] select-none object-contain drop-shadow-[0_0_24px_rgba(168,85,247,0.22)]"
             />
-            <h1 className="text-2xl font-bold text-content-heading tracking-tight">{t.auth.title}</h1>
             <p className="text-content-muted text-sm mt-2">{t.auth.subtitle}</p>
           </div>
 

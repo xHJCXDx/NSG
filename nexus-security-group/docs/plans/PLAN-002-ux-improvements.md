@@ -27,6 +27,7 @@
 | M12 | ✅ DONE | Frontend | Rediseño UX de la página de Users y permisos de roles | DONE |
 | M13 | ✅ DONE | Frontend | Edición de usuarios existentes: rol, estado y contraseña opcional | DONE |
 | M14 | ✅ DONE | Frontend | Keywords management UI para permisos read/write/delete | DONE |
+| M15 | ✅ DONE | Frontend | Ajuste de login branding y protección UI básica de logos | DONE |
 
 ---
 
@@ -345,6 +346,7 @@
 12. ✅ **M12** — Rediseño UX Users y permisos
 13. ✅ **M13** — Edición de usuarios existentes
 14. ✅ **M14** — Keywords management UI
+15. ✅ **M15** — Login branding y protección UI básica de logos
 
 ---
 
@@ -408,5 +410,36 @@
 - `frontend/src/app/router/AppRouter.test.tsx` y `frontend/src/app/layouts/DashboardLayout.test.tsx` — cobertura de ruta/nav.
 
 **Tests:** `npm test -- src/features/keywords/api.test.ts src/features/keywords/pages/KeywordsPage.test.tsx src/app/router/AppRouter.test.tsx src/app/layouts/DashboardLayout.test.tsx` — PASS (19 tests). `npm run typecheck` — PASS.
+
+**Commit:** No commit aún.
+
+---
+
+## M15 — Ajuste de login branding y protección UI básica de logos
+
+**Prioridad:** LOW
+**Area:** Frontend
+**Estado:** DONE
+
+**Que se hizo:**
+- Quitado el heading visible `NSG Dashboard` del login para evitar duplicación visual con el logo full de Nexus Security Group.
+- El login conserva el logo principal y el subtítulo de acceso.
+- Agregada protección UI básica a los logos del login y sidebar:
+  - `draggable={false}` para desalentar arrastrar la imagen.
+  - prevención de `contextmenu` sobre la imagen.
+  - clase `select-none` para evitar selección accidental.
+- Actualizado el test de login para verificar que el logo sigue visible, que el título redundante no aparece y que la imagen no es draggable.
+- Actualizado el wrapper del test de login para usar `LanguageProvider`, consistente con la app real.
+
+**Limitación importante:**
+- Esto NO es protección anti-descarga real. Los logos siguen siendo assets públicos y una persona técnica puede verlos desde Network/devtools. La medida solo reduce interacción casual de arrastrar/click derecho/selección en la UI.
+
+**Archivos afectados:**
+- `frontend/src/features/auth/LoginView.tsx` — removido heading visible y protegida imagen del logo full.
+- `frontend/src/app/layouts/DashboardLayout.tsx` — protegida imagen del símbolo NSG en sidebar.
+- `frontend/src/features/auth/LoginView.test.tsx` — cobertura de branding login y provider real de idioma.
+- `docs/plans/PLAN-002-ux-improvements.md` — documentación de M15.
+
+**Tests:** `npm run typecheck` — PASS. `npm test -- src/features/auth/LoginView.test.tsx src/app/layouts/DashboardLayout.test.tsx` — PASS (12 tests).
 
 **Commit:** No commit aún.

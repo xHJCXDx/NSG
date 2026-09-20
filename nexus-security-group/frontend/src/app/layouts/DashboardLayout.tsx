@@ -74,7 +74,9 @@ export function DashboardLayout() {
             src="/nsg-symbol.png"
             alt=""
             aria-hidden="true"
-            className="h-10 w-10 rounded-xl object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.28)]"
+            draggable={false}
+            onContextMenu={(event) => event.preventDefault()}
+            className="h-10 w-10 select-none rounded-xl object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.28)]"
           />
           <div>
             <h2 className="font-bold text-content-heading tracking-tight leading-tight">NSG</h2>
