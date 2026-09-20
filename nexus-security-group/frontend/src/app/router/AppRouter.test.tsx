@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../features/auth';
+import { LanguageProvider } from '../../shared/contexts/LanguageContext';
 import { AppRouter } from './AppRouter';
 
 vi.mock('../layouts/DashboardLayout', async () => {
@@ -27,6 +28,10 @@ vi.mock('../../features/threats', () => ({
   ThreatsPage: () => <div>Threats page</div>,
 }));
 
+vi.mock('../../features/keywords', () => ({
+  KeywordsPage: () => <div>Keywords page</div>,
+}));
+
 vi.mock('../../features/users', () => ({
   UsersPage: () => <div>Users page</div>,
 }));
@@ -35,6 +40,14 @@ const encodePayload = (payload: unknown) =>
   btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
 const makeToken = (permissions: string[]) => `header.${encodePayload({ permissions })}.signature`;
+
+const renderRouter = () => render(
+  <AuthProvider>
+    <LanguageProvider>
+      <AppRouter />
+    </LanguageProvider>
+  </AuthProvider>,
+);
 
 describe('AppRouter', () => {
   afterEach(() => {
@@ -47,11 +60,7 @@ describe('AppRouter', () => {
     localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/');
 
-    render(
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>,
-    );
+    renderRouter();
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
     expect(await screen.findByText('Dashboard page')).toBeInTheDocument();
@@ -61,11 +70,7 @@ describe('AppRouter', () => {
     localStorage.setItem('nsg:auth:token', makeToken(['mentions:read']));
     window.history.pushState({}, '', '/mentions');
 
-    render(
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>,
-    );
+    renderRouter();
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
     expect(await screen.findByText('Mentions page')).toBeInTheDocument();
@@ -75,24 +80,26 @@ describe('AppRouter', () => {
     localStorage.setItem('nsg:auth:token', makeToken(['users:read']));
     window.history.pushState({}, '', '/users');
 
-    render(
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>,
-    );
+    renderRouter();
 
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
     expect(await screen.findByText('Users page')).toBeInTheDocument();
   });
 
+  it('keeps the keywords route inside the protected dashboard layout', async () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['keywords:read']));
+    window.history.pushState({}, '', '/keywords');
+
+    renderRouter();
+
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(await screen.findByText('Keywords page')).toBeInTheDocument();
+  });
+
   it('redirects unauthenticated users away from the users route', () => {
     window.history.pushState({}, '', '/users');
 
-    render(
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>,
-    );
+    renderRouter();
 
     expect(screen.queryByTestId('dashboard-layout')).not.toBeInTheDocument();
     expect(screen.queryByText('Users page')).not.toBeInTheDocument();
@@ -102,13 +109,19 @@ describe('AppRouter', () => {
     localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/users');
 
-    render(
-      <AuthProvider>
-        <AppRouter />
-      </AuthProvider>,
-    );
+    renderRouter();
 
     expect(screen.getByRole('alert')).toHaveTextContent('users:read');
     expect(screen.queryByText('Users page')).not.toBeInTheDocument();
+  });
+
+  it('blocks authenticated users from keywords when keywords:read is missing', () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
+    window.history.pushState({}, '', '/keywords');
+
+    renderRouter();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('keywords:read');
+    expect(screen.queryByText('Keywords page')).not.toBeInTheDocument();
   });
 });

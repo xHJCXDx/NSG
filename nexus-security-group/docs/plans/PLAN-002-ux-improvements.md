@@ -26,6 +26,7 @@
 | M11 | ✅ DONE | Frontend | Reemplazar tooltips nativos por texto expandible en ThreatCard | DONE |
 | M12 | ✅ DONE | Frontend | Rediseño UX de la página de Users y permisos de roles | DONE |
 | M13 | ✅ DONE | Frontend | Edición de usuarios existentes: rol, estado y contraseña opcional | DONE |
+| M14 | ✅ DONE | Frontend | Keywords management UI para permisos read/write/delete | DONE |
 
 ---
 
@@ -343,6 +344,7 @@
 11. ✅ **M11** — Tooltips a expandible en ThreatCard
 12. ✅ **M12** — Rediseño UX Users y permisos
 13. ✅ **M13** — Edición de usuarios existentes
+14. ✅ **M14** — Keywords management UI
 
 ---
 
@@ -370,5 +372,41 @@
 - `frontend/src/features/users/pages/UsersPage.test.tsx` — tests de visibilidad/interacción de edición.
 
 **Tests:** `npm test -- src/features/users/api.test.ts src/features/users/pages/UsersPage.test.tsx` — PASS (33 tests).
+
+**Commit:** No commit aún.
+
+---
+
+## M14 — Keywords management UI para permisos read/write/delete
+
+**Prioridad:** MEDIUM
+**Area:** Frontend
+**Estado:** DONE
+
+**Que se hizo:**
+- Agregado feature frontend `keywords` con tipos, contrato, API functions, React Query hooks y página lazy `/keywords`.
+- La ruta `/keywords` queda protegida por `keywords:read` y el sidebar muestra la opción solo con ese permiso.
+- La página lista `keyword_text`, categoría, prioridad (`keyword_weight`), estado activo, `match_count` y `last_match_at`.
+- Con `keywords:write` se muestran creación, edición inline y toggle activo/inactivo; sin write se ocultan esos controles y se muestra aviso de solo lectura.
+- Con `keywords:delete` se muestra borrado con confirmación segura inline; sin delete se oculta.
+- Validación mínima frontend: texto requerido y prioridad entera entre 1 y 100. El backend sigue siendo autoridad y se exponen errores retornados por API.
+- Agregadas traducciones EN/ES para navegación y pantalla de Keywords.
+
+**Backend contract usado:**
+- `GET /api/keywords` → requiere `keywords:read` y devuelve `KeywordResponse[]`.
+- `POST /api/keywords` → requiere `keywords:write`, payload compatible con `KeywordCreate`.
+- `PATCH /api/keywords/{keyword_id}` → requiere `keywords:write`, payload parcial compatible con `KeywordUpdate`.
+- `DELETE /api/keywords/{keyword_id}` → requiere `keywords:delete`.
+
+**Archivos afectados:**
+- `frontend/src/features/keywords/` — NUEVO feature completo.
+- `frontend/src/app/router/AppRouter.tsx` — ruta lazy `/keywords` protegida por `keywords:read`.
+- `frontend/src/app/layouts/DashboardLayout.tsx` — ítem de navegación con `KeyRound` visible con `keywords:read`.
+- `frontend/src/shared/i18n/translations.ts` — strings EN/ES de Keywords y nav.
+- `frontend/src/features/keywords/api.test.ts` — tests de contrato API.
+- `frontend/src/features/keywords/pages/KeywordsPage.test.tsx` — tests de permisos/interacciones.
+- `frontend/src/app/router/AppRouter.test.tsx` y `frontend/src/app/layouts/DashboardLayout.test.tsx` — cobertura de ruta/nav.
+
+**Tests:** `npm test -- src/features/keywords/api.test.ts src/features/keywords/pages/KeywordsPage.test.tsx src/app/router/AppRouter.test.tsx src/app/layouts/DashboardLayout.test.tsx` — PASS (19 tests). `npm run typecheck` — PASS.
 
 **Commit:** No commit aún.
