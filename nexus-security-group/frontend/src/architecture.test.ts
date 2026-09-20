@@ -35,7 +35,7 @@ const getImportSpecifiers = (filePath: string): string[] => {
 const referencesFeaturePath = (specifier: string, featurePath: string): boolean =>
   specifier === featurePath || specifier.includes(`/${featurePath}`);
 
-const auditedFeatureNames = ['alerts', 'automation', 'dashboard', 'keywords', 'mentions', 'metrics', 'settings', 'threats', 'users'];
+const auditedFeatureNames = ['alerts', 'automation', 'dashboard', 'keywords', 'logs', 'mentions', 'metrics', 'settings', 'threats', 'users'];
 
 describe('frontend architecture boundaries', () => {
   it('allows only implemented domain folders and keeps future domains unmaterialized', () => {

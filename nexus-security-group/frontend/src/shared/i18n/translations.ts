@@ -9,6 +9,7 @@ export const translations = {
       keywords: 'Keywords',
       automation: 'Automation',
       alerts: 'Alerts',
+      logs: 'Logs',
       users: 'Users',
       analytics: 'Analytics',
       settings: 'Settings',
@@ -310,6 +311,103 @@ export const translations = {
         acknowledgeFallback: 'Alert could not be acknowledged. Please try again.',
       },
     },
+    logs: {
+      eyebrow: 'Operations audit',
+      title: 'Logs & Activity',
+      description: 'Read-only operational traceability from backend execution logs and user activity endpoints.',
+      tabs: {
+        ariaLabel: 'Logs views',
+        executions: 'Executions',
+        activity: 'User Activity',
+      },
+      executions: {
+        title: 'Execution logs',
+        description: 'Pipeline execution records returned by /api/logs with backend-supported filters only.',
+        loading: 'Loading execution logs...',
+        filters: {
+          status: 'Status',
+          allStatuses: 'All statuses',
+          workflowName: 'Workflow name',
+          workflowPlaceholder: 'Exact workflow name',
+        },
+        status: {
+          success: 'Success',
+          partial_success: 'Partial success',
+          error: 'Error',
+          warning: 'Warning',
+          timeout: 'Timeout',
+        },
+        counters: {
+          mentionsCollected: 'Mentions collected',
+          mentionsProcessed: 'Mentions processed',
+          detections: 'Detections',
+          alerts: 'Alerts',
+        },
+        timestamps: {
+          started: 'Started',
+          completed: 'Completed',
+        },
+        table: {
+          ariaLabel: 'Execution logs',
+          columns: {
+            workflow: 'Workflow',
+            status: 'Status',
+            counters: 'Counters',
+            timestamps: 'Timestamps',
+            duration: 'Duration',
+          },
+        },
+        empty: {
+          title: 'No execution logs returned',
+          description: 'Try adjusting the status or workflow filters.',
+        },
+        pagination: {
+          previous: 'Previous',
+          next: 'Next',
+          refreshing: 'Refreshing',
+          window: (from: number, to: number) => `Showing ${from}-${to}`,
+        },
+        errors: {
+          fallback: 'Execution logs could not be loaded.',
+        },
+      },
+      activity: {
+        title: 'User activity',
+        description: 'Recent user activity returned by /api/activity. Sensitive fields are intentionally hidden by default.',
+        loading: 'Loading user activity...',
+        refreshing: 'Refreshing',
+        filters: {
+          username: 'Username',
+          usernamePlaceholder: 'Exact username',
+          activityType: 'Activity type',
+          typePlaceholder: 'Exact activity type',
+          limit: 'Limit',
+        },
+        table: {
+          ariaLabel: 'User activity',
+          columns: {
+            user: 'User',
+            type: 'Type',
+            description: 'Description',
+            related: 'Related IDs',
+            timestamp: 'Timestamp',
+          },
+        },
+        related: {
+          mention: 'Mention',
+          detection: 'Detection',
+          alert: 'Alert',
+        },
+        empty: {
+          title: 'No user activity returned',
+          description: 'Try adjusting username or activity type filters.',
+        },
+        resultCount: (count: number) => `${count} activity rows returned. Pagination is not shown because the backend does not support offset for this endpoint.`,
+        errors: {
+          fallback: 'User activity could not be loaded.',
+        },
+      },
+    },
     users: {
       eyebrow: 'Admin operations',
       title: 'Users',
@@ -470,6 +568,7 @@ export const translations = {
       keywords: 'Palabras clave',
       automation: 'Automatización',
       alerts: 'Alertas',
+      logs: 'Logs',
       users: 'Usuarios',
       analytics: 'Analítica',
       settings: 'Configuración',
@@ -769,6 +868,103 @@ export const translations = {
       errors: {
         listFallback: 'No se pudieron cargar las alertas.',
         acknowledgeFallback: 'No se pudo reconocer la alerta. Intentá de nuevo.',
+      },
+    },
+    logs: {
+      eyebrow: 'Auditoría operacional',
+      title: 'Logs y actividad',
+      description: 'Trazabilidad operacional de solo lectura desde los endpoints backend de ejecuciones y actividad de usuario.',
+      tabs: {
+        ariaLabel: 'Vistas de logs',
+        executions: 'Ejecuciones',
+        activity: 'Actividad de usuario',
+      },
+      executions: {
+        title: 'Logs de ejecución',
+        description: 'Registros de ejecución del pipeline retornados por /api/logs con filtros soportados por backend solamente.',
+        loading: 'Cargando logs de ejecución...',
+        filters: {
+          status: 'Estado',
+          allStatuses: 'Todos los estados',
+          workflowName: 'Nombre de workflow',
+          workflowPlaceholder: 'Nombre exacto del workflow',
+        },
+        status: {
+          success: 'Exitosa',
+          partial_success: 'Éxito parcial',
+          error: 'Error',
+          warning: 'Advertencia',
+          timeout: 'Timeout',
+        },
+        counters: {
+          mentionsCollected: 'Menciones recolectadas',
+          mentionsProcessed: 'Menciones procesadas',
+          detections: 'Detecciones',
+          alerts: 'Alertas',
+        },
+        timestamps: {
+          started: 'Inicio',
+          completed: 'Fin',
+        },
+        table: {
+          ariaLabel: 'Logs de ejecución',
+          columns: {
+            workflow: 'Workflow',
+            status: 'Estado',
+            counters: 'Contadores',
+            timestamps: 'Timestamps',
+            duration: 'Duración',
+          },
+        },
+        empty: {
+          title: 'No se retornaron logs de ejecución',
+          description: 'Probá ajustando los filtros de estado o workflow.',
+        },
+        pagination: {
+          previous: 'Anterior',
+          next: 'Siguiente',
+          refreshing: 'Actualizando',
+          window: (from: number, to: number) => `Mostrando ${from}-${to}`,
+        },
+        errors: {
+          fallback: 'No se pudieron cargar los logs de ejecución.',
+        },
+      },
+      activity: {
+        title: 'Actividad de usuario',
+        description: 'Actividad reciente de usuarios retornada por /api/activity. Los campos sensibles se ocultan intencionalmente por defecto.',
+        loading: 'Cargando actividad de usuario...',
+        refreshing: 'Actualizando',
+        filters: {
+          username: 'Usuario',
+          usernamePlaceholder: 'Usuario exacto',
+          activityType: 'Tipo de actividad',
+          typePlaceholder: 'Tipo exacto de actividad',
+          limit: 'Límite',
+        },
+        table: {
+          ariaLabel: 'Actividad de usuario',
+          columns: {
+            user: 'Usuario',
+            type: 'Tipo',
+            description: 'Descripción',
+            related: 'IDs relacionados',
+            timestamp: 'Timestamp',
+          },
+        },
+        related: {
+          mention: 'Mención',
+          detection: 'Detección',
+          alert: 'Alerta',
+        },
+        empty: {
+          title: 'No se retornó actividad de usuario',
+          description: 'Probá ajustando los filtros de usuario o tipo de actividad.',
+        },
+        resultCount: (count: number) => `${count} filas de actividad retornadas. No se muestra paginación porque el backend no soporta offset en este endpoint.`,
+        errors: {
+          fallback: 'No se pudo cargar la actividad de usuario.',
+        },
       },
     },
     users: {

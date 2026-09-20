@@ -40,6 +40,10 @@ vi.mock('../../features/alerts', () => ({
   AlertsPage: () => <div>Alerts page</div>,
 }));
 
+vi.mock('../../features/logs', () => ({
+  LogsPage: () => <div>Logs page</div>,
+}));
+
 vi.mock('../../features/users', () => ({
   UsersPage: () => <div>Users page</div>,
 }));
@@ -124,6 +128,16 @@ describe('AppRouter', () => {
     expect(await screen.findByText('Alerts page')).toBeInTheDocument();
   });
 
+  it('keeps the logs route inside the protected dashboard layout', async () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['logs:read']));
+    window.history.pushState({}, '', '/logs');
+
+    renderRouter();
+
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(await screen.findByText('Logs page')).toBeInTheDocument();
+  });
+
   it('redirects unauthenticated users away from the users route', () => {
     window.history.pushState({}, '', '/users');
 
@@ -171,5 +185,15 @@ describe('AppRouter', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('alerts:read');
     expect(screen.queryByText('Alerts page')).not.toBeInTheDocument();
+  });
+
+  it('blocks authenticated users from logs when logs:read is missing', () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
+    window.history.pushState({}, '', '/logs');
+
+    renderRouter();
+
+    expect(screen.getByRole('alert')).toHaveTextContent('logs:read');
+    expect(screen.queryByText('Logs page')).not.toBeInTheDocument();
   });
 });

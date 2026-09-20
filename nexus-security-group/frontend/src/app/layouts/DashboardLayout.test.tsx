@@ -61,6 +61,7 @@ describe('DashboardLayout navigation', () => {
     expect(screen.queryByRole('link', { name: /Keywords/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Automation/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Alerts/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Logs/i })).not.toBeInTheDocument();
   });
 
   it('shows the Automation destination only when workflows:read is present', () => {
@@ -103,5 +104,26 @@ describe('DashboardLayout navigation', () => {
     );
 
     expect(screen.getByRole('link', { name: /Alerts/i })).toHaveAttribute('href', '/alerts');
+  });
+
+  it('shows the Logs destination only when logs:read is present', () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read', 'logs:read']));
+
+    render(
+      <AuthProvider>
+        <LanguageProvider>
+          <MemoryRouter initialEntries={['/']}>
+            <Routes>
+              <Route path="/" element={<DashboardLayout />}>
+                <Route index element={<div>Dashboard content</div>} />
+                <Route path="logs" element={<div>Logs content</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </LanguageProvider>
+      </AuthProvider>,
+    );
+
+    expect(screen.getByRole('link', { name: /Logs/i })).toHaveAttribute('href', '/logs');
   });
 });
