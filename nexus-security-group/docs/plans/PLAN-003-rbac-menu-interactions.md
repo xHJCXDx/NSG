@@ -51,7 +51,7 @@
 | M02 | HIGH | Frontend + posible Backend | Alerts Center: listar, filtrar y revisar alertas | DONE |
 | M03 | MEDIUM | Frontend + posible Backend | Logs / Activity: auditoría operacional y actividad de usuario | DONE |
 | M04 | MEDIUM | Frontend + Backend | Delete Users: borrado seguro de usuarios existentes | DONE |
-| M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | PENDING |
+| M05 | MEDIUM | Frontend | Navegación agrupada y consistencia UX de permisos | DONE |
 | M06 | MEDIUM | Docs + Tests | Matriz final permiso → menú → acción → tests | PENDING |
 
 ---
@@ -135,7 +135,7 @@ No crear backend nuevo si ya existe un endpoint operativo.
 ### Commit sugerido
 
 ```txt
-PENDING — orchestrator will commit after verification.
+eb67ba0 refactor(frontend): group dashboard navigation by domain
 ```
 
 ### Implementación verificada
@@ -502,7 +502,7 @@ PENDING — orchestrator will commit after verification.
 
 **Prioridad:** MEDIUM  
 **Área:** Frontend  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Problema
 
@@ -554,8 +554,29 @@ Administration
 ### Commit sugerido
 
 ```txt
-refactor(frontend): group dashboard navigation by domain
+PENDING — orchestrator will commit after verification.
 ```
+
+### Implementación verificada
+
+- Sidebar agrupado por dominios visibles solo cuando tienen al menos un item autorizado:
+  - Overview: Dashboard, Analytics.
+  - OSINT: Mentions, Threats, Keywords.
+  - Operations: Automation, Alerts, Logs.
+  - Administration: Users, Settings.
+- El filtrado de permisos se mantiene por item antes de renderizar cada grupo.
+- Los grupos vacíos no se renderizan.
+- Los encabezados de grupo son texto/heading legible, no links; las queries accesibles por link siguen apuntando a los nombres de destinos.
+- `NavLink end` sigue aplicado únicamente para `/`.
+- i18n agregado para labels de grupo en EN/ES.
+- Archivos afectados:
+  - `frontend/src/app/layouts/DashboardLayout.tsx`
+  - `frontend/src/app/layouts/DashboardLayout.test.tsx`
+  - `frontend/src/shared/i18n/translations.ts`
+  - `docs/plans/PLAN-003-rbac-menu-interactions.md`
+- Verificación:
+  - `npm run typecheck` desde `frontend/` → PASS.
+  - `npm test -- src/app/layouts/DashboardLayout.test.tsx` desde `frontend/` → PASS, 1 file / 6 tests.
 
 ---
 
