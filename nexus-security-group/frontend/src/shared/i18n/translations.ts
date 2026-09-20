@@ -8,6 +8,7 @@ export const translations = {
       threats: 'Threats',
       keywords: 'Keywords',
       automation: 'Automation',
+      alerts: 'Alerts',
       users: 'Users',
       analytics: 'Analytics',
       settings: 'Settings',
@@ -237,6 +238,78 @@ export const translations = {
       error: 'Failed to load analytics data.',
       noData: 'No data available.',
     },
+    alerts: {
+      eyebrow: 'Operations',
+      title: 'Alerts Center',
+      description:
+        'Review backend-generated alerts, delivery metadata, and acknowledgement status without inventing frontend-only states.',
+      loading: 'Loading alerts...',
+      authNotice: {
+        readOnly: 'You have read-only alert access. Acknowledgement requires alerts:write; the backend remains authoritative.',
+      },
+      filters: {
+        deliveryStatus: 'Delivery status',
+        allStatuses: 'All statuses',
+        acknowledged: 'Acknowledgement',
+        allAcknowledgement: 'All alerts',
+      },
+      severity: {
+        info: 'Info',
+        warning: 'Warning',
+        high: 'High',
+        critical: 'Critical',
+      },
+      deliveryStatus: {
+        pending: 'Pending',
+        sent: 'Sent',
+        delivered: 'Delivered',
+        failed: 'Failed',
+      },
+      acknowledgement: {
+        acknowledged: 'Acknowledged',
+        unacknowledged: 'Unacknowledged',
+      },
+      timestamps: {
+        created: 'Created',
+        sent: 'Sent',
+        acknowledged: 'Acknowledged',
+      },
+      list: {
+        title: 'Alert stream',
+        description: 'Alerts returned by /api/alerts with backend-supported filters only.',
+        ariaLabel: 'Security alerts',
+        detectionId: 'Detection ID',
+        columns: {
+          alert: 'Alert',
+          delivery: 'Delivery',
+          channels: 'Channels',
+          acknowledged: 'Acknowledgement',
+          timestamps: 'Timestamps',
+          actions: 'Actions',
+        },
+      },
+      empty: {
+        title: 'No alerts returned',
+        description: 'Try adjusting the delivery or acknowledgement filters.',
+      },
+      actions: {
+        acknowledge: 'Acknowledge',
+        acknowledging: 'Acknowledging...',
+      },
+      status: {
+        acknowledged: (title: string) => `${title} acknowledged successfully.`,
+      },
+      pagination: {
+        previous: 'Previous',
+        next: 'Next',
+        refreshing: 'Refreshing',
+        window: (from: number, to: number) => `Showing ${from}-${to}`,
+      },
+      errors: {
+        listFallback: 'Alerts could not be loaded.',
+        acknowledgeFallback: 'Alert could not be acknowledged. Please try again.',
+      },
+    },
     users: {
       eyebrow: 'Admin operations',
       title: 'Users',
@@ -396,6 +469,7 @@ export const translations = {
       threats: 'Amenazas',
       keywords: 'Palabras clave',
       automation: 'Automatización',
+      alerts: 'Alertas',
       users: 'Usuarios',
       analytics: 'Analítica',
       settings: 'Configuración',
@@ -624,6 +698,78 @@ export const translations = {
       loading: 'Cargando datos analíticos...',
       error: 'Error al cargar los datos analíticos.',
       noData: 'Sin datos disponibles.',
+    },
+    alerts: {
+      eyebrow: 'Operaciones',
+      title: 'Centro de alertas',
+      description:
+        'Revisá alertas generadas por backend, metadata de entrega y estado de reconocimiento sin inventar estados solo de frontend.',
+      loading: 'Cargando alertas...',
+      authNotice: {
+        readOnly: 'Tenés acceso de solo lectura a alertas. Reconocer alertas requiere alerts:write; el backend sigue siendo la autoridad.',
+      },
+      filters: {
+        deliveryStatus: 'Estado de entrega',
+        allStatuses: 'Todos los estados',
+        acknowledged: 'Reconocimiento',
+        allAcknowledgement: 'Todas las alertas',
+      },
+      severity: {
+        info: 'Info',
+        warning: 'Advertencia',
+        high: 'Alta',
+        critical: 'Crítica',
+      },
+      deliveryStatus: {
+        pending: 'Pendiente',
+        sent: 'Enviada',
+        delivered: 'Entregada',
+        failed: 'Fallida',
+      },
+      acknowledgement: {
+        acknowledged: 'Reconocida',
+        unacknowledged: 'Sin reconocer',
+      },
+      timestamps: {
+        created: 'Creada',
+        sent: 'Enviada',
+        acknowledged: 'Reconocida',
+      },
+      list: {
+        title: 'Flujo de alertas',
+        description: 'Alertas retornadas por /api/alerts con filtros soportados por backend solamente.',
+        ariaLabel: 'Alertas de seguridad',
+        detectionId: 'ID de detección',
+        columns: {
+          alert: 'Alerta',
+          delivery: 'Entrega',
+          channels: 'Canales',
+          acknowledged: 'Reconocimiento',
+          timestamps: 'Timestamps',
+          actions: 'Acciones',
+        },
+      },
+      empty: {
+        title: 'No se retornaron alertas',
+        description: 'Probá ajustando los filtros de entrega o reconocimiento.',
+      },
+      actions: {
+        acknowledge: 'Reconocer',
+        acknowledging: 'Reconociendo...',
+      },
+      status: {
+        acknowledged: (title: string) => `${title} reconocida con éxito.`,
+      },
+      pagination: {
+        previous: 'Anterior',
+        next: 'Siguiente',
+        refreshing: 'Actualizando',
+        window: (from: number, to: number) => `Mostrando ${from}-${to}`,
+      },
+      errors: {
+        listFallback: 'No se pudieron cargar las alertas.',
+        acknowledgeFallback: 'No se pudo reconocer la alerta. Intentá de nuevo.',
+      },
     },
     users: {
       eyebrow: 'Operaciones de administración',

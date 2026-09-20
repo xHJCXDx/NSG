@@ -11,6 +11,7 @@ const MentionsPage = lazy(() => import('../../features/mentions').then(m => ({ d
 const ThreatsPage = lazy(() => import('../../features/threats').then(m => ({ default: m.ThreatsPage })));
 const KeywordsPage = lazy(() => import('../../features/keywords').then(m => ({ default: m.KeywordsPage })));
 const AutomationPage = lazy(() => import('../../features/automation').then(m => ({ default: m.AutomationPage })));
+const AlertsPage = lazy(() => import('../../features/alerts').then(m => ({ default: m.AlertsPage })));
 const UsersPage = lazy(() => import('../../features/users').then(m => ({ default: m.UsersPage })));
 const AnalyticsPage = lazy(() => import('../pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -40,6 +41,7 @@ export function AppRouter() {
           <Route path="threats" element={<ProtectedRoute requiredPermission="threats:read"><Suspense fallback={<LazyFallback />}><ThreatsPage /></Suspense></ProtectedRoute>} />
           <Route path="keywords" element={<ProtectedRoute requiredPermission="keywords:read"><Suspense fallback={<LazyFallback />}><KeywordsPage /></Suspense></ProtectedRoute>} />
           <Route path="automation" element={<ProtectedRoute requiredPermission="workflows:read"><Suspense fallback={<LazyFallback />}><AutomationPage /></Suspense></ProtectedRoute>} />
+          <Route path="alerts" element={<ProtectedRoute requiredPermission="alerts:read"><Suspense fallback={<LazyFallback />}><AlertsPage /></Suspense></ProtectedRoute>} />
           <Route path="users" element={<ProtectedRoute requiredPermission="users:read"><Suspense fallback={<LazyFallback />}><UsersPage /></Suspense></ProtectedRoute>} />
           <Route path="analytics" element={<ProtectedRoute requiredPermission="metrics:read"><Suspense fallback={<LazyFallback />}><AnalyticsPage /></Suspense></ProtectedRoute>} />
           <Route path="settings" element={<ProtectedRoute requiredPermission="permissions:read"><Suspense fallback={<LazyFallback />}><SettingsPage /></Suspense></ProtectedRoute>} />
