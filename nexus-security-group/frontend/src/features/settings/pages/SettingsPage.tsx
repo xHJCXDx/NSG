@@ -1,6 +1,7 @@
 import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { ComplianceCard } from '../components/ComplianceCard';
+import { ProfileCard } from '../components/ProfileCard';
 import { SystemInfoCard } from '../components/SystemInfoCard';
 import { useHealthQuery } from '../hooks/useHealthQuery';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
@@ -30,6 +31,8 @@ export function SettingsPage() {
           {t.settings.readOnlyNotice}
         </div>
       )}
+
+      <ProfileCard />
 
       <div className="glass-card p-6">
         <h2 className="mb-4 text-lg font-semibold text-content-heading">{t.settings.theme.title}</h2>

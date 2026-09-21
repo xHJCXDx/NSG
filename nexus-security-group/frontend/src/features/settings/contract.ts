@@ -1,4 +1,5 @@
 export const HEALTH_ENDPOINT = '/api/health';
+export const CHANGE_PASSWORD_ENDPOINT = '/api/users/me/password';
 
 export const SETTINGS_COPY = {
   page: {
