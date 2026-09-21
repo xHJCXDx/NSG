@@ -1,5 +1,6 @@
 import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../auth';
+import { ComplianceCard } from '../components/ComplianceCard';
 import { SystemInfoCard } from '../components/SystemInfoCard';
 import { useHealthQuery } from '../hooks/useHealthQuery';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
@@ -80,6 +81,8 @@ export function SettingsPage() {
       </div>
 
       <SystemInfoCard health={health} isLoading={isLoadingHealth} />
+
+      <ComplianceCard />
     </section>
   );
 }

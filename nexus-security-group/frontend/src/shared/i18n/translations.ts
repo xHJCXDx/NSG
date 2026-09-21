@@ -558,6 +558,72 @@ export const translations = {
         connected: 'Connected',
         unavailable: 'Unavailable',
       },
+      compliance: {
+        title: 'Regulatory Compliance',
+        description: 'Standards and regulations this system adheres to, as documented in the thesis (Chapter 7.7).',
+        implemented: {
+          title: 'Implemented Compliance',
+          description: 'Standards with concrete implementation in the system.',
+        },
+        aligned: {
+          title: 'Declared Alignment',
+          description: 'Standards adopted as design guidelines.',
+        },
+        reference: {
+          title: 'Technical Reference',
+          description: 'Standards referenced without certifiable implementation.',
+        },
+        standards: {
+          ley25326: {
+            name: 'Ley 25.326 (Personal Data Protection)',
+            description: 'Data purpose, proportionality, minimization, access controls via RBAC and PostgreSQL RLS.',
+          },
+          convention108: {
+            name: 'Convention 108/108+ (Council of Europe)',
+            description: 'Automated processing of personal data — derived from same design decisions.',
+          },
+          ley26388: {
+            name: 'Ley 26.388 (Computer Crimes)',
+            description: 'Collection limited to public sources without bypassing authentication.',
+          },
+          ley25520: {
+            name: 'Ley 25.520 (National Intelligence)',
+            description: 'Only technical cybersecurity indicators — no profiling by religion, politics, unions.',
+          },
+          budapest: {
+            name: 'Budapest Convention (Cybercrime)',
+            description: 'Legality, integrity and traceability in evidence acquisition.',
+          },
+          gdpr: {
+            name: 'GDPR (EU 2016/679)',
+            description: 'Privacy by design, minimization, purpose limitation — adopted as architectural best practices.',
+          },
+          res710: {
+            name: 'Resolution 710/2024 (Min. Security)',
+            description: 'AI on public sources: purpose, proportionality, human control, traceability — best practices guide.',
+          },
+          owaspSession: {
+            name: 'OWASP Session Management',
+            description: 'Secure session handling — technical reference.',
+          },
+          iso27037: {
+            name: 'ISO/IEC 27037:2012',
+            description: 'Digital evidence guidelines — guides logging/hashing design, not certified.',
+          },
+          iso27701: {
+            name: 'ISO/IEC 27701:2019',
+            description: 'Privacy management (PIMS) — guides privacy controls, not certified.',
+          },
+          nistCsf: {
+            name: 'NIST CSF v1.1',
+            description: 'Cybersecurity framework — bibliographic reference.',
+          },
+          mitreAttack: {
+            name: 'MITRE ATT&CK',
+            description: 'Threat tactics and techniques — future work, not implemented.',
+          },
+        },
+      },
     },
     pagination: {
       previous: 'Previous',
@@ -1141,6 +1207,72 @@ export const translations = {
         healthy: 'Saludable',
         connected: 'Conectada',
         unavailable: 'No disponible',
+      },
+      compliance: {
+        title: 'Cumplimiento Normativo',
+        description: 'Normas y regulaciones que el sistema respeta, documentadas en la tesis (Capítulo 7.7).',
+        implemented: {
+          title: 'Cumplimiento Implementado',
+          description: 'Normas con implementación concreta en el sistema.',
+        },
+        aligned: {
+          title: 'Alineación Declarada',
+          description: 'Normas adoptadas como lineamientos de diseño.',
+        },
+        reference: {
+          title: 'Referencia Técnica',
+          description: 'Normas referenciadas sin implementación certificable.',
+        },
+        standards: {
+          ley25326: {
+            name: 'Ley 25.326 (Protección de Datos Personales)',
+            description: 'Finalidad, proporcionalidad, minimización y controles de acceso mediante RBAC y RLS de PostgreSQL.',
+          },
+          convention108: {
+            name: 'Convenio 108/108+ (Consejo de Europa)',
+            description: 'Tratamiento automatizado de datos personales — derivado de las mismas decisiones de diseño.',
+          },
+          ley26388: {
+            name: 'Ley 26.388 (Delitos Informáticos)',
+            description: 'Recolección limitada a fuentes públicas sin eludir autenticación.',
+          },
+          ley25520: {
+            name: 'Ley 25.520 (Inteligencia Nacional)',
+            description: 'Solo indicadores técnicos de ciberseguridad — sin perfilamiento por religión, política ni gremios.',
+          },
+          budapest: {
+            name: 'Convenio de Budapest (Ciberdelito)',
+            description: 'Legalidad, integridad y trazabilidad en la adquisición de evidencia.',
+          },
+          gdpr: {
+            name: 'GDPR (UE 2016/679)',
+            description: 'Privacidad por diseño, minimización y limitación de finalidad — adoptado como buenas prácticas arquitectónicas.',
+          },
+          res710: {
+            name: 'Resolución 710/2024 (Min. Seguridad)',
+            description: 'IA sobre fuentes públicas: finalidad, proporcionalidad, control humano y trazabilidad — guía de buenas prácticas.',
+          },
+          owaspSession: {
+            name: 'OWASP Session Management',
+            description: 'Manejo seguro de sesiones — referencia técnica.',
+          },
+          iso27037: {
+            name: 'ISO/IEC 27037:2012',
+            description: 'Guías de evidencia digital — orienta el diseño de logging/hashing, sin certificación.',
+          },
+          iso27701: {
+            name: 'ISO/IEC 27701:2019',
+            description: 'Gestión de privacidad (PIMS) — orienta controles de privacidad, sin certificación.',
+          },
+          nistCsf: {
+            name: 'NIST CSF v1.1',
+            description: 'Marco de ciberseguridad — referencia bibliográfica.',
+          },
+          mitreAttack: {
+            name: 'MITRE ATT&CK',
+            description: 'Tácticas y técnicas de amenazas — trabajo futuro, no implementado.',
+          },
+        },
       },
     },
     pagination: {
