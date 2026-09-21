@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { ThemeProvider } from '../../../shared/contexts/ThemeContext';
 import { AuthProvider } from '../../auth';
 import { DASHBOARD_COPY } from '../contract';
 import { Dashboard } from './Dashboard';
@@ -24,9 +26,13 @@ const renderDashboard = () => {
 
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <AuthProvider>
-        <Dashboard />
-      </AuthProvider>
+      <LanguageProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Dashboard />
+          </AuthProvider>
+        </ThemeProvider>
+      </LanguageProvider>
     </QueryClientProvider>,
   );
 };

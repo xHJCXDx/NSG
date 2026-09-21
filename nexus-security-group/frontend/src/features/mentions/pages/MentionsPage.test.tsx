@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { MentionsPage } from './MentionsPage';
@@ -10,9 +11,11 @@ const renderMentionsPage = () => {
   localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <AuthProvider>
-        <MentionsPage />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <MentionsPage />
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>,
   );
 };
@@ -28,7 +31,7 @@ describe('MentionsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        mentions: [
+        data: [
           {
             id: '1',
             platform: 'twitter',
@@ -52,7 +55,7 @@ describe('MentionsPage', () => {
   it('shows initial empty, load error, and no-results states distinctly', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ mentions: [] }),
+      json: async () => ({ data: [] }),
     } as Response);
 
     const { rerender } = renderMentionsPage();
@@ -62,9 +65,11 @@ describe('MentionsPage', () => {
     fetchMock.mockResolvedValueOnce({ ok: false } as Response);
     rerender(
       <QueryClientProvider client={createTestQueryClient()}>
-        <AuthProvider>
-          <MentionsPage />
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <MentionsPage />
+          </AuthProvider>
+        </LanguageProvider>
       </QueryClientProvider>,
     );
 
@@ -79,10 +84,11 @@ describe('MentionsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        mentions: [
+        data: [
           { id: '1', platform: 'twitter', text: 'Brand mention', created_at: '2026-07-03T10:00:00Z', author: 'alice' },
           { id: '2', platform: 'reddit', text: 'Community thread', created_at: '2026-07-03T11:00:00Z', author: 'bob' },
         ],
+        available_platforms: ['twitter', 'reddit'],
       }),
     } as Response);
 
@@ -94,7 +100,7 @@ describe('MentionsPage', () => {
     expect(screen.getByText('Community thread')).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText('Search by text, platform, or author'));
-    await userEvent.type(screen.getByPlaceholderText('Platform'), 'telegram');
+    await userEvent.type(screen.getByPlaceholderText('Search by text, platform, or author'), 'no-match-xyz');
 
     await waitFor(() => expect(screen.getByText('No matching mentions')).toBeInTheDocument());
   });

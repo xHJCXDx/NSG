@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { ThreatsPage } from './ThreatsPage';
@@ -10,9 +11,11 @@ const renderThreatsPage = () => {
   localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <AuthProvider>
-        <ThreatsPage />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <ThreatsPage />
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>,
   );
 };
@@ -28,7 +31,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             detection_id: 'threat-1',
             threat_type: 'credential_leak',
@@ -62,7 +65,7 @@ describe('ThreatsPage', () => {
   it('shows initial empty and load error states distinctly with retry', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ threats: [] }),
+      json: async () => ({ data: [] }),
     } as Response);
 
     renderThreatsPage();
@@ -72,7 +75,7 @@ describe('ThreatsPage', () => {
 
     fetchMock.mockResolvedValueOnce({ ok: false } as Response).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ threats: [] }),
+      json: async () => ({ data: [] }),
     } as Response);
 
     renderThreatsPage();
@@ -86,7 +89,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             id: '1',
             threat_type: 'credential_leak',
@@ -124,7 +127,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             id: 'threat-without-filter-fields',
             confidence_score: 0.64,
