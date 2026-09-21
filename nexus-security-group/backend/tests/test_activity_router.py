@@ -27,6 +27,7 @@ from main import app
 from routers.activity import get_activities, get_activity, router
 from schemas.auth import TokenData
 from schemas.activity import UserActivityResponse
+from services.activity_audit import record_user_activity
 from tests.conftest import FakeDb, FakeQuery
 
 
@@ -73,6 +74,32 @@ def test_get_activities_lists_recent_user_activity_with_limit():
     response = UserActivityResponse.model_validate(result[0])
     assert response.activity_id == 10
     assert response.activity_type == "review_threat"
+
+
+def test_get_activities_lists_helper_generated_user_activity():
+    write_db = FakeDb(FakeQuery())
+    record_user_activity(
+        write_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="create_keyword",
+        activity_description="Created keyword monitor",
+        activity_data={"keyword_id": 123},
+    )
+    activity = write_db.added[0]
+    activity.activity_id = 11
+    activity.activity_timestamp = datetime(2026, 7, 5, 16, 0, tzinfo=timezone.utc)
+
+    query = FakeQuery(all_result=[activity])
+    result = get_activities(db=FakeDb(query), limit=10, current_user=object())
+
+    response = UserActivityResponse.model_validate(result[0])
+    assert response.activity_id == 11
+    assert response.username == "analyst1"
+    assert response.activity_type == "create_keyword"
+    assert response.activity_data == {"keyword_id": 123}
+    assert query.order_by_args is not None
+    assert query.limit_value == 10
 
 
 def test_get_activities_limit_defaults_to_fifty_when_called_directly():
@@ -196,6 +223,39 @@ def test_get_activities_allows_authenticated_user_with_logs_read_permission():
     assert response.status_code == 200
     assert response.json()[0]["activity_id"] == 10
     assert response.json()[0]["activity_type"] == "review_threat"
+
+
+def test_get_activities_endpoint_returns_helper_generated_activity_with_logs_read_permission():
+    write_db = FakeDb(FakeQuery())
+    record_user_activity(
+        write_db,
+        username="admin1",
+        user_role="admin",
+        activity_type="deactivate_user",
+        activity_description="Deactivated user",
+        activity_data={"target_username": "inactive-user"},
+    )
+    activity = write_db.added[0]
+    activity.activity_id = 12
+    activity.activity_timestamp = datetime(2026, 7, 5, 17, 0, tzinfo=timezone.utc)
+
+    access_token = auth.create_access_token(
+        {"sub": "admin1", "role": "admin", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(all_result=[activity]))
+    try:
+        response = TestClient(app).get(
+            "/api/activity?limit=10",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["activity_id"] == 12
+    assert response.json()[0]["username"] == "admin1"
+    assert response.json()[0]["activity_type"] == "deactivate_user"
+    assert response.json()[0]["activity_data"] == {"target_username": "inactive-user"}
 
 
 def test_get_activity_allows_authenticated_user_with_logs_read_permission():

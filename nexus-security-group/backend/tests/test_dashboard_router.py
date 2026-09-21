@@ -6,6 +6,7 @@ from database import get_db
 from main import app
 from routers.dashboard import get_dashboard_summary
 from schemas.dashboard import DashboardSummaryResponse
+from services.activity_audit import record_user_activity
 
 
 class FakeQuery:
@@ -25,10 +26,14 @@ class FakeDb:
     def __init__(self, queries):
         self.queries = queries
         self.query_args = []
+        self.added = []
 
     def query(self, *args):
         self.query_args.append(args)
         return self.queries.pop(0)
+
+    def add(self, obj):
+        self.added.append(obj)
 
 
 def test_main_registers_api_dashboard_summary_route():
@@ -142,6 +147,36 @@ def test_dashboard_summary_counts_existing_domain_models():
     assert len(pending_threats_query.filter_args) == 1
     assert len(unacknowledged_alerts_query.filter_args) == 1
     assert len(active_keywords_query.filter_args) == 1
+
+
+def test_dashboard_summary_counts_helper_generated_user_activity_rows():
+    fake_db = FakeDb([FakeQuery(count_result=0) for _ in range(6)])
+
+    record_user_activity(
+        fake_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="login_success",
+        activity_description="User logged in",
+    )
+    record_user_activity(
+        fake_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="acknowledge_alert",
+        activity_description="Acknowledged alert",
+        related_alert_id=99,
+    )
+    fake_db.queries.append(FakeQuery(count_result=len(fake_db.added)))
+
+    result = get_dashboard_summary(db=fake_db, current_user=object())
+
+    assert result["activity_count"] == 2
+    assert [activity.activity_type for activity in fake_db.added] == [
+        "login_success",
+        "acknowledge_alert",
+    ]
+    assert len(fake_db.query_args) == 7
 
 
 def test_dashboard_summary_coerces_empty_counts_to_zero():

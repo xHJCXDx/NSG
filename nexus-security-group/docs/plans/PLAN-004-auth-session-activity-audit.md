@@ -37,7 +37,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | DONE |
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | DONE |
 | M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | DONE |
-| M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | PENDING |
+| M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | DONE |
 | M08 | MEDIUM | Docs + Tests | Matriz final evento → endpoint → actividad → tests | PENDING |
 
 ---
@@ -462,7 +462,7 @@ feat(api): audit critical user actions
 
 **Prioridad:** MEDIUM  
 **Área:** Dashboard/Logs  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -491,6 +491,22 @@ Comprobar que el KPI `activity_count` y la pantalla Logs → User Activity refle
 ```txt
 test(api): verify dashboard activity audit counts
 ```
+
+### Resultado
+
+- Se agregó cobertura backend que crea filas `UserActivity` mediante `record_user_activity` y verifica que el dashboard summary las cuenta en `activity_count`.
+- Se agregó cobertura backend para `/api/activity` usando eventos producidos por el helper de auditoría, tanto en llamada directa al router como vía endpoint autenticado con `logs:read`.
+- No hubo cambios de contrato API ni cambios frontend: el backend sigue exponiendo `limit`, `username` y `activity_type`, sin `offset`, por lo que no se agregó paginación fake.
+
+### Archivos modificados
+
+- `backend/tests/test_dashboard_router.py`
+- `backend/tests/test_activity_router.py`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `python -m pytest tests/test_dashboard_router.py tests/test_activity_router.py` desde `backend/` → PASS, 23 tests.
 
 ---
 
