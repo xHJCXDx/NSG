@@ -1,11 +1,52 @@
 # PLAN-004: Hardening de sesión y auditoría de actividad
 
-**Estado:** PENDIENTE  
+**Estado:** COMPLETADO  
 **Prioridad:** HIGH  
 **Origen:** Revisión de comportamiento multi-pestaña, offline y KPI `activity_count` siempre en 0  
 **Arquitectura de referencia:** `docs/SYSTEM-ARCHITECTURE.md`  
 
 > **Estrategia de commits:** Conventional commits con scope. Branch: `develop`. Un commit por modificación completada. No ejecutar build; usar typecheck y tests focalizados.
+
+---
+
+## Cierre ejecutivo
+
+PLAN-004 quedó completado de punta a punta. El sistema pasó de tener un KPI `activity_count` técnicamente correcto pero operativo/decorativo —porque leía una tabla sin productores reales— a tener eventos reales de sesión, autenticación y acciones críticas registrados en `user_activity`.
+
+El cierre cubre tres frentes:
+
+1. **Hardening de sesión frontend**: sincronización multi-pestaña, limpieza ante `401` y mensajes de login/red diferenciados.
+2. **Auditoría backend real**: helper centralizado `record_user_activity`, eventos de auth y eventos de dominio críticos.
+3. **Trazabilidad verificable**: tests focalizados para productores, consumidores (`dashboard`/`activity`) y matriz final evento → endpoint → test.
+
+### Estado final
+
+- **M01:** DONE — sincronización multi-pestaña.
+- **M02:** DONE — limpieza de sesión ante `401`.
+- **M03:** DONE — errores claros de login/backend/red.
+- **M04:** DONE — helper backend `record_user_activity`.
+- **M05:** DONE — auditoría de login/logout.
+- **M06:** DONE — auditoría de acciones críticas.
+- **M07:** DONE — verificación dashboard/logs.
+- **M08:** DONE — matriz final de trazabilidad.
+
+### Checklist de cierre
+
+- [x] Documentación del plan actualizada.
+- [x] Commits convencionales por modificación.
+- [x] Tests focalizados registrados en cada etapa.
+- [x] Matriz final con referencias `archivo::test` verificadas contra archivos reales.
+- [x] Sin cambios de contrato API innecesarios.
+- [x] Sin paginación fake en `/api/activity`.
+- [x] Sin persistencia de passwords, JWTs, tokens, hashes ni `webhook_id` crudo en auditoría.
+
+### Limitaciones conocidas / fuera de alcance
+
+- El logout sigue siendo **stateless/client-side acknowledgment**: no invalida JWT en servidor. Una blacklist de tokens, refresh tokens o sesiones server-side queda fuera de este plan.
+- `/api/activity` mantiene el contrato actual: filtros y `limit`, sin `offset`; por eso la UI no debe mostrar paginación Previous/Next artificial.
+- n8n no guarda `webhook_id` crudo; registra `webhook_ref` hash corto no reversible. No se agregó catálogo semántico de workflows.
+- La auditoría es best-effort donde corresponde: no debe tumbar flujos críticos secundarios por fallos de logging/audit.
+- No se implementó cola offline ni sincronización diferida de mutaciones.
 
 ---
 
