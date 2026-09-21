@@ -20,12 +20,14 @@ from config import settings
 from database import get_db
 from models import SystemUser
 from schemas.auth import Token, TokenData
+from services.activity_audit import record_user_activity
 
 SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 PASSWORD_HASH_SCHEME = "pbkdf2_sha256"
@@ -144,6 +146,41 @@ def _permissions_from_payload(payload: dict) -> list[str]:
     return [permission for permission in permissions if isinstance(permission, str)]
 
 
+def _record_auth_activity(
+    db: Session,
+    *,
+    username: str,
+    user_role: str | None,
+    activity_type: str,
+    activity_description: str,
+    request: Request | None = None,
+    activity_data: dict | None = None,
+) -> None:
+    """Best-effort auth audit writer that owns auth endpoint commits."""
+    try:
+        record_user_activity(
+            db,
+            username=username,
+            user_role=user_role,
+            activity_type=activity_type,
+            activity_description=activity_description,
+            request=request,
+            activity_data=activity_data,
+        )
+        db.commit()
+    except Exception:
+        try:
+            db.rollback()
+        except Exception:
+            logger.warning("Failed to rollback auth activity audit", exc_info=True)
+        logger.warning(
+            "Failed to record auth activity: username=%s activity_type=%s",
+            username,
+            activity_type,
+            exc_info=True,
+        )
+
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -205,8 +242,25 @@ async def login_for_access_token(
         )
 
     if has_db_users:
-        if not db_user or not db_user.is_active or not verify_password(form_data.password, db_user.password_hash):
+        failure_reason = None
+        if not db_user:
+            failure_reason = "invalid_credentials"
+        elif not db_user.is_active:
+            failure_reason = "inactive_user"
+        elif not verify_password(form_data.password, db_user.password_hash):
+            failure_reason = "invalid_credentials"
+
+        if failure_reason is not None:
             logger.warning("Login failed: user=%s", form_data.username)
+            _record_auth_activity(
+                db,
+                username=form_data.username,
+                user_role=None,
+                activity_type="login_failed",
+                activity_description="Login failed",
+                request=request,
+                activity_data={"auth_source": "database", "reason": failure_reason},
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -219,6 +273,15 @@ async def login_for_access_token(
     else:
         if not hmac.compare_digest(form_data.username, ADMIN_USER) or not hmac.compare_digest(form_data.password, ADMIN_PASSWORD):
             logger.warning("Login failed: user=%s (bootstrap)", form_data.username)
+            _record_auth_activity(
+                db,
+                username=form_data.username,
+                user_role=None,
+                activity_type="login_failed",
+                activity_description="Login failed",
+                request=request,
+                activity_data={"auth_source": "bootstrap", "reason": "invalid_credentials"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -238,10 +301,38 @@ async def login_for_access_token(
         expires_delta=access_token_expires,
     )
     logger.info("Login successful: user=%s source=%s", form_data.username, auth_source)
+    _record_auth_activity(
+        db,
+        username=form_data.username,
+        user_role=role,
+        activity_type="login_success",
+        activity_description="Login successful",
+        request=request,
+        activity_data={"auth_source": auth_source},
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/logout")
-async def logout():
+async def logout(
+    request: Request,
+    token: str | None = Depends(optional_oauth2_scheme),
+    db: Session = Depends(get_db),
+):
     """Client-side logout acknowledgment. Token invalidation is handled by the client clearing stored credentials. Server-side token blacklist is documented as future work."""
+    if token is not None:
+        try:
+            current_user = await get_current_user(token=token)
+        except HTTPException:
+            current_user = None
+        if current_user is not None:
+            _record_auth_activity(
+                db,
+                username=current_user.username,
+                user_role=current_user.role,
+                activity_type="logout",
+                activity_description="Logout requested",
+                request=request,
+                activity_data={"auth_source": current_user.auth_source},
+            )
     return {"message": "Logged out successfully"}

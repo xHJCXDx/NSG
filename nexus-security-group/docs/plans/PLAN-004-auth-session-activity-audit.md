@@ -35,7 +35,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | DONE |
 | M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | DONE |
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | DONE |
-| M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | PENDING |
+| M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | DONE |
 | M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | PENDING |
 | M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | PENDING |
 | M08 | MEDIUM | Docs + Tests | Matriz final evento → endpoint → actividad → tests | PENDING |
@@ -326,7 +326,7 @@ feat(api): add user activity audit service
 
 **Prioridad:** HIGH  
 **Área:** Backend Auth  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -363,6 +363,23 @@ Registrar eventos de autenticación relevantes.
 ```txt
 feat(api): audit authentication activity
 ```
+
+### Resultado
+
+- `/api/auth/login` registra `login_success` después de emitir credenciales válidas, sin persistir JWTs ni passwords en `activity_data`.
+- `/api/auth/login` registra `login_failed` para credenciales inválidas o usuario inactivo, usando `user_role=None` para no afirmar roles en intentos fallidos.
+- La auditoría auth es best-effort: si falla el insert/commit de actividad, se loggea warning, se intenta rollback y no se rompe el flujo primario de auth.
+- Decisión logout: se preservó la compatibilidad del endpoint stateless. `/api/auth/logout` sigue respondiendo sin requerir token; solo audita `logout` cuando recibe un bearer token válido y puede obtener un usuario autoritativo desde el JWT.
+
+### Archivos modificados
+
+- `backend/auth.py`
+- `backend/tests/test_auth.py`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `python -m pytest tests/test_auth.py` desde `backend/` → PASS, 29 tests.
 
 ---
 
