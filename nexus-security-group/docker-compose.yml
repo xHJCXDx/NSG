@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:17
     container_name: osint-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -49,7 +49,7 @@ services:
       - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -62,6 +62,8 @@ services:
       # permissions" errors caused by ownership mismatch on imported workflows.
       - N8N_USER_MANAGEMENT_DISABLED=true
       - N8N_PERSONALIZATION_ENABLED=false
+      # Migrate binary storage path ahead of n8n v3 rename.
+      - N8N_MIGRATE_FS_STORAGE_PATH=true
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-entrypoint.sh:/custom-entrypoint.sh:ro
