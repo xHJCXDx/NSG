@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { AuthProvider } from '../../features/auth';
 import { ThemeProvider } from '../../shared/contexts/ThemeContext';
 import { LanguageProvider } from '../../shared/contexts/LanguageContext';
+import { PollingProvider } from '../../shared/contexts/PollingContext';
+import { DateFormatProvider } from '../../shared/contexts/DateFormatContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -22,9 +24,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <LanguageProvider>
       <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryClientProvider>
+        <PollingProvider>
+          <DateFormatProvider>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>{children}</AuthProvider>
+            </QueryClientProvider>
+          </DateFormatProvider>
+        </PollingProvider>
       </ThemeProvider>
     </LanguageProvider>
   );

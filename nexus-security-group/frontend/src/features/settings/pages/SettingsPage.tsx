@@ -1,6 +1,8 @@
 import { Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { ComplianceCard } from '../components/ComplianceCard';
+import { DateFormatCard } from '../components/DateFormatCard';
+import { PollingCard } from '../components/PollingCard';
 import { ProfileCard } from '../components/ProfileCard';
 import { SystemInfoCard } from '../components/SystemInfoCard';
 import { useHealthQuery } from '../hooks/useHealthQuery';
@@ -82,6 +84,10 @@ export function SettingsPage() {
           </select>
         </div>
       </div>
+
+      <PollingCard />
+
+      <DateFormatCard />
 
       <SystemInfoCard health={health} isLoading={isLoadingHealth} />
 

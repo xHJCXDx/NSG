@@ -565,6 +565,39 @@ export const translations = {
         en: 'English',
         es: 'Español',
       },
+      polling: {
+        title: 'Dashboard Refresh',
+        description: 'How often the dashboard automatically fetches new data.',
+        label: 'Refresh interval',
+        options: {
+          '15000': '15 seconds',
+          '30000': '30 seconds',
+          '60000': '1 minute',
+          '300000': '5 minutes',
+          'false': 'Disabled',
+        },
+      },
+      dateFormat: {
+        title: 'Date & Time',
+        description: 'Configure how dates and times are displayed throughout the application.',
+        timezone: {
+          label: 'Timezone',
+          utc: 'UTC',
+          buenosAires: 'Buenos Aires (GMT-3)',
+          local: 'Browser default',
+        },
+        format: {
+          label: 'Date format',
+          iso: 'ISO (2026-09-21)',
+          ar: 'Argentina (21/09/2026)',
+          us: 'US (09/21/2026)',
+        },
+        timeFormat: {
+          label: 'Time format',
+          h24: '24 hours',
+          h12: '12 hours (AM/PM)',
+        },
+      },
       systemInfo: {
         title: 'System Information',
         description: 'Runtime and connectivity status.',
@@ -1232,6 +1265,39 @@ export const translations = {
         description: 'Elegí el idioma de la interfaz.',
         en: 'English',
         es: 'Español',
+      },
+      polling: {
+        title: 'Actualización del Panel',
+        description: 'Cada cuánto el panel obtiene datos nuevos automáticamente.',
+        label: 'Intervalo de actualización',
+        options: {
+          '15000': '15 segundos',
+          '30000': '30 segundos',
+          '60000': '1 minuto',
+          '300000': '5 minutos',
+          'false': 'Desactivado',
+        },
+      },
+      dateFormat: {
+        title: 'Fecha y Hora',
+        description: 'Configurá cómo se muestran las fechas y horas en toda la aplicación.',
+        timezone: {
+          label: 'Zona horaria',
+          utc: 'UTC',
+          buenosAires: 'Buenos Aires (GMT-3)',
+          local: 'Predeterminado del navegador',
+        },
+        format: {
+          label: 'Formato de fecha',
+          iso: 'ISO (2026-09-21)',
+          ar: 'Argentina (21/09/2026)',
+          us: 'US (09/21/2026)',
+        },
+        timeFormat: {
+          label: 'Formato de hora',
+          h24: '24 horas',
+          h12: '12 horas (AM/PM)',
+        },
       },
       systemInfo: {
         title: 'Información del sistema',

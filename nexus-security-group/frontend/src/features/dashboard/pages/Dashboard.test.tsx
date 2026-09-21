@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
 import { ThemeProvider } from '../../../shared/contexts/ThemeContext';
+import { PollingProvider } from '../../../shared/contexts/PollingContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { AuthProvider } from '../../auth';
 import { DASHBOARD_COPY } from '../contract';
 import { Dashboard } from './Dashboard';
@@ -28,9 +30,13 @@ const renderDashboard = () => {
     <QueryClientProvider client={createTestQueryClient()}>
       <LanguageProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <Dashboard />
-          </AuthProvider>
+          <PollingProvider>
+            <DateFormatProvider>
+              <AuthProvider>
+                <Dashboard />
+              </AuthProvider>
+            </DateFormatProvider>
+          </PollingProvider>
         </ThemeProvider>
       </LanguageProvider>
     </QueryClientProvider>,
