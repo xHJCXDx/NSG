@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { CategoryCount } from '../types';
 import { ChartCard } from './ChartCard';
 import { useTranslation } from '../../../shared/i18n/translations';
@@ -9,9 +9,11 @@ const PLATFORM_COLORS = ['#0ea5e9', '#8b5cf6', '#f97316', '#22c55e', '#ef4444', 
 
 interface PlatformDistributionChartProps {
   data: CategoryCount[];
+  isLoading?: boolean;
+  error?: unknown;
 }
 
-export function PlatformDistributionChart({ data }: PlatformDistributionChartProps) {
+export function PlatformDistributionChart({ data, isLoading, error }: PlatformDistributionChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -23,6 +25,24 @@ export function PlatformDistributionChart({ data }: PlatformDistributionChartPro
       tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
     };
   }, [theme]);
+
+  if (isLoading) {
+    return (
+      <ChartCard title={t.analytics.charts.platformDistribution}>
+        <div className="flex h-[300px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500/30 border-t-brand-500" />
+        </div>
+      </ChartCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <ChartCard title={t.analytics.charts.platformDistribution}>
+        <div className="flex h-[300px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      </ChartCard>
+    );
+  }
 
   if (data.length === 0) {
     return (
@@ -47,6 +67,8 @@ export function PlatformDistributionChart({ data }: PlatformDistributionChartPro
               outerRadius={110}
               paddingAngle={2}
               strokeWidth={0}
+              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+              labelLine={false}
             >
               {data.map((entry, index) => (
                 <Cell key={entry.label} fill={PLATFORM_COLORS[index % PLATFORM_COLORS.length]} />
@@ -54,6 +76,12 @@ export function PlatformDistributionChart({ data }: PlatformDistributionChartPro
             </Pie>
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+            />
+            <Legend
+              layout="vertical"
+              align="right"
+              verticalAlign="middle"
+              wrapperStyle={{ color: 'var(--color-content-secondary)' }}
             />
           </PieChart>
         </ResponsiveContainer>

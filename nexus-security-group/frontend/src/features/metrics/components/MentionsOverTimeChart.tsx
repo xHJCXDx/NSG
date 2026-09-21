@@ -7,9 +7,11 @@ import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 interface MentionsOverTimeChartProps {
   data: TimeSeriesPoint[];
+  isLoading?: boolean;
+  error?: unknown;
 }
 
-export function MentionsOverTimeChart({ data }: MentionsOverTimeChartProps) {
+export function MentionsOverTimeChart({ data, isLoading, error }: MentionsOverTimeChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -23,6 +25,24 @@ export function MentionsOverTimeChart({ data }: MentionsOverTimeChartProps) {
       tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
     };
   }, [theme]);
+
+  if (isLoading) {
+    return (
+      <ChartCard title={t.analytics.charts.mentionsOverTime}>
+        <div className="flex h-[300px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500/30 border-t-brand-500" />
+        </div>
+      </ChartCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <ChartCard title={t.analytics.charts.mentionsOverTime}>
+        <div className="flex h-[300px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      </ChartCard>
+    );
+  }
 
   if (data.length === 0) {
     return (

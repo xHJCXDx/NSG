@@ -14,9 +14,11 @@ const SEVERITY_COLORS: Record<string, string> = {
 
 interface ThreatsBySeverityChartProps {
   data: CategoryCount[];
+  isLoading?: boolean;
+  error?: unknown;
 }
 
-export function ThreatsBySeverityChart({ data }: ThreatsBySeverityChartProps) {
+export function ThreatsBySeverityChart({ data, isLoading, error }: ThreatsBySeverityChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -30,6 +32,24 @@ export function ThreatsBySeverityChart({ data }: ThreatsBySeverityChartProps) {
       tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
     };
   }, [theme]);
+
+  if (isLoading) {
+    return (
+      <ChartCard title={t.analytics.charts.threatsBySeverity}>
+        <div className="flex h-[300px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500/30 border-t-brand-500" />
+        </div>
+      </ChartCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <ChartCard title={t.analytics.charts.threatsBySeverity}>
+        <div className="flex h-[300px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      </ChartCard>
+    );
+  }
 
   if (data.length === 0) {
     return (

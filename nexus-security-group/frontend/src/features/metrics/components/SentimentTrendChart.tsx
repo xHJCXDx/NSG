@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { SentimentTimeSeriesPoint } from '../types';
 import { ChartCard } from './ChartCard';
 import { useTranslation } from '../../../shared/i18n/translations';
@@ -7,9 +7,11 @@ import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 interface SentimentTrendChartProps {
   data: SentimentTimeSeriesPoint[];
+  isLoading?: boolean;
+  error?: unknown;
 }
 
-export function SentimentTrendChart({ data }: SentimentTrendChartProps) {
+export function SentimentTrendChart({ data, isLoading, error }: SentimentTrendChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -23,6 +25,24 @@ export function SentimentTrendChart({ data }: SentimentTrendChartProps) {
       tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
     };
   }, [theme]);
+
+  if (isLoading) {
+    return (
+      <ChartCard title={t.analytics.charts.sentimentTrends}>
+        <div className="flex h-[300px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500/30 border-t-brand-500" />
+        </div>
+      </ChartCard>
+    );
+  }
+
+  if (error) {
+    return (
+      <ChartCard title={t.analytics.charts.sentimentTrends}>
+        <div className="flex h-[300px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      </ChartCard>
+    );
+  }
 
   if (data.length === 0) {
     return (
@@ -56,6 +76,9 @@ export function SentimentTrendChart({ data }: SentimentTrendChartProps) {
             <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+            />
+            <Legend
+              wrapperStyle={{ color: 'var(--color-content-secondary)' }}
             />
             <Area type="monotone" dataKey="positive" stackId="1" stroke="#34d399" fill="url(#positiveGradient)" strokeWidth={2} />
             <Area type="monotone" dataKey="neutral" stackId="1" stroke="#94a3b8" fill="url(#neutralGradient)" strokeWidth={2} />
