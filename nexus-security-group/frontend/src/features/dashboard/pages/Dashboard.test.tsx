@@ -17,7 +17,8 @@ vi.mock('recharts', () => ({
   XAxis: ({ dataKey }: { dataKey: string }) => <span data-testid="x-axis">{dataKey}</span>,
   YAxis: () => null,
   Tooltip: () => null,
-  Bar: ({ dataKey }: { dataKey: string }) => <span data-testid="bar-series">{dataKey}</span>,
+  Bar: ({ children, dataKey }: { children: ReactNode; dataKey: string }) => <span data-testid="bar-series">{dataKey}{children}</span>,
+  Cell: () => null,
 }));
 
 const createTestQueryClient = () =>

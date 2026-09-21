@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import { Activity, Bell, KeyRound, ListChecks, ShieldAlert, Zap } from 'lucide-react';
 import { KpiCard } from '../../../shared/components/KpiCard';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
@@ -76,7 +76,11 @@ export function Dashboard() {
                   cursor={{ fill: 'rgba(128,128,128,0.08)' }}
                   contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
                 />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={index} fill={entry.fill} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
