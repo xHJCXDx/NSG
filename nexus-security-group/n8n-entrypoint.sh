@@ -24,6 +24,10 @@ set -e
 
 echo "[n8n-entrypoint] Cleaning stale webhook registrations …"
 
+# Run from n8n's install directory so require('pg') resolves against
+# n8n's bundled node_modules (the image does not install pg globally).
+cd /usr/local/lib/node_modules/n8n
+
 node -e "
 const { Client } = require('pg');
 const client = new Client({
