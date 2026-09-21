@@ -67,12 +67,45 @@ n8n re-registra todos los webhooks activos limpiamente en su proceso de startup.
 - `N8N_PERSONALIZATION_ENABLED=false` — desactiva el wizard de personalización
   que no aplica en un entorno automatizado.
 
+### M03 — Fix SyntaxError en Parse GitHub Issues
+
+El nodo `Parse GitHub Issues` del workflow tenía un `.join()` con saltos de
+línea literales dentro de un string de comillas simples, lo cual es JavaScript
+inválido.  vm2 (el sandbox de n8n para Function nodes) rechazaba el código con
+`SyntaxError`.
+
+**Fix**: reemplazar los newlines literales por secuencias de escape `\n\n`.
+
+### M04 — Upgrade Postgres 15 → 17 y deprecations
+
+n8n 2.39.7 requiere Postgres 17+.  Los data files de Postgres NO son
+compatibles entre versiones mayores, así que la migración se realizó con
+`pg_dump` (PG 15) → borrar data dir → `pg_restore` (PG 17).
+
+Datos migrados y verificados:
+
+| Tabla | Filas |
+|-------|-------|
+| social_mentions | 1392 |
+| sentiment_analysis | 1392 |
+| threat_detections | 1392 |
+| alerts | 566 |
+| execution_logs | 58 |
+| system_users | 2 |
+| user_activity | 1 |
+
+**Deprecations resueltas**:
+- `WEBHOOK_URL` → `N8N_WEBHOOK_URL`
+- `N8N_MIGRATE_FS_STORAGE_PATH=true` — migración anticipada del storage path
+  antes de n8n v3
+
 ## Archivos modificados
 
 | Archivo | Cambio |
 |---------|--------|
 | `n8n-entrypoint.sh` | **Nuevo** — entrypoint custom para limpieza de webhooks |
-| `docker-compose.yml` | Agregado `entrypoint`, volumen del script, y env vars de n8n |
+| `docker-compose.yml` | Entrypoint, env vars, Postgres 15→17, deprecations |
+| `workflow.json` | Fix SyntaxError en Parse GitHub Issues |
 
 ## Limitaciones
 
@@ -81,3 +114,6 @@ n8n re-registra todos los webhooks activos limpiamente en su proceso de startup.
   significa que hay una ventana de ~1s donde los webhooks no existen en la tabla.
 - Si n8n cambia el nombre de la tabla `webhook_entity` en una versión futura,
   el script fallará silenciosamente (log de warning, n8n arranca igual).
+- Quedan warnings inofensivos en los logs de n8n que no requieren acción:
+  `ExperimentalWarning: localStorage`, `DEP0060`, Python task runner missing,
+  `N8N_RUNNERS_MODE` / `N8N_COMPRESSION` / `N8N_UNVERIFIED_PACKAGES` defaults.
