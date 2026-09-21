@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -12,6 +12,7 @@ from database import get_db
 from models import KeywordMonitor
 from schemas.auth import TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
+from services.activity_audit import record_user_activity
 
 
 router = APIRouter(prefix="/api/keywords", tags=["keywords"])
@@ -38,6 +39,7 @@ def get_keywords(
 )
 def create_keyword(
     request: KeywordCreate,
+    http_request: Request = None,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("keywords", "write")),
 ):
@@ -45,6 +47,16 @@ def create_keyword(
 
     db.add(keyword)
     try:
+        db.flush()
+        record_user_activity(
+            db,
+            username=current_user.username or "unknown",
+            user_role=getattr(current_user, "role", None),
+            activity_type="create_keyword",
+            activity_description="Created keyword monitor",
+            request=http_request,
+            activity_data={"keyword_id": keyword.keyword_id},
+        )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -82,6 +94,7 @@ def get_keyword(
 def update_keyword(
     keyword_id: int,
     request: KeywordUpdate,
+    http_request: Request = None,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("keywords", "write")),
 ):
@@ -96,10 +109,22 @@ def update_keyword(
             detail="Keyword not found",
         )
 
-    for field, value in request.model_dump(exclude_unset=True).items():
+    update_data = request.model_dump(exclude_unset=True)
+    changed_fields = sorted(update_data.keys())
+    for field, value in update_data.items():
         setattr(keyword, field, value)
 
     try:
+        db.flush()
+        record_user_activity(
+            db,
+            username=current_user.username or "unknown",
+            user_role=getattr(current_user, "role", None),
+            activity_type="update_keyword",
+            activity_description=f"Updated keyword #{keyword_id}",
+            request=http_request,
+            activity_data={"keyword_id": keyword_id, "changed_fields": changed_fields},
+        )
         db.commit()
     except IntegrityError:
         db.rollback()
@@ -116,6 +141,7 @@ def update_keyword(
 @router.delete("/{keyword_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_keyword(
     keyword_id: int,
+    request: Request = None,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("keywords", "delete")),
 ):
@@ -131,5 +157,14 @@ def delete_keyword(
         )
 
     db.delete(keyword)
+    record_user_activity(
+        db,
+        username=current_user.username or "unknown",
+        user_role=getattr(current_user, "role", None),
+        activity_type="delete_keyword",
+        activity_description=f"Deleted keyword #{keyword_id}",
+        request=request,
+        activity_data={"keyword_id": keyword_id},
+    )
     db.commit()
     logger.info("Keyword deleted: id=%s by %s", keyword_id, current_user.username)

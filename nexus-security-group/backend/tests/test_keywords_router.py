@@ -16,6 +16,7 @@ sys.modules.setdefault("auth", auth_stub)
 from main import app
 from auth import get_current_user, require_permission
 from database import get_db
+from models import UserActivity
 from routers.keywords import (
     create_keyword,
     delete_keyword,
@@ -54,6 +55,13 @@ class FakeDb:
         if self.commit_exception is not None:
             raise self.commit_exception
         self.committed = True
+
+    def flush(self):
+        if self.commit_exception is not None:
+            raise self.commit_exception
+        for obj in self.added:
+            if getattr(obj, "keyword_id", None) is None:
+                obj.keyword_id = 101
 
     def rollback(self):
         self.rolled_back = True
@@ -161,7 +169,11 @@ def test_create_keyword_adds_commits_refreshes_and_returns_response_valid_object
     result = create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
     response = KeywordResponse.model_validate(result)
 
-    assert fake_db.added == [result]
+    assert fake_db.added[0] == result
+    assert isinstance(fake_db.added[1], UserActivity)
+    assert fake_db.added[1].activity_type == "create_keyword"
+    assert fake_db.added[1].username == "test-user"
+    assert fake_db.added[1].activity_data == {"keyword_id": 101}
     assert fake_db.committed is True
     assert fake_db.refreshed == [result]
     assert result.keyword_text == "credential leak"
@@ -185,6 +197,19 @@ def test_create_keyword_returns_409_for_duplicate_keyword():
     assert exc_info.value.detail == "Keyword already exists"
     assert fake_db.rolled_back is True
     assert fake_db.refreshed == []
+
+
+def test_create_keyword_duplicate_does_not_audit_success():
+    fake_db = FakeDb(
+        FakeQuery(),
+        commit_exception=IntegrityError("insert", "params", Exception("duplicate")),
+    )
+    request = KeywordCreate(keyword_text="credential leak")
+
+    with pytest.raises(HTTPException):
+        create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
+
+    assert not any(isinstance(obj, UserActivity) for obj in fake_db.added)
 
 
 def test_get_keyword_returns_detail_by_keyword_id():
@@ -236,6 +261,13 @@ def test_update_keyword_changes_only_provided_fields_commits_and_refreshes():
     assert len(query.filter_args) == 1
     assert response.keyword_id == 42
     assert response.is_active is False
+    activity = fake_db.added[0]
+    assert activity.activity_type == "update_keyword"
+    assert activity.username == "test-user"
+    assert activity.activity_data == {
+        "keyword_id": 42,
+        "changed_fields": ["description", "is_active"],
+    }
 
 
 def test_update_keyword_returns_409_for_duplicate_keyword_text():
@@ -290,6 +322,10 @@ def test_delete_keyword_deletes_and_commits():
     assert fake_db.deleted == [keyword]
     assert fake_db.committed is True
     assert len(query.filter_args) == 1
+    activity = fake_db.added[0]
+    assert activity.activity_type == "delete_keyword"
+    assert activity.username == "test-user"
+    assert activity.activity_data == {"keyword_id": 42}
 
 
 def test_delete_keyword_raises_404_when_missing_and_does_not_commit():

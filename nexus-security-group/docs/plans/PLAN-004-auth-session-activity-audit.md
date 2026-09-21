@@ -36,7 +36,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | DONE |
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | DONE |
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | DONE |
-| M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | PENDING |
+| M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | DONE |
 | M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | PENDING |
 | M08 | MEDIUM | Docs + Tests | Matriz final evento → endpoint → actividad → tests | PENDING |
 
@@ -387,7 +387,7 @@ feat(api): audit authentication activity
 
 **Prioridad:** HIGH  
 **Área:** Backend Domain Actions  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -432,6 +432,29 @@ Que `activity_count` suba con acciones reales del sistema, no con datos artifici
 ```txt
 feat(api): audit critical user actions
 ```
+
+### Resultado
+
+- `PATCH /api/alerts/{alert_id}/acknowledge` registra `acknowledge_alert` en la misma transacción que el acknowledge exitoso, con `related_alert_id` y metadata mínima (`alert_id`).
+- `POST /api/keywords`, `PATCH /api/keywords/{keyword_id}` y `DELETE /api/keywords/{keyword_id}` registran `create_keyword`, `update_keyword` y `delete_keyword` sólo en rutas exitosas. La metadata evita volcar el texto/description de la keyword y usa `keyword_id` más `changed_fields` cuando aplica.
+- `POST /api/users`, `PATCH /api/users/{user_id}` y `DELETE /api/users/{user_id}` registran `create_user`, `update_user` y `deactivate_user`. Los cambios de usuario auditan usuario objetivo y campos modificados; no guardan passwords, hashes, JWTs ni tokens.
+- Automation/n8n: existe `POST /api/n8n/webhook/{webhook_id}` como endpoint backend de ejecución/proxy manual de workflows. Se audita `execute_workflow` sólo cuando n8n responde con status `< 400`; errores de transporte o respuestas `4xx/5xx` no generan evento de éxito. El `webhook_id` no se persiste raw en descripción ni metadata: se registra sólo un `webhook_ref` no reversible. La auditoría n8n es best-effort: si falla el commit/rollback del evento de actividad, se loggea warning y no se rompe la respuesta exitosa del workflow.
+
+### Archivos modificados
+
+- `backend/routers/alerts.py`
+- `backend/routers/keywords.py`
+- `backend/routers/users.py`
+- `backend/routers/n8n.py`
+- `backend/tests/test_alerts_router.py`
+- `backend/tests/test_keywords_router.py`
+- `backend/tests/test_users_router.py`
+- `backend/tests/test_n8n.py`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `python -m pytest tests/test_alerts_router.py tests/test_keywords_router.py tests/test_users_router.py tests/test_n8n.py` desde `backend/` → PASS, 71 tests.
 
 ---
 

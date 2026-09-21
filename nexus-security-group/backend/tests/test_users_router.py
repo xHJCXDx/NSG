@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from auth import get_current_user, hash_password, require_permission
 from database import get_db
 from main import app
+from models import UserActivity
 from routers.users import create_user, delete_user, list_users, router, update_user
 from schemas.auth import TokenData
 from schemas.user import UserCreate, UserResponse, UserUpdate
@@ -69,6 +70,13 @@ class FakeDb:
     def rollback(self):
         self.rolled_back = True
 
+    def flush(self):
+        if self.commit_exception is not None:
+            raise self.commit_exception
+        for obj in self.added:
+            if getattr(obj, "user_id", None) is None:
+                obj.user_id = 101
+
     def refresh(self, obj):
         self.refreshed.append(obj)
         obj.user_id = 101
@@ -129,7 +137,19 @@ def test_admin_creates_user_hashes_password_and_response_has_no_secret():
     result = create_user(request=request, db=fake_db, current_user=admin)
     response = UserResponse.model_validate(result)
 
-    assert fake_db.added == [result]
+    assert fake_db.added[0] == result
+    assert isinstance(fake_db.added[1], UserActivity)
+    assert fake_db.added[1].activity_type == "create_user"
+    assert fake_db.added[1].username == "root"
+    assert fake_db.added[1].user_role == "admin"
+    assert fake_db.added[1].activity_data == {
+        "target_user_id": 101,
+        "target_username": "analyst1",
+        "target_role": "analyst",
+        "target_is_active": True,
+    }
+    assert "plain-secret" not in str(fake_db.added[1].activity_data)
+    assert "password" not in str(fake_db.added[1].activity_data)
     assert fake_db.committed is True
     assert fake_db.refreshed == [result]
     assert result.username == "analyst1"
@@ -190,6 +210,7 @@ def test_duplicate_username_returns_409_and_does_not_commit():
 
     assert exc_info.value.status_code == 409
     assert fake_db.rolled_back is True
+    assert not any(isinstance(obj, UserActivity) for obj in fake_db.added)
 
 
 def test_create_user_rolls_back_integrity_error_and_returns_409():
@@ -252,6 +273,16 @@ def test_admin_patches_user_role_active_and_password():
     assert user.password_hash != "new-password"
     assert fake_db.committed is True
     assert fake_db.refreshed == [user]
+    activity = fake_db.added[0]
+    assert activity.activity_type == "update_user"
+    assert activity.username == "root"
+    assert activity.user_role == "admin"
+    assert activity.activity_data == {
+        "target_user_id": 1,
+        "target_username": "analyst1",
+        "changed_fields": ["is_active", "password", "role"],
+    }
+    assert "new-password" not in str(activity.activity_data)
 
 
 def test_patch_missing_user_returns_404():
@@ -337,6 +368,7 @@ def test_delete_inactive_user_is_idempotent_noop():
     assert target.is_active is False
     assert fake_db.committed is False
     assert fake_db.deleted == []
+    assert fake_db.added == []
 
 
 def test_valid_delete_soft_deactivates_and_does_not_physically_remove_user():
@@ -359,6 +391,15 @@ def test_valid_delete_soft_deactivates_and_does_not_physically_remove_user():
     assert fake_db.committed is True
     assert fake_db.refreshed == [target]
     assert fake_db.deleted == []
+    activity = fake_db.added[0]
+    assert activity.activity_type == "deactivate_user"
+    assert activity.username == "root"
+    assert activity.user_role == "admin"
+    assert activity.activity_data == {
+        "target_user_id": 2,
+        "target_username": "bob",
+        "target_role": "analyst",
+    }
 
 
 def test_user_routes_reject_invalid_create_and_empty_patch_payloads():

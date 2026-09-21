@@ -22,6 +22,7 @@ from routers.alerts import (
     router,
 )
 from database import get_db
+from models import UserActivity
 from schemas.alert import AlertResponse
 from schemas.auth import TokenData
 from tests.conftest import FakeDb, FakeQuery
@@ -156,6 +157,12 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     assert response.alert_id == 42
     assert response.acknowledged is True
     assert response.acknowledged_by == "test-user"
+    activity = fake_db.added[0]
+    assert isinstance(activity, UserActivity)
+    assert activity.activity_type == "acknowledge_alert"
+    assert activity.username == "test-user"
+    assert activity.related_alert_id == 42
+    assert activity.activity_data == {"alert_id": 42}
 
 
 def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit():
@@ -173,6 +180,7 @@ def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit(
     assert exc_info.value.detail == "Alert not found"
     assert fake_db.committed is False
     assert fake_db.refreshed == []
+    assert fake_db.added == []
 
 
 def test_acknowledge_alert_sets_timezone_aware_acknowledged_at():

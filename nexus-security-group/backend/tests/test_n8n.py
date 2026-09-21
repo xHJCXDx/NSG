@@ -9,11 +9,35 @@ from httpx import AsyncClient, ASGITransport, ConnectError, Response
 import pytest
 
 from auth import get_current_user
-from routers.n8n import router
+from database import get_db
+from models import UserActivity
+from routers.n8n import _safe_webhook_ref, router
 from schemas.auth import TokenData
 
 
 N8N_PATH = Path(__file__).parent.parent / "routers" / "n8n.py"
+
+
+class FakeDb:
+    def __init__(self):
+        self.added = []
+        self.committed = False
+        self.rolled_back = False
+
+    def add(self, obj):
+        self.added.append(obj)
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        self.rolled_back = True
+
+
+class CommitFailingDb(FakeDb):
+    def commit(self):
+        self.committed = True
+        raise RuntimeError("audit commit failed")
 
 
 @pytest.fixture(autouse=True)
@@ -56,6 +80,8 @@ async def test_proxy_webhook_uses_settings_url():
         username="analyst1", role="analyst", auth_source="database",
         permissions=["workflows:execute"],
     )
+    fake_db = FakeDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
 
     # Patch the AsyncClient that the n8n router creates internally.
     # We patch the __aenter__ return value so context-manager usage is intercepted.
@@ -90,6 +116,20 @@ async def test_proxy_webhook_uses_settings_url():
     assert mock_client_instance.post.call_args.kwargs["headers"] == {
         "Content-Type": "application/vnd.nsg+json"
     }
+    webhook_ref = _safe_webhook_ref("test-id")
+    activity = fake_db.added[0]
+    assert isinstance(activity, UserActivity)
+    assert activity.activity_type == "execute_workflow"
+    assert activity.username == "analyst1"
+    assert activity.user_role == "analyst"
+    assert activity.activity_description == f"Executed workflow webhook ref={webhook_ref}"
+    assert "test-id" not in activity.activity_description
+    assert activity.activity_data == {
+        "webhook_ref": webhook_ref,
+        "response_status_code": 200,
+    }
+    assert "test-id" not in str(activity.activity_data)
+    assert fake_db.committed is True
 
 
 def test_proxy_webhook_declares_auth_dependency_and_passthrough_contract():
@@ -122,6 +162,8 @@ async def test_proxy_webhook_propagates_workflow_error_status_and_payload():
         username="analyst1", role="analyst", auth_source="database",
         permissions=["workflows:execute"],
     )
+    fake_db = FakeDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(
@@ -141,6 +183,8 @@ async def test_proxy_webhook_propagates_workflow_error_status_and_payload():
 
     assert response.status_code == 400
     assert response.json() == {"error": "missing target"}
+    assert fake_db.added == []
+    assert fake_db.committed is False
 
 
 @pytest.mark.anyio
@@ -151,6 +195,7 @@ async def test_proxy_webhook_normalizes_transport_errors_as_bad_gateway():
         username="analyst1", role="analyst", auth_source="database",
         permissions=["workflows:execute"],
     )
+    app.dependency_overrides[get_db] = lambda: FakeDb()
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(side_effect=ConnectError("connection refused"))
@@ -174,6 +219,8 @@ async def test_proxy_webhook_passes_through_non_json_workflow_response():
         username="analyst1", role="analyst", auth_source="database",
         permissions=["workflows:execute"],
     )
+    fake_db = FakeDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
 
     mock_client_instance = AsyncMock()
     mock_client_instance.post = AsyncMock(
@@ -193,6 +240,48 @@ async def test_proxy_webhook_passes_through_non_json_workflow_response():
 
     assert response.status_code == 202
     assert response.text == "accepted"
+    webhook_ref = _safe_webhook_ref("test-id")
+    assert fake_db.added[0].activity_type == "execute_workflow"
+    assert fake_db.added[0].activity_description == f"Executed workflow webhook ref={webhook_ref}"
+    assert "test-id" not in fake_db.added[0].activity_description
+    assert fake_db.added[0].activity_data == {
+        "webhook_ref": webhook_ref,
+        "response_status_code": 202,
+    }
+    assert "test-id" not in str(fake_db.added[0].activity_data)
+
+
+@pytest.mark.anyio
+async def test_proxy_webhook_audit_commit_failure_does_not_break_success_response():
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
+    fake_db = CommitFailingDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post = AsyncMock(
+        return_value=Response(
+            200,
+            json={"status": "ok"},
+            headers={"content-type": "application/json"},
+        )
+    )
+    mock_async_client = MagicMock()
+    mock_async_client.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_async_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("routers.n8n.httpx.AsyncClient", return_value=mock_async_client):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/api/n8n/webhook/test-id", json={"trigger": "scan"})
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert fake_db.committed is True
+    assert fake_db.rolled_back is True
 
 
 def test_proxy_webhook_rejects_user_without_workflows_execute_permission():

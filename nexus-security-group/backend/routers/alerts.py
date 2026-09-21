@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from auth import require_permission
@@ -12,6 +12,7 @@ from database import get_db
 from models import Alert
 from schemas.alert import AlertDeliveryStatus, AlertResponse
 from schemas.auth import TokenData
+from services.activity_audit import record_user_activity
 
 
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
@@ -55,6 +56,7 @@ def get_alert(
 @router.patch("/{alert_id}/acknowledge", response_model=AlertResponse)
 def acknowledge_alert(
     alert_id: int,
+    request: Request = None,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("alerts", "write")),
 ):
@@ -68,6 +70,16 @@ def acknowledge_alert(
     alert.acknowledged = True
     alert.acknowledged_by = current_user.username
     alert.acknowledged_at = datetime.now(timezone.utc)
+    record_user_activity(
+        db,
+        username=current_user.username or "unknown",
+        user_role=getattr(current_user, "role", None),
+        activity_type="acknowledge_alert",
+        activity_description=f"Acknowledged alert #{alert_id}",
+        related_alert_id=alert_id,
+        request=request,
+        activity_data={"alert_id": alert_id},
+    )
 
     db.commit()
     db.refresh(alert)
