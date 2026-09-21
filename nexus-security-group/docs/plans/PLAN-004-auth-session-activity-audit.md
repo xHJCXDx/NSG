@@ -33,7 +33,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 |---|---|---|---|---|
 | M01 | HIGH | Frontend Auth | Sincronización multi-pestaña de login/logout/token | DONE |
 | M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | DONE |
-| M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | PENDING |
+| M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | DONE |
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | PENDING |
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | PENDING |
 | M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | PENDING |
@@ -178,7 +178,7 @@ fix(frontend): clear auth session on unauthorized responses
 
 **Prioridad:** MEDIUM  
 **Área:** Frontend UX  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -213,6 +213,31 @@ Mostrar errores correctos para credenciales inválidas, backend caído y pérdid
 ```txt
 fix(frontend): clarify login network and auth errors
 ```
+
+### Resultado
+
+- `loginWithCredentials` ahora clasifica los fallos de login con `LoginError` y códigos estables:
+  - `401` → credenciales inválidas.
+  - `429` → demasiados intentos.
+  - `503`/`5xx` → servicio de autenticación no disponible.
+  - rechazo de `fetch`/`TypeError` → posible problema de conexión.
+- `LoginView` mantiene la validación frontend antes del request y traduce los códigos a mensajes i18n.
+- Se agregaron mensajes EN/ES para credenciales inválidas, rate limit, servicio no disponible, red y fallback genérico.
+- Tests cubren éxito, validaciones locales y los errores principales de login.
+
+### Archivos modificados
+
+- `frontend/src/features/auth/api.ts`
+- `frontend/src/features/auth/api.test.ts`
+- `frontend/src/features/auth/LoginView.tsx`
+- `frontend/src/features/auth/LoginView.test.tsx`
+- `frontend/src/shared/i18n/translations.ts`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `npm test -- src/features/auth/api.test.ts src/features/auth/LoginView.test.tsx` desde `frontend/` → PASS, 2 files / 14 tests.
+- `npm run typecheck` desde `frontend/` → PASS.
 
 ---
 

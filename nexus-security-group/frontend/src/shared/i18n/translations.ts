@@ -31,6 +31,13 @@ export const translations = {
       signingIn: 'Signing in...',
       signIn: 'Sign In',
       loginFailed: 'Login failed',
+      errors: {
+        invalid_credentials: 'Invalid username or password.',
+        rate_limited: 'Too many login attempts. Please wait a moment and try again.',
+        service_unavailable: 'Authentication service is unavailable. Please try again later.',
+        network: 'Unable to reach the server. Check your connection and try again.',
+        unknown: 'Login failed. Please try again.',
+      },
       validation: {
         usernameRequired: 'Username is required',
         passwordRequired: 'Password is required',
@@ -608,6 +615,13 @@ export const translations = {
       signingIn: 'Iniciando sesión...',
       signIn: 'Iniciar sesión',
       loginFailed: 'Error al iniciar sesión',
+      errors: {
+        invalid_credentials: 'Usuario o contraseña inválidos.',
+        rate_limited: 'Demasiados intentos de inicio de sesión. Esperá un momento e intentá de nuevo.',
+        service_unavailable: 'El servicio de autenticación no está disponible. Intentá de nuevo más tarde.',
+        network: 'No se pudo contactar al servidor. Revisá tu conexión e intentá de nuevo.',
+        unknown: 'No se pudo iniciar sesión. Intentá de nuevo.',
+      },
       validation: {
         usernameRequired: 'El nombre de usuario es obligatorio',
         passwordRequired: 'La contraseña es obligatoria',

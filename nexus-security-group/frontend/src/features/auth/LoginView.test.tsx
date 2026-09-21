@@ -119,9 +119,65 @@ describe('LoginView', () => {
     await user.type(screen.getByLabelText('Password'), 'wrong-password');
     await user.click(screen.getByRole('button', { name: 'Sign In' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid username or password.');
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
     expect(screen.queryByText('Dashboard route')).not.toBeInTheDocument();
+    expect(getToken()).toBeNull();
+  });
+
+  it('displays a rate-limit message when login has too many attempts', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 429,
+      json: async () => ({ detail: 'Too many attempts' }),
+    } as Response);
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), 'admin');
+    await user.type(screen.getByLabelText('Password'), 'wrong-password');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Too many login attempts. Please wait a moment and try again.',
+    );
+    expect(getToken()).toBeNull();
+  });
+
+  it('displays a service-unavailable message when auth backend fails', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => ({ detail: 'Service unavailable' }),
+    } as Response);
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), 'admin');
+    await user.type(screen.getByLabelText('Password'), 'secure-password');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Authentication service is unavailable. Please try again later.',
+    );
+    expect(getToken()).toBeNull();
+  });
+
+  it('displays a network message when the login request cannot reach the server', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+    renderLoginRoute();
+
+    await user.type(screen.getByLabelText('Username'), 'admin');
+    await user.type(screen.getByLabelText('Password'), 'secure-password');
+    await user.click(screen.getByRole('button', { name: 'Sign In' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to reach the server. Check your connection and try again.',
+    );
     expect(getToken()).toBeNull();
   });
 });

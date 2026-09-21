@@ -1,7 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Loader2 } from 'lucide-react';
-import { loginWithCredentials } from './api';
+import { LoginError, loginWithCredentials } from './api';
 import { useAuth } from './AuthContext';
 import { useTranslation } from '../../shared/i18n/translations';
 
@@ -35,7 +35,11 @@ export function LoginView() {
       login(accessToken);
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.auth.loginFailed);
+      if (err instanceof LoginError) {
+        setError(t.auth.errors[err.code]);
+        return;
+      }
+      setError(t.auth.loginFailed);
     } finally {
       setLoading(false);
     }
