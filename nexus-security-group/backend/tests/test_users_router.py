@@ -9,9 +9,9 @@ from auth import get_current_user, hash_password, require_permission
 from database import get_db
 from main import app
 from models import UserActivity
-from routers.users import create_user, delete_user, list_users, router, update_user
+from routers.users import change_own_password, create_user, delete_user, list_users, router, update_user
 from schemas.auth import TokenData
-from schemas.user import UserCreate, UserResponse, UserUpdate
+from schemas.user import ChangePasswordRequest, UserCreate, UserResponse, UserUpdate
 
 
 class FakeQuery:
@@ -458,3 +458,83 @@ def test_users_read_allows_user_with_users_read_permission():
 
     response = TestClient(authz_app).get("/api/users")
     assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# change_own_password
+# ---------------------------------------------------------------------------
+
+def _make_user_with_password(plain: str):
+    now = datetime(2026, 7, 10, tzinfo=timezone.utc)
+    return type("User", (), {
+        "user_id": 7,
+        "username": "bob",
+        "password_hash": hash_password(plain),
+        "role": "analyst",
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now,
+    })()
+
+
+def test_change_own_password_correct_current_password_returns_204_and_updates_hash():
+    user = _make_user_with_password("old-password1")
+    fake_db = FakeDb(first_result=user)
+    current_user = TokenData(username="bob", user_id=7, role="analyst", auth_source="database")
+
+    change_own_password(
+        request=ChangePasswordRequest(current_password="old-password1", new_password="new-password1"),
+        db=fake_db,
+        current_user=current_user,
+    )
+
+    from auth import verify_password as vp
+    assert vp("new-password1", user.password_hash)
+    assert not vp("old-password1", user.password_hash)
+    assert fake_db.committed is True
+    activity = fake_db.added[0]
+    assert activity.activity_type == "change_own_password"
+    assert activity.username == "bob"
+
+
+def test_change_own_password_wrong_current_password_returns_401():
+    user = _make_user_with_password("real-password1")
+    fake_db = FakeDb(first_result=user)
+    current_user = TokenData(username="bob", user_id=7, role="analyst", auth_source="database")
+
+    with pytest.raises(HTTPException) as exc_info:
+        change_own_password(
+            request=ChangePasswordRequest(current_password="wrong-password", new_password="new-password1"),
+            db=fake_db,
+            current_user=current_user,
+        )
+
+    assert exc_info.value.status_code == 401
+    assert "incorrect" in exc_info.value.detail
+    assert fake_db.committed is False
+
+
+def test_change_own_password_new_password_too_short_returns_422():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="bob", user_id=7, role="analyst", auth_source="database"
+    )
+    authz_app.dependency_overrides[get_db] = lambda: object()
+
+    response = TestClient(authz_app).patch(
+        "/api/users/me/password",
+        json={"current_password": "old-password1", "new_password": "short"},
+    )
+
+    assert response.status_code == 422
+
+
+def test_change_own_password_unauthenticated_returns_401():
+    response = TestClient(app).patch(
+        "/api/users/me/password",
+        json={"current_password": "old-password1", "new_password": "new-password1"},
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"

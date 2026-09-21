@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from auth import hash_password, require_permission
+from auth import get_current_user, hash_password, require_permission, verify_password
 
 logger = logging.getLogger("nsg.users")
 from database import get_db
 from models import SystemUser
 from schemas.auth import TokenData
-from schemas.user import UserCreate, UserResponse, UserUpdate
+from schemas.user import ChangePasswordRequest, UserCreate, UserResponse, UserUpdate
 from services.activity_audit import record_user_activity
 
 
@@ -63,6 +63,34 @@ def list_users(
     current_user: TokenData = Depends(require_permission("users", "read")),
 ):
     return db.query(SystemUser).order_by(SystemUser.username.asc()).all()
+
+
+@router.patch("/me/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_own_password(
+    request: ChangePasswordRequest,
+    http_request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    user = db.query(SystemUser).filter(SystemUser.user_id == current_user.user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if not verify_password(request.current_password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
+
+    user.password_hash = hash_password(request.new_password)
+    record_user_activity(
+        db,
+        username=current_user.username or "unknown",
+        user_role=getattr(current_user, "role", None),
+        activity_type="change_own_password",
+        activity_description="Changed own password",
+        request=http_request,
+        activity_data={"user_id": current_user.user_id},
+    )
+    db.commit()
+    logger.info("Password changed: user_id=%s", current_user.user_id)
 
 
 @router.patch("/{user_id}", response_model=UserResponse)

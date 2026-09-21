@@ -16,7 +16,9 @@ PUBLIC_ROUTE_EXCEPTIONS = {
     ("/api/system/info", "GET"): "Static platform metadata: intentionally public.",
 }
 
-AUTHENTICATED_PRIVATE_ROUTES = set()
+AUTHENTICATED_PRIVATE_ROUTES = {
+    ("/api/users/me/password", "PATCH"),
+}
 
 PERMISSION_PROTECTED_ROUTES = {
     ("/api/alerts", "GET"): "alerts:read",

@@ -35,6 +35,7 @@ EXPECTED_ERROR_STATUS_BY_FILE = {
     "routers/threats.py": {"status.HTTP_404_NOT_FOUND"},
     "routers/users.py": {
         "status.HTTP_400_BAD_REQUEST",
+        "status.HTTP_401_UNAUTHORIZED",
         "status.HTTP_404_NOT_FOUND",
         "status.HTTP_409_CONFLICT",
     },
