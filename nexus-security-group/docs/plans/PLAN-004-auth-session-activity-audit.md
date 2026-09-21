@@ -38,7 +38,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | DONE |
 | M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | DONE |
 | M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | DONE |
-| M08 | MEDIUM | Docs + Tests | Matriz final evento → endpoint → actividad → tests | PENDING |
+| M08 | MEDIUM | Docs + Tests | Matriz final evento → endpoint → actividad → tests | DONE |
 
 ---
 
@@ -514,7 +514,7 @@ test(api): verify dashboard activity audit counts
 
 **Prioridad:** MEDIUM  
 **Área:** Docs + Tests  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -526,10 +526,25 @@ Agregar tabla final:
 
 | Evento | Endpoint/UI | `activity_type` | Test |
 |---|---|---|---|
-| Login exitoso | `/api/auth/login` | `login_success` | pendiente |
-| Login fallido | `/api/auth/login` | `login_failed` | pendiente |
-| Acknowledge alerta | `/api/alerts/{id}/acknowledge` | `acknowledge_alert` | pendiente |
-| Desactivar usuario | `/api/users/{id}` | `deactivate_user` | pendiente |
+| Login exitoso bootstrap | `POST /api/auth/login` | `login_success` | `backend/tests/test_auth.py::test_login_success` |
+| Login exitoso DB user | `POST /api/auth/login` | `login_success` | `backend/tests/test_auth.py::test_login_db_user_success` |
+| Login fallido por usuario inactivo | `POST /api/auth/login` | `login_failed` | `backend/tests/test_auth.py::test_login_inactive_db_user_returns_401` |
+| Login fallido por usuario inexistente | `POST /api/auth/login` | `login_failed` | `backend/tests/test_auth.py::test_login_nonexistent_db_user_audits_failed_login_without_secret_exposure` |
+| Login fallido por password incorrecto | `POST /api/auth/login` | `login_failed` | `backend/tests/test_auth.py::test_login_wrong_password` |
+| Logout autenticado | `POST /api/auth/logout` | `logout` | `backend/tests/test_auth.py::test_logout_with_valid_token_audits_user_without_exposing_token` |
+| Logout sin token | `POST /api/auth/logout` | _no audita_ | `backend/tests/test_auth.py::test_logout_without_token_preserves_ack_and_skips_audit` |
+| Acknowledge alerta | `PATCH /api/alerts/{alert_id}/acknowledge` | `acknowledge_alert` | `backend/tests/test_alerts_router.py::test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response` |
+| Crear keyword | `POST /api/keywords` | `create_keyword` | `backend/tests/test_keywords_router.py::test_create_keyword_adds_commits_refreshes_and_returns_response_valid_object` |
+| Editar keyword | `PATCH /api/keywords/{keyword_id}` | `update_keyword` | `backend/tests/test_keywords_router.py::test_update_keyword_changes_only_provided_fields_commits_and_refreshes` |
+| Borrar keyword | `DELETE /api/keywords/{keyword_id}` | `delete_keyword` | `backend/tests/test_keywords_router.py::test_delete_keyword_deletes_and_commits` |
+| Crear usuario | `POST /api/users` | `create_user` | `backend/tests/test_users_router.py::test_admin_creates_user_hashes_password_and_response_has_no_secret` |
+| Editar usuario | `PATCH /api/users/{user_id}` | `update_user` | `backend/tests/test_users_router.py::test_admin_patches_user_role_active_and_password` |
+| Desactivar usuario | `DELETE /api/users/{user_id}` | `deactivate_user` | `backend/tests/test_users_router.py::test_valid_delete_soft_deactivates_and_does_not_physically_remove_user` |
+| Ejecutar workflow n8n JSON | `POST /api/n8n/webhook/{webhook_id}` | `execute_workflow` | `backend/tests/test_n8n.py::test_proxy_webhook_uses_settings_url` |
+| Ejecutar workflow n8n no JSON | `POST /api/n8n/webhook/{webhook_id}` | `execute_workflow` | `backend/tests/test_n8n.py::test_proxy_webhook_passes_through_non_json_workflow_response` |
+| Falla de auditoría n8n post-éxito | `POST /api/n8n/webhook/{webhook_id}` | `execute_workflow` best-effort | `backend/tests/test_n8n.py::test_proxy_webhook_audit_commit_failure_does_not_break_success_response` |
+| Dashboard cuenta actividad real | `GET /api/dashboard/summary` | `activity_count` | `backend/tests/test_dashboard_router.py::test_dashboard_summary_counts_helper_generated_user_activity_rows` |
+| Logs lista actividad real | `GET /api/activity` | lista `UserActivity` | `backend/tests/test_activity_router.py::test_get_activities_endpoint_returns_helper_generated_activity_with_logs_read_permission` |
 
 ### Criterios de aceptación
 
@@ -542,6 +557,21 @@ Agregar tabla final:
 ```txt
 docs: add auth session and activity audit matrix
 ```
+
+### Resultado
+
+- Se completó la matriz final evento → endpoint/UI → `activity_type` → test focalizado.
+- La matriz incluye eventos positivos, decisiones explícitas de no-auditoría (`logout` sin token) y salvaguardas de seguridad/transacción para n8n.
+- Se dejó documentado que dashboard/logs consumen eventos reales generados por el helper y que no se agregó paginación fake.
+
+### Archivos modificados
+
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- Verificación documental contra tests existentes de M05, M06 y M07.
+- No se ejecutaron tests nuevos: M08 no modifica código productivo ni tests.
 
 ---
 
