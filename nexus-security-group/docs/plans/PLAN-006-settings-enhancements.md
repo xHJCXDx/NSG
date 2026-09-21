@@ -1,6 +1,6 @@
 # PLAN-006: Mejoras de configuración en Settings
 
-**Estado:** PENDIENTE
+**Estado:** COMPLETADO
 **Prioridad:** MEDIUM
 **Origen:** Revisión post-cierre de PLANs 001–005 — funcionalidades de configuración faltantes.
 **Arquitectura de referencia:** `docs/SYSTEM-ARCHITECTURE.md`
@@ -26,11 +26,11 @@
 
 | # | Prioridad | Área | Descripción | Estado |
 |---|-----------|------|-------------|--------|
-| M01 | HIGH | Frontend + Backend | Perfil de usuario: cambiar contraseña propia | PENDIENTE |
-| M02 | MEDIUM | Frontend | Intervalo de polling del dashboard (configurable) | PENDIENTE |
-| M03 | MEDIUM | Frontend | Zona horaria y formato de fecha | PENDIENTE |
+| M01 | ✅ DONE | Frontend + Backend | Perfil de usuario: cambiar contraseña propia | DONE |
+| M02 | ✅ DONE | Frontend | Intervalo de polling del dashboard (configurable) | DONE |
+| M03 | ✅ DONE | Frontend | Zona horaria y formato de fecha | DONE |
 | M04 | ✅ DONE | Frontend + Backend | About: versión del sistema y cumplimiento normativo | DONE |
-| M05 | LOW | Frontend | Preferencias de notificaciones (toggle email/slack) | PENDIENTE |
+| M05 | ⏭️ SKIP | Frontend | Preferencias de notificaciones (toggle email/slack) | DESCARTADO — n8n controla canales, toggles sin efecto real serían engañosos |
 
 ---
 
@@ -38,7 +38,7 @@
 
 **Prioridad:** HIGH
 **Área:** Frontend + Backend
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -94,7 +94,7 @@ Body: { current_password: string, new_password: string }
 
 **Prioridad:** MEDIUM
 **Área:** Frontend
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -131,7 +131,7 @@ Ninguno — es configuración puramente frontend/localStorage.
 
 **Prioridad:** MEDIUM
 **Área:** Frontend
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -278,7 +278,7 @@ La tabla de cumplimiento normativo es estática en frontend (no cambia en runtim
 
 **Prioridad:** LOW
 **Área:** Frontend + Backend
-**Estado:** PENDIENTE
+**Estado:** DESCARTADO — n8n controla los canales de notificación; toggles sin efecto backend real serían engañosos.
 
 ### Problema
 
