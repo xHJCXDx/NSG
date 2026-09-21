@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { AlertsPage } from './AlertsPage';
@@ -35,9 +36,11 @@ const renderAlertsPage = (permissions = ['alerts:read', 'alerts:write']) => {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <LanguageProvider>
-        <AuthProvider>
-          <AlertsPage />
-        </AuthProvider>
+        <DateFormatProvider>
+          <AuthProvider>
+            <AlertsPage />
+          </AuthProvider>
+        </DateFormatProvider>
       </LanguageProvider>
     </QueryClientProvider>,
   );

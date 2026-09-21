@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { LogsPage } from './LogsPage';
@@ -49,9 +50,11 @@ const renderLogsPage = () => {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <LanguageProvider>
-        <AuthProvider>
-          <LogsPage />
-        </AuthProvider>
+        <DateFormatProvider>
+          <AuthProvider>
+            <LogsPage />
+          </AuthProvider>
+        </DateFormatProvider>
       </LanguageProvider>
     </QueryClientProvider>,
   );

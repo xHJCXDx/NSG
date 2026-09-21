@@ -5,9 +5,11 @@ import { KpiCard } from '../../../shared/components/KpiCard';
 import { useDashboardSummary } from '../hooks/useDashboardSummary';
 import { useTranslation } from '../../../shared/i18n/translations';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
+import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 
 export function Dashboard() {
   const t = useTranslation();
+  const { formatTime } = useDateFormat();
   const { data, isLoading, dataUpdatedAt } = useDashboardSummary();
   const { theme } = useTheme();
 
@@ -38,7 +40,7 @@ export function Dashboard() {
           <h1 className="text-3xl font-bold text-content-heading tracking-tight">{t.dashboard.title}</h1>
           {dataUpdatedAt > 0 && (
             <span className="text-xs text-content-muted">
-              {t.dashboard.lastUpdated}: {new Date(dataUpdatedAt).toLocaleTimeString()}
+              {t.dashboard.lastUpdated}: {formatTime(new Date(dataUpdatedAt).toISOString())}
             </span>
           )}
         </div>

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { AuthProvider } from '../../auth';
 import { UsersPage } from './UsersPage';
 
@@ -32,9 +33,11 @@ const renderUsersPage = (token = adminToken) => {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <LanguageProvider>
-        <AuthProvider>
-          <UsersPage />
-        </AuthProvider>
+        <DateFormatProvider>
+          <AuthProvider>
+            <UsersPage />
+          </AuthProvider>
+        </DateFormatProvider>
       </LanguageProvider>
     </QueryClientProvider>,
   );

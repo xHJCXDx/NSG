@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider } from '../../auth';
 import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { KeywordsPage } from './KeywordsPage';
 
@@ -37,9 +38,11 @@ const renderKeywordsPage = (permissions = ['keywords:read', 'keywords:write', 'k
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <LanguageProvider>
-        <AuthProvider>
-          <KeywordsPage />
-        </AuthProvider>
+        <DateFormatProvider>
+          <AuthProvider>
+            <KeywordsPage />
+          </AuthProvider>
+        </DateFormatProvider>
       </LanguageProvider>
     </QueryClientProvider>,
   );

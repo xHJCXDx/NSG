@@ -1,6 +1,7 @@
 import { Fragment, useState, type FormEvent } from 'react';
 import { KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 import { useAuth } from '../../auth';
 import { CreateKeywordError, DeleteKeywordError, UpdateKeywordError } from '../api';
 import { KEYWORD_DEFAULT_PRIORITY, KEYWORD_PRIORITY_MAX, KEYWORD_PRIORITY_MIN } from '../contract';
@@ -24,11 +25,6 @@ const initialFormState: KeywordFormState = {
   isActive: true,
 };
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) return '—';
-  return new Date(value).toLocaleString();
-};
-
 const normalizeOptional = (value: string) => {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
@@ -44,6 +40,7 @@ const buildPayload = (form: KeywordFormState): KeywordCreatePayload => ({
 
 export function KeywordsPage() {
   const t = useTranslation();
+  const { formatDateTime } = useDateFormat();
   const { hasPermission } = useAuth();
   const { data: keywords = [], isLoading, error: listError } = useKeywordsQuery();
   const createMutation = useCreateKeywordMutation();

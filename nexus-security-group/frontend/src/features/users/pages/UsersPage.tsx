@@ -11,6 +11,7 @@ import { useUpdateUserMutation } from '../hooks/useUpdateUserMutation';
 import { useUsersQuery } from '../hooks/useUsersQuery';
 import { PermissionMatrix } from '../components/PermissionMatrix';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 import type { RoleName, UpdateUserPayload, UserResponse, UserRole } from '../types';
 
 const ROLE_BADGE: Record<string, string> = {
@@ -20,6 +21,7 @@ const ROLE_BADGE: Record<string, string> = {
 
 export function UsersPage() {
   const t = useTranslation();
+  const { formatDate } = useDateFormat();
   const { claims, hasPermission } = useAuth();
   const { data: users = [], isLoading: isLoadingUsers, error: listError } = useUsersQuery();
   const createUserMutation = useCreateUserMutation();
@@ -404,7 +406,7 @@ export function UsersPage() {
                             </span>
                           </span>
                         </td>
-                        <td className="pl-4 py-3.5 text-content-muted">{new Date(user.created_at).toLocaleDateString()}</td>
+                        <td className="pl-4 py-3.5 text-content-muted">{formatDate(user.created_at)}</td>
                         {(canEditUsers || canDeleteUsers) && (
                           <td className="pl-4 py-3.5">
                             <div className="flex flex-wrap gap-2">

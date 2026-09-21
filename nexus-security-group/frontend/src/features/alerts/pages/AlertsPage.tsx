@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { BellRing, CheckCircle2 } from 'lucide-react';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 import { useAuth } from '../../auth';
 import { AcknowledgeAlertError } from '../api';
 import { ALERT_DELIVERY_STATUSES, ALERTS_DEFAULT_LIMIT } from '../contract';
@@ -9,11 +10,6 @@ import { useAlertsQuery } from '../hooks/useAlertsQuery';
 import type { AlertDeliveryStatus, AlertResponse } from '../types';
 
 type AcknowledgedFilter = 'all' | 'true' | 'false';
-
-const formatDateTime = (value?: string | null) => {
-  if (!value) return '—';
-  return new Date(value).toLocaleString();
-};
 
 const severityStyles: Record<string, string> = {
   info: 'border-sky-500/30 bg-sky-500/10 text-sky-300',
@@ -30,6 +26,7 @@ const formatChannels = (alert: AlertResponse) => {
 
 export function AlertsPage() {
   const t = useTranslation();
+  const { formatDateTime } = useDateFormat();
   const { hasPermission } = useAuth();
   const canWrite = hasPermission('alerts', 'write');
   const [deliveryStatus, setDeliveryStatus] = useState<AlertDeliveryStatus | 'all'>('all');

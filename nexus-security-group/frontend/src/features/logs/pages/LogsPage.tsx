@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ClipboardList, History } from 'lucide-react';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 import { EXECUTION_LOG_STATUSES, LOGS_DEFAULT_LIMIT, USER_ACTIVITY_DEFAULT_LIMIT } from '../contract';
 import { useExecutionLogsQuery } from '../hooks/useExecutionLogsQuery';
 import { useUserActivityQuery } from '../hooks/useUserActivityQuery';
@@ -8,7 +9,6 @@ import type { ExecutionLogStatus } from '../types';
 
 type ActiveTab = 'executions' | 'activity';
 
-const formatDateTime = (value?: string | null) => (value ? new Date(value).toLocaleString() : '—');
 const formatDuration = (value?: number | null) => (typeof value === 'number' ? `${value}s` : '—');
 const formatRelatedId = (label: string, value?: number | null) => (value ? `${label} #${value}` : null);
 
@@ -22,6 +22,7 @@ const statusStyles: Record<ExecutionLogStatus, string> = {
 
 export function LogsPage() {
   const t = useTranslation();
+  const { formatDateTime } = useDateFormat();
   const [activeTab, setActiveTab] = useState<ActiveTab>('executions');
   const [status, setStatus] = useState<ExecutionLogStatus | 'all'>('all');
   const [workflowName, setWorkflowName] = useState('');
