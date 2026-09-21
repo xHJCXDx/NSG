@@ -71,7 +71,7 @@ services:
       - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES=5000
     volumes:
       - n8n_data:/home/node/.n8n
-      - ./n8n-entrypoint.sh:/custom-entrypoint.sh:ro
+      - ./scripts/n8n-entrypoint.sh:/custom-entrypoint.sh:ro
     depends_on:
       postgres:
         condition: service_healthy

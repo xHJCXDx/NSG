@@ -103,7 +103,7 @@ Datos migrados y verificados:
 
 | Archivo | Cambio |
 |---------|--------|
-| `n8n-entrypoint.sh` | **Nuevo** — entrypoint custom para limpieza de webhooks |
+| `scripts/n8n-entrypoint.sh` | **Nuevo** — entrypoint custom para limpieza de webhooks |
 | `docker-compose.yml` | Entrypoint, env vars, Postgres 15→17, deprecations |
 | `workflow.json` | Fix SyntaxError en Parse GitHub Issues |
 
