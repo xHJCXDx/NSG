@@ -64,6 +64,11 @@ services:
       - N8N_PERSONALIZATION_ENABLED=false
       # Migrate binary storage path ahead of n8n v3 rename.
       - N8N_MIGRATE_FS_STORAGE_PATH=true
+      # Pin defaults that n8n warns will change in future versions.
+      - N8N_UNVERIFIED_PACKAGES_ENABLED=true
+      - N8N_RUNNERS_TASK_TIMEOUT=300
+      - N8N_COMPRESSION_NODE_MAX_DECOMPRESSED_SIZE_BYTES=2147483648
+      - N8N_COMPRESSION_NODE_MAX_ZIP_ENTRIES=5000
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n-entrypoint.sh:/custom-entrypoint.sh:ro
