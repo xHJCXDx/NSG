@@ -22,6 +22,7 @@ services:
   n8n:
     image: n8nio/n8n:2.39.7
     container_name: osint-n8n
+    entrypoint: ["/custom-entrypoint.sh"]
     dns:
       - 1.1.1.1
       - 8.8.8.8
@@ -56,8 +57,14 @@ services:
       - DB_POSTGRESDB_DATABASE=n8n_internal
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      # Disable n8n's internal user management — our backend handles auth
+      # separately. Prevents "user attempted to access workflow without
+      # permissions" errors caused by ownership mismatch on imported workflows.
+      - N8N_USER_MANAGEMENT_DISABLED=true
+      - N8N_PERSONALIZATION_ENABLED=false
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./n8n-entrypoint.sh:/custom-entrypoint.sh:ro
     depends_on:
       postgres:
         condition: service_healthy
