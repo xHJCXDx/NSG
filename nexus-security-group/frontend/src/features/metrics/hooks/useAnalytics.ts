@@ -67,11 +67,29 @@ export function useAnalytics(days = 30) {
 
   return {
     summary: summary.data,
+    summaryLoading: summary.isLoading,
+    summaryError: summary.error,
+
     mentionsOverTime: mentionsOverTime.data ?? [],
+    mentionsOverTimeLoading: mentionsOverTime.isLoading,
+    mentionsOverTimeError: mentionsOverTime.error,
+
     sentimentOverTime: sentimentOverTime.data ?? [],
+    sentimentOverTimeLoading: sentimentOverTime.isLoading,
+    sentimentOverTimeError: sentimentOverTime.error,
+
     threatsBySeverity: threatsBySeverity.data ?? [],
+    threatsBySeverityLoading: threatsBySeverity.isLoading,
+    threatsBySeverityError: threatsBySeverity.error,
+
     platformDistribution: platformDistribution.data ?? [],
+    platformDistributionLoading: platformDistribution.isLoading,
+    platformDistributionError: platformDistribution.error,
+
     threatCategories: threatCategories.data ?? [],
+    threatCategoriesLoading: threatCategories.isLoading,
+    threatCategoriesError: threatCategories.error,
+
     isLoading,
     error,
   };
