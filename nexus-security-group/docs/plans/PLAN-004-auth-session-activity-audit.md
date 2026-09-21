@@ -34,7 +34,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | M01 | HIGH | Frontend Auth | Sincronización multi-pestaña de login/logout/token | DONE |
 | M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | DONE |
 | M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | DONE |
-| M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | PENDING |
+| M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | DONE |
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | PENDING |
 | M06 | HIGH | Backend Domain Actions | Auditar acciones críticas existentes | PENDING |
 | M07 | MEDIUM | Dashboard/Logs | Verificar que `activity_count` y `/api/activity` reflejen eventos reales | PENDING |
@@ -245,7 +245,7 @@ fix(frontend): clarify login network and auth errors
 
 **Prioridad:** HIGH  
 **Área:** Backend Audit  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -301,6 +301,24 @@ La auditoría debe ser **best-effort** para este prototipo: si falla registrar a
 ```txt
 feat(api): add user activity audit service
 ```
+
+### Resultado
+
+- Se creó `services.activity_audit.record_user_activity` como helper best-effort para centralizar la creación de filas `UserActivity`.
+- El helper hace `db.add(...)` sin `commit`, manteniendo la transacción bajo control del caller.
+- Captura opcionalmente IP (`request.client.host`) y User-Agent cuando se recibe `request`, y permite pasar `session_id` porque el modelo ya lo soporta.
+- Ante fallos al registrar auditoría, loggea warning y no propaga la excepción al flujo principal.
+
+### Archivos modificados
+
+- `backend/services/__init__.py`
+- `backend/services/activity_audit.py`
+- `backend/tests/test_activity_audit_service.py`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `python -m pytest tests/test_activity_audit_service.py` desde `backend/` → PASS, 4 tests.
 
 ---
 
