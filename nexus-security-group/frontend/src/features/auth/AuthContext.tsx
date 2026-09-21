@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { decodeTokenClaims, type TokenClaims } from '../../shared/auth/decodeTokenClaims';
+import { AUTH_UNAUTHORIZED_EVENT } from '../../shared/api/apiClient';
 import { getToken, removeToken, setToken as saveToken, TOKEN_STORAGE_KEY } from '../../shared/storage/tokenStorage';
 
 interface AuthContextType {
@@ -60,6 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('storage', syncTokenFromStorage);
     return () => window.removeEventListener('storage', syncTokenFromStorage);
+  }, []);
+
+  useEffect(() => {
+    const clearUnauthorizedSession = () => {
+      removeToken();
+      setToken(null);
+    };
+
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, clearUnauthorizedSession);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, clearUnauthorizedSession);
   }, []);
 
   const login = (newToken: string) => {

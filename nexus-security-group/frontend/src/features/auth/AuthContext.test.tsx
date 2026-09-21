@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
+import { AUTH_UNAUTHORIZED_EVENT } from '../../shared/api/apiClient';
 import { getToken, removeToken, setToken, TOKEN_STORAGE_KEY } from '../../shared/storage/tokenStorage';
 import { AuthProvider, useAuth } from './AuthContext';
 
@@ -163,6 +164,27 @@ describe('AuthProvider behavior', () => {
       window.dispatchEvent(new StorageEvent('storage', { key: 'theme', newValue: 'light' }));
     });
 
+    expect(screen.getByText('status: anonymous')).toBeInTheDocument();
+    expect(screen.getByText('token: none')).toBeInTheDocument();
+  });
+
+  it('clears the stored token when an unauthorized session event is emitted', () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+    setToken(makeToken({ role: 'analyst', exp: futureExp }));
+
+    render(
+      <AuthProvider>
+        <AuthProbe />
+      </AuthProvider>,
+    );
+
+    expect(screen.getByText('status: authenticated')).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+    });
+
+    expect(getToken()).toBeNull();
     expect(screen.getByText('status: anonymous')).toBeInTheDocument();
     expect(screen.getByText('token: none')).toBeInTheDocument();
   });

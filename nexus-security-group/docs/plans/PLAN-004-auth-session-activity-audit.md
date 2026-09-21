@@ -32,7 +32,7 @@ Endurecer la sesión de usuario y hacer que el conteo de actividad represente ac
 | # | Prioridad | Área | Descripción | Estado |
 |---|---|---|---|---|
 | M01 | HIGH | Frontend Auth | Sincronización multi-pestaña de login/logout/token | DONE |
-| M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | PENDING |
+| M02 | HIGH | Frontend API | Manejo centralizado de `401` y sesión expirada | DONE |
 | M03 | MEDIUM | Frontend UX | Errores claros para login/backend offline/red | PENDING |
 | M04 | HIGH | Backend Audit | Helper/service `record_user_activity` | PENDING |
 | M05 | HIGH | Backend Auth | Auditar login exitoso/fallido y logout | PENDING |
@@ -117,7 +117,7 @@ fix(frontend): sync auth state across browser tabs
 
 **Prioridad:** HIGH  
 **Área:** Frontend API  
-**Estado:** PENDING
+**Estado:** DONE
 
 ### Objetivo
 
@@ -150,6 +150,27 @@ Si el backend rechaza el token, el frontend debe limpiar sesión de forma consis
 ```txt
 fix(frontend): clear auth session on unauthorized responses
 ```
+
+### Resultado
+
+- `authFetch` ahora detecta respuestas `401 Unauthorized` y emite el evento custom `nsg:auth:unauthorized`.
+- `AuthContext` escucha `nsg:auth:unauthorized`, elimina el token persistido y actualiza el estado local a sesión anónima.
+- El mecanismo queda desacoplado de React Router: la capa API no navega ni conoce rutas.
+- `403 Forbidden` no limpia la sesión, porque representa falta de permiso y no token inválido.
+- Errores de red/rechazos de `fetch` no limpian la sesión, porque conectividad caída no invalida credenciales.
+
+### Archivos modificados
+
+- `frontend/src/shared/api/apiClient.ts`
+- `frontend/src/shared/api/apiClient.test.ts`
+- `frontend/src/features/auth/AuthContext.tsx`
+- `frontend/src/features/auth/AuthContext.test.tsx`
+- `docs/plans/PLAN-004-auth-session-activity-audit.md`
+
+### Verificación
+
+- `npm test -- src/features/auth/AuthContext.test.tsx src/shared/api/apiClient.test.ts` desde `frontend/` → PASS, 2 files / 13 tests.
+- `npm run typecheck` desde `frontend/` → PASS.
 
 ---
 
