@@ -18,7 +18,7 @@ from auth import get_current_user, require_permission
 from database import get_db
 from routers.threats import get_threat, get_threats, review_threat, router
 from schemas.auth import TokenData
-from schemas.threat import ThreatDetail, ThreatListResponse, ThreatReviewRequest
+from schemas.threat import PaginatedThreatsResponse, ThreatDetail, ThreatListResponse, ThreatReviewRequest
 from tests.conftest import FakeDb, FakeQuery
 
 
@@ -83,68 +83,85 @@ def test_main_registers_api_threats_routes():
 def test_get_threats_lists_recent_detections_with_limit():
     threat = _threat_row()
     mention = _mention_row()
-    query = FakeQuery(all_result=[(threat, mention)])
-    fake_db = FakeDb(query)
+    # db.query() call order in get_threats:
+    #   1 → base_query (ThreatDetection); with_entities used on it for count + data
+    #   2 → distinct(criticality_level) → severities list
+    #   3 → distinct(threat_type)       → classifications part 1
+    #   4 → distinct(threat_category)   → classifications part 2
+    data_query = FakeQuery(all_result=[(threat, mention)])
+    fake_db = FakeDb([
+        data_query,
+        FakeQuery(all_result=[]),
+        FakeQuery(all_result=[]),
+        FakeQuery(all_result=[]),
+    ])
 
-    result = get_threats(db=fake_db, limit=7, current_user=SimpleNamespace(username="test-user"))
+    result = get_threats(db=fake_db, page=1, page_size=7, current_user=SimpleNamespace(username="test-user"))
 
-    assert result == [
-        {
-            "detection_id": 10,
+    expected_item = {
+        "detection_id": 10,
+        "mention_id": 20,
+        "threat_type": "credential_leak",
+        "threat_category": "data_exposure",
+        "criticality_level": "critical",
+        "confidence_score": Decimal("0.875"),
+        "risk_score": 95,
+        "matched_keywords": ["password", "leak"],
+        "detection_rules_triggered": ["credential-rule"],
+        "contextual_notes": "Possible leaked credentials",
+        "detected_at": threat.detected_at,
+        "review_status": "pending",
+        "last_updated": threat.last_updated,
+        "related_mention": {
             "mention_id": 20,
-            "threat_type": "credential_leak",
-            "threat_category": "data_exposure",
-            "criticality_level": "critical",
-            "confidence_score": Decimal("0.875"),
-            "risk_score": 95,
-            "matched_keywords": ["password", "leak"],
-            "detection_rules_triggered": ["credential-rule"],
-            "contextual_notes": "Possible leaked credentials",
-            "detected_at": threat.detected_at,
-            "review_status": "pending",
-            "last_updated": threat.last_updated,
-            "related_mention": {
-                "mention_id": 20,
-                "text_content": "admin password leaked",
-                "platform": "github",
-            },
-        }
-    ]
-    assert len(fake_db.query_args) == 1
-    assert query.outerjoin_args is not None
-    assert query.add_entity_args is not None
-    assert query.order_by_args is not None
-    assert query.limit_value == 7
-    assert ThreatListResponse.model_validate(result[0]).confidence_score == 0.875
+            "text_content": "admin password leaked",
+            "platform": "github",
+        },
+    }
+    assert result["data"] == [expected_item]
+    assert result["page"] == 1
+    assert result["page_size"] == 7
+    assert len(fake_db.query_args) == 4
+    assert data_query.outerjoin_args is not None
+    assert data_query.add_entity_args is not None
+    assert data_query.order_by_args is not None
+    assert data_query.limit_value == 7
+    assert ThreatListResponse.model_validate(result["data"][0]).confidence_score == 0.875
 
 
 def test_get_threats_applies_supported_filters_before_limit():
-    query = FakeQuery(all_result=[])
-    fake_db = FakeDb(query)
+    data_query = FakeQuery(all_result=[])
+    fake_db = FakeDb([
+        data_query,
+        FakeQuery(all_result=[]),
+        FakeQuery(all_result=[]),
+        FakeQuery(all_result=[]),
+    ])
 
     result = get_threats(
         db=fake_db,
-        limit=25,
+        page=1,
+        page_size=25,
         criticality_level="critical",
         review_status="pending",
         mention_id=20,
         current_user=SimpleNamespace(username="test-user"),
     )
 
-    assert result == []
-    assert len(query.filter_args) == 3
-    assert query.order_by_args is not None
-    assert query.limit_value == 25
+    assert result["data"] == []
+    assert len(data_query.filter_args) == 3
+    assert data_query.order_by_args is not None
+    assert data_query.limit_value == 25
 
 
-def test_get_threats_limit_defaults_to_fifty_when_called_directly():
+def test_get_threats_page_size_defaults_to_twentyfive_when_called_directly():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
 
     result = get_threats(db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
-    assert result == []
-    assert query.limit_value == 50
+    assert result["data"] == []
+    assert query.limit_value == 25
 
 
 def test_get_threat_returns_detail_by_detection_id():
@@ -248,7 +265,7 @@ def test_threat_routes_declare_response_models_and_auth_dependency():
     detail_route = routes_by_path["/api/threats/{threat_id}"]
     review_route = routes_by_path["/api/threats/{threat_id}/review"]
 
-    assert list_route.response_model == list[ThreatListResponse]
+    assert list_route.response_model is PaginatedThreatsResponse
     assert detail_route.response_model is ThreatDetail
     assert review_route.response_model is ThreatDetail
     assert any(
@@ -316,10 +333,17 @@ def test_threats_read_routes_allow_user_with_threats_read_permission():
 
     threat = _threat_row(detection_id=1)
     mention = _mention_row()
-    fake_query = FakeQuery(all_result=[(threat, mention)], first_result=threat)
-    fake_db = FakeDb(fake_query)
 
-    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    # /api/threats makes 4 db.query() calls; /api/threats/1 makes 1
+    def make_db():
+        return FakeDb([
+            FakeQuery(all_result=[(threat, mention)], first_result=threat),
+            FakeQuery(all_result=[]),
+            FakeQuery(all_result=[]),
+            FakeQuery(all_result=[], first_result=threat),
+        ])
+
+    authz_app.dependency_overrides[get_db] = make_db
     authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
         username="analyst1",
         role="analyst",

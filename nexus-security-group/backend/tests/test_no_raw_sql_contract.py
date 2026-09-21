@@ -6,7 +6,7 @@ from pathlib import Path
 BACKEND_ROOT = Path(__file__).parent.parent
 APPLICATION_FILES = (
     *sorted((BACKEND_ROOT / "routers").glob("*.py")),
-    BACKEND_ROOT / "auth.py",
+    *sorted((BACKEND_ROOT / "auth").glob("*.py")),
     BACKEND_ROOT / "database.py",
     BACKEND_ROOT / "main.py",
 )

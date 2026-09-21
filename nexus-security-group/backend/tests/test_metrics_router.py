@@ -23,6 +23,7 @@ from schemas.auth import TokenData
 from schemas.metrics import (
     CategoryCount,
     MetricsSummaryEndpointResponse,
+    PaginatedMentionsResponse,
     RecentMentionResponse,
     SentimentTimeSeriesPoint,
     TimeSeriesPoint,
@@ -52,10 +53,16 @@ class FakeQuery:
         self.limit_value = value
         return self
 
+    def offset(self, value):
+        return self
+
     def filter(self, *args):
         return self
 
     def join(self, *args, **kwargs):
+        return self
+
+    def with_entities(self, *args):
         return self
 
     def all(self):
@@ -111,7 +118,11 @@ def test_metrics_summary_coerces_empty_counts_to_zero():
 
 def test_recent_mentions_maps_orm_rows_to_frontend_shape():
     created_at = datetime(2026, 7, 5, 10, 30, 0, tzinfo=timezone.utc)
+    # Production calls db.query() twice:
+    #   1) db.query(SocialMention) → base_query; with_entities used for count+data on same obj
+    #   2) db.query(func.distinct(platform)).filter().order_by().all() → platforms list
     mentions_query = FakeQuery(
+        scalar_result=1,
         all_result=[
             SimpleNamespace(
                 mention_id=42,
@@ -120,13 +131,15 @@ def test_recent_mentions_maps_orm_rows_to_frontend_shape():
                 created_at=created_at,
                 author_username="security-researcher",
             )
-        ]
+        ],
     )
-    fake_db = FakeDb([mentions_query])
+    fake_db = FakeDb([mentions_query, FakeQuery(all_result=[("github",)])])
 
-    result = get_recent_mentions(db=fake_db, limit=10, current_user=object())
+    result = get_recent_mentions(
+        db=fake_db, page=1, page_size=10, platform=None, current_user=object()
+    )
 
-    assert result == [
+    assert result["data"] == [
         {
             "id": 42,
             "platform": "github",
@@ -135,6 +148,8 @@ def test_recent_mentions_maps_orm_rows_to_frontend_shape():
             "author": "security-researcher",
         }
     ]
+    assert result["page"] == 1
+    assert result["page_size"] == 10
     assert mentions_query.limit_value == 10
 
 
@@ -145,7 +160,7 @@ def test_metrics_routes_declare_response_models_and_auth_dependency():
     mentions_route = routes_by_path["/api/metrics/mentions"]
 
     assert summary_route.response_model is MetricsSummaryEndpointResponse
-    assert mentions_route.response_model == list[RecentMentionResponse]
+    assert mentions_route.response_model is PaginatedMentionsResponse
     assert any(
         getattr(dep.call, "required_permission", None) == "metrics:read"
         for dep in summary_route.dependant.dependencies
@@ -239,31 +254,30 @@ def test_metrics_mentions_allows_authenticated_user_with_mentions_read_permissio
         {"sub": "analyst1", "role": "analyst", "permissions": ["mentions:read"]}
     )
     created_at = datetime(2026, 7, 5, 10, 30, 0, tzinfo=timezone.utc)
+    mention_row = SimpleNamespace(
+        mention_id=42,
+        platform="github",
+        text_content="Potential secret leaked in issue",
+        created_at=created_at,
+        author_username="security-researcher",
+    )
     app.dependency_overrides[get_db] = lambda: FakeDb(
         [
-            FakeQuery(
-                all_result=[
-                    SimpleNamespace(
-                        mention_id=42,
-                        platform="github",
-                        text_content="Potential secret leaked in issue",
-                        created_at=created_at,
-                        author_username="security-researcher",
-                    )
-                ]
-            )
+            FakeQuery(scalar_result=1, all_result=[mention_row]),
+            FakeQuery(all_result=[("github",)]),
         ]
     )
     try:
         response = TestClient(app).get(
-            "/api/metrics/mentions?limit=10",
+            "/api/metrics/mentions?page=1&page_size=10",
             headers={"Authorization": f"Bearer {access_token}"},
         )
     finally:
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert response.json() == [
+    body = response.json()
+    assert body["data"] == [
         {
             "id": 42,
             "platform": "github",
@@ -272,18 +286,23 @@ def test_metrics_mentions_allows_authenticated_user_with_mentions_read_permissio
             "author": "security-researcher",
         }
     ]
+    assert body["total"] == 1
+    assert body["page"] == 1
+    assert body["page_size"] == 10
 
 
 def test_recent_mentions_rejects_invalid_limit_before_querying_db():
-    app = FastAPI()
-    app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: TokenData(
+    isolated_app = FastAPI()
+    isolated_app.include_router(router)
+    isolated_app.dependency_overrides[get_current_user] = lambda: TokenData(
         username="analyst1",
         role="analyst",
         permissions=["mentions:read"],
     )
 
-    response = TestClient(app).get("/api/metrics/mentions", params={"limit": 0})
+    response = TestClient(isolated_app).get(
+        "/api/metrics/mentions", params={"page_size": 0}
+    )
 
     assert response.status_code == 422
 

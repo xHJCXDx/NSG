@@ -67,6 +67,12 @@ class FakeQuery:
         self.add_entity_args = args
         return self
 
+    def with_entities(self, *args):
+        return self
+
+    def scalar(self):
+        return len(self.all_result)
+
     def all(self):
         return self.all_result
 
@@ -75,8 +81,19 @@ class FakeQuery:
 
 
 class FakeDb:
+    """Fake SQLAlchemy session.
+
+    Pass a single FakeQuery to always return the same object for every
+    ``db.query()`` call (original behaviour).  Pass a list of FakeQuery
+    objects to return them in order — first call gets index 0, second gets
+    index 1, etc.  Once the list is exhausted the last element is reused.
+    """
+
     def __init__(self, query, commit_exception=None):
-        self.query_obj = query
+        if isinstance(query, list):
+            self._query_list = query
+        else:
+            self._query_list = [query]
         self.query_args = []
         self.added = []
         self.deleted = []
@@ -85,9 +102,17 @@ class FakeDb:
         self.refreshed = []
         self.commit_exception = commit_exception
 
+    @property
+    def query_obj(self):
+        """Return the first (or only) query object for back-compat."""
+        return self._query_list[0]
+
     def query(self, *args):
         self.query_args.append(args)
-        return self.query_obj
+        idx = len(self.query_args) - 1
+        if idx < len(self._query_list):
+            return self._query_list[idx]
+        return self._query_list[-1]
 
     def add(self, obj):
         self.added.append(obj)
