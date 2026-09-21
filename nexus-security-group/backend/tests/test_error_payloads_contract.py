@@ -14,9 +14,14 @@ from schemas.auth import TokenData
 BACKEND_DIR = Path(__file__).parent.parent
 
 EXPECTED_ERROR_STATUS_BY_FILE = {
-    "auth.py": {
+    "auth/tokens.py": {
         "status.HTTP_401_UNAUTHORIZED",
+    },
+    "auth/permissions.py": {
         "status.HTTP_403_FORBIDDEN",
+    },
+    "auth/routes.py": {
+        "status.HTTP_401_UNAUTHORIZED",
         "status.HTTP_503_SERVICE_UNAVAILABLE",
     },
     "routers/activity.py": {"status.HTTP_404_NOT_FOUND"},
@@ -29,6 +34,7 @@ EXPECTED_ERROR_STATUS_BY_FILE = {
     "routers/n8n.py": {"status.HTTP_502_BAD_GATEWAY"},
     "routers/threats.py": {"status.HTTP_404_NOT_FOUND"},
     "routers/users.py": {
+        "status.HTTP_400_BAD_REQUEST",
         "status.HTTP_404_NOT_FOUND",
         "status.HTTP_409_CONFLICT",
     },
@@ -54,6 +60,9 @@ class CommitConflictDb:
 
     def add(self, obj):
         self.added = obj
+
+    def flush(self):
+        raise IntegrityError("duplicate", params=None, orig=None)
 
     def commit(self):
         raise IntegrityError("duplicate", params=None, orig=None)

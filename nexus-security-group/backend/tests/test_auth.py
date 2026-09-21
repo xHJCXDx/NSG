@@ -9,7 +9,8 @@ import jwt
 from sqlalchemy.exc import SQLAlchemyError
 
 
-AUTH_PATH = Path(__file__).parent.parent / "auth.py"
+AUTH_PKG = Path(__file__).parent.parent / "auth"
+AUTH_FILES = sorted(AUTH_PKG.glob("*.py"))
 
 
 class FakeQuery:
@@ -78,25 +79,26 @@ def auth_env(monkeypatch):
 
 
 def test_auth_no_os_getenv():
-    """auth.py must not call os.getenv() anywhere."""
-    source = AUTH_PATH.read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            # os.getenv(...)
-            if (
-                isinstance(node.func, ast.Attribute)
-                and node.func.attr == "getenv"
-                and isinstance(node.func.value, ast.Name)
-                and node.func.value.id == "os"
-            ):
-                pytest.fail("auth.py still contains os.getenv() call — migrate to settings")
+    """auth package must not call os.getenv() anywhere."""
+    for path in AUTH_FILES:
+        source = path.read_text()
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                if (
+                    isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "getenv"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "os"
+                ):
+                    pytest.fail(f"{path.name} still contains os.getenv() call — migrate to settings")
 
 
 def test_auth_no_import_os():
-    """auth.py must not have 'import os'."""
-    source = AUTH_PATH.read_text()
-    assert "import os" not in source, "auth.py still contains 'import os' — remove it"
+    """auth package must not have 'import os'."""
+    for path in AUTH_FILES:
+        source = path.read_text()
+        assert "import os" not in source, f"{path.name} still contains 'import os' — remove it"
 
 
 @pytest.mark.anyio
