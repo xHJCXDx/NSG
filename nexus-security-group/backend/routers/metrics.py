@@ -47,10 +47,18 @@ def get_metrics_summary(
     # Alerts count
     alerts_count = db.query(func.count(Alert.alert_id)).scalar() or 0
 
+    # Avg sentiment score (real score from sentiment analysis, not count-based proxy)
+    avg_sentiment = (
+        db.query(func.avg(SentimentAnalysis.final_sentiment_score))
+        .filter(SentimentAnalysis.final_sentiment_score.isnot(None))
+        .scalar()
+    )
+
     return {
         "total_mentions": total_mentions,
         "sentiment_distribution": sentiment_dist,
         "alerts_count": alerts_count,
+        "avg_sentiment_score": round(float(avg_sentiment), 4) if avg_sentiment is not None else None,
     }
 
 

@@ -12,6 +12,7 @@ class MetricsSummaryEndpointResponse(BaseModel):
     total_mentions: int
     sentiment_distribution: dict[str, int]
     alerts_count: int
+    avg_sentiment_score: float | None = None
 
 
 class RecentMentionResponse(BaseModel):

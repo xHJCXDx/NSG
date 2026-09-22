@@ -2,6 +2,7 @@ export interface MetricsSummary {
   total_mentions: number;
   sentiment_distribution: Record<string, number>;
   alerts_count: number;
+  avg_sentiment_score: number | null;
 }
 
 export interface TimeSeriesPoint {

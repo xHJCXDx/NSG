@@ -15,14 +15,8 @@ export function AnalyticsKpiRow({ summary, threatsBySeverity, isLoading }: Analy
 
   const totalThreats = threatsBySeverity.reduce((sum, item) => sum + item.count, 0);
 
-  const avgSentiment = summary
-    ? (() => {
-        const dist = summary.sentiment_distribution;
-        const total = (dist.positive ?? 0) + (dist.neutral ?? 0) + (dist.negative ?? 0);
-        if (total === 0) return '0.00';
-        const score = ((dist.positive ?? 0) - (dist.negative ?? 0)) / total;
-        return score.toFixed(2);
-      })()
+  const avgSentiment = summary?.avg_sentiment_score != null
+    ? summary.avg_sentiment_score.toFixed(2)
     : '0.00';
 
   return (
