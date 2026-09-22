@@ -1,9 +1,22 @@
 import { useMemo } from 'react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { CategoryCount } from '../types';
 import { ChartCard } from './ChartCard';
 import { useTranslation } from '../../../shared/i18n/translations';
 import { useTheme } from '../../../shared/contexts/ThemeContext';
+
+const CATEGORY_COLORS: Record<string, string> = {
+  malware: '#ef4444',
+  data_breach: '#f97316',
+  phishing: '#eab308',
+  vulnerability: '#0ea5e9',
+  advanced_threat: '#8b5cf6',
+  ddos: '#ec4899',
+  supply_chain: '#14b8a6',
+  critical_incident: '#dc2626',
+  security_threat: '#f59e0b',
+  other: '#6b7280',
+};
 
 interface ThreatCategoriesChartProps {
   data: CategoryCount[];
@@ -15,6 +28,9 @@ export function ThreatCategoriesChart({ data, isLoading, error }: ThreatCategori
   const t = useTranslation();
   const { theme } = useTheme();
 
+  const categoryLabels = t.analytics.category as Record<string, string>;
+  const formatLabel = (raw: string) => categoryLabels[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
   const chartColors = useMemo(() => {
     const s = getComputedStyle(document.documentElement);
     return {
@@ -25,6 +41,11 @@ export function ThreatCategoriesChart({ data, isLoading, error }: ThreatCategori
       tooltipBorder: s.getPropertyValue('--color-chart-tooltip-border').trim(),
     };
   }, [theme]);
+
+  const formattedData = useMemo(
+    () => data.map(d => ({ ...d, displayLabel: formatLabel(d.label) })),
+    [data, categoryLabels],
+  );
 
   if (isLoading) {
     return (
@@ -56,14 +77,19 @@ export function ThreatCategoriesChart({ data, isLoading, error }: ThreatCategori
     <ChartCard title={t.analytics.charts.threatCategories}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <BarChart data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
-            <XAxis dataKey="label" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="displayLabel" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 11 }} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" height={60} />
             <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+              labelFormatter={(_, payload) => payload[0]?.payload?.displayLabel ?? ''}
             />
-            <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              {formattedData.map((entry) => (
+                <Cell key={entry.label} fill={CATEGORY_COLORS[entry.label] ?? '#6b7280'} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

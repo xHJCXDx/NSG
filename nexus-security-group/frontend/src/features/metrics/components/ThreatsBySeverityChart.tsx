@@ -22,6 +22,14 @@ export function ThreatsBySeverityChart({ data, isLoading, error }: ThreatsBySeve
   const t = useTranslation();
   const { theme } = useTheme();
 
+  const severityLabels = t.analytics.severity as Record<string, string>;
+  const formatLabel = (raw: string) => severityLabels[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1);
+
+  const formattedData = useMemo(
+    () => data.map(d => ({ ...d, displayLabel: formatLabel(d.label) })),
+    [data, severityLabels],
+  );
+
   const chartColors = useMemo(() => {
     const s = getComputedStyle(document.documentElement);
     return {
@@ -63,15 +71,16 @@ export function ThreatsBySeverityChart({ data, isLoading, error }: ThreatsBySeve
     <ChartCard title={t.analytics.charts.threatsBySeverity}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 60, bottom: 0 }}>
+          <BarChart data={formattedData} layout="vertical" margin={{ top: 10, right: 30, left: 60, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
             <XAxis type="number" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="label" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
+            <YAxis type="category" dataKey="displayLabel" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+              labelFormatter={(_, payload) => payload[0]?.payload?.displayLabel ?? ''}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-              {data.map((entry) => (
+              {formattedData.map((entry) => (
                 <Cell key={entry.label} fill={SEVERITY_COLORS[entry.label] ?? '#6b7280'} />
               ))}
             </Bar>

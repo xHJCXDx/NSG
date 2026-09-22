@@ -7,6 +7,16 @@ import { useTheme } from '../../../shared/contexts/ThemeContext';
 
 const PLATFORM_COLORS = ['#0ea5e9', '#8b5cf6', '#f97316', '#22c55e', '#ef4444', '#eab308', '#ec4899'];
 
+const PLATFORM_LABELS: Record<string, string> = {
+  hackernews: 'Hacker News',
+  'exploit-db': 'Exploit-DB',
+  github: 'GitHub',
+  twitter: 'Twitter',
+  reddit: 'Reddit',
+};
+
+const formatPlatform = (raw: string) => PLATFORM_LABELS[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1);
+
 interface PlatformDistributionChartProps {
   data: CategoryCount[];
   isLoading?: boolean;
@@ -76,12 +86,14 @@ export function PlatformDistributionChart({ data, isLoading, error }: PlatformDi
             </Pie>
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+              formatter={(value, name) => [value, formatPlatform(String(name))]}
             />
             <Legend
               layout="vertical"
               align="right"
               verticalAlign="middle"
               wrapperStyle={{ color: 'var(--color-content-secondary)' }}
+              formatter={formatPlatform}
             />
           </PieChart>
         </ResponsiveContainer>

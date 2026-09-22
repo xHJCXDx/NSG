@@ -76,13 +76,15 @@ export function SentimentTrendChart({ data, isLoading, error }: SentimentTrendCh
             <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
+              formatter={(value, name) => [value, (t.analytics.sentiment as Record<string, string>)[String(name)] ?? name]}
             />
             <Legend
               wrapperStyle={{ color: 'var(--color-content-secondary)' }}
+              formatter={(value: string) => (t.analytics.sentiment as Record<string, string>)[value] ?? value}
             />
-            <Area type="monotone" dataKey="positive" stackId="1" stroke="#34d399" fill="url(#positiveGradient)" strokeWidth={2} />
-            <Area type="monotone" dataKey="neutral" stackId="1" stroke="#94a3b8" fill="url(#neutralGradient)" strokeWidth={2} />
-            <Area type="monotone" dataKey="negative" stackId="1" stroke="#f87171" fill="url(#negativeGradient)" strokeWidth={2} />
+            <Area type="monotone" dataKey="positive" name="positive" stackId="1" stroke="#34d399" fill="url(#positiveGradient)" strokeWidth={2} />
+            <Area type="monotone" dataKey="neutral" name="neutral" stackId="1" stroke="#94a3b8" fill="url(#neutralGradient)" strokeWidth={2} />
+            <Area type="monotone" dataKey="negative" name="negative" stackId="1" stroke="#f87171" fill="url(#negativeGradient)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
