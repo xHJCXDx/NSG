@@ -1,3 +1,6 @@
+# Optional Appsmith overlay. MUST be run together with the main Compose file:
+#   docker compose -f docker-compose.yml -f docker-compose.appsmith.yml --profile appsmith up -d
+# The nexus-net network is declared in docker-compose.yml; this overlay joins it.
 services:
   appsmith:
     image: appsmith/appsmith-ce:v1.41

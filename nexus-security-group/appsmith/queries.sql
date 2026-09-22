@@ -5,7 +5,7 @@
 -- NOTE: Queries reading from materialized views (daily_activity_summary,
 -- daily_mention_stats, top_keywords_stats, workflow_performance_stats)
 -- show data as of the last REFRESH MATERIALIZED VIEW call.
--- Refresh via: SELECT perform_daily_maintenance(); (defined in init.sql)
+-- Refresh via: SELECT refresh_all_materialized_views(); (defined in init.sql)
 
 -- name: Dashboard_KPIs
 -- purpose: High-level OSINT counts for the overview cards.

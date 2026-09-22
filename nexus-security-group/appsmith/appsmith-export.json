@@ -21,14 +21,29 @@
       "name": "Overview",
       "queries": [
         "Dashboard_KPIs",
+        "WorkflowHealth_ByDay"
+      ]
+    },
+    {
+      "name": "Mentions",
+      "queries": [
         "MentionTrend_ByDatePlatformSentiment",
         "Sentiment_Distribution",
+        "RecentMentions_Table"
+      ]
+    },
+    {
+      "name": "Threats",
+      "queries": [
         "ThreatSeverity_Distribution",
-        "TopKeywords_Ranking",
-        "WorkflowHealth_ByDay",
         "UnresolvedThreats_Table",
-        "RecentMentions_Table",
         "RecentAlerts_Table"
+      ]
+    },
+    {
+      "name": "Keywords",
+      "queries": [
+        "TopKeywords_Ranking"
       ]
     },
     {

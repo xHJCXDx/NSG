@@ -10,7 +10,7 @@ This folder contains a safe Appsmith demo pack for the NSG thesis dashboard. It 
 - `security.md` — read-only PostgreSQL setup, existing-volume rollout, rollback, and no-secret checklist.
 - `runtime-validation.md` — operator checklist for local Appsmith + PostgreSQL validation.
 
-The legacy root `appsmith-dashboard.json` is deprecated and points here.
+The legacy root `appsmith-dashboard.json` placeholder was removed; this directory is the authoritative demo pack.
 
 ## Local setup
 
@@ -42,7 +42,7 @@ Use constrained Appsmith widgets rather than free-form SQL fragments:
 - `DateRangePicker.startDate` / `DateRangePicker.endDate`: default last 7 or 30 days.
 - `PlatformSelect`: allow `all`, `twitter`, `reddit`, `telegram`, `discord`, `github`, `exploit-db`, `hackernews`, `other`.
 - `SeveritySelect`: allow `all`, `low`, `medium`, `high`, `critical`.
-- `StatusSelect`: allow `all`, `pending`, `reviewing`, `confirmed`, `false_positive`, `investigating`, `resolved`.
+- `StatusSelect` (for `RecentAlerts_Table` `delivery_status`): allow `all`, `pending`, `sent`, `delivered`, `failed`.
 - `PageSizeSelect`: allow `25` or `50` only.
 - `Table.pageNo`: minimum 1.
 
@@ -67,7 +67,7 @@ Use constrained Appsmith widgets rather than free-form SQL fragments:
 
 ## Local verification checklist
 
-- JSON files parse: `appsmith-dashboard.json`, `appsmith/appsmith-export.json`, and unchanged `workflow.json`.
+- JSON files parse: `appsmith/appsmith-export.json` and unchanged `workflow.json`.
 - `appsmith/queries.sql` contains dashboard `SELECT` queries only, bounded date filters, and table pagination.
 - Appsmith datasource uses `appsmith_readonly`, not admin or n8n credentials.
 - Secrets remain placeholders in repository files: `<APPSMITH_DB_PASSWORD>`, `<APPSMITH_API_BEARER_TOKEN>`, `<N8N_WEBHOOK_TOKEN>`, `<operator>`.
