@@ -21,3 +21,12 @@ export interface CategoryCount {
   label: string;
   count: number;
 }
+
+export interface TopKeywordEntry {
+  keyword: string;
+  detection_count: number;
+  days_active: number;
+  avg_confidence: number;
+  high_severity_count: number;
+  last_detection: string | null;
+}

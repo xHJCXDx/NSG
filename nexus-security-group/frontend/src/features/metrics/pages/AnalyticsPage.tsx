@@ -6,6 +6,7 @@ import { SentimentTrendChart } from '../components/SentimentTrendChart';
 import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
+import { TopKeywordsChart } from '../components/TopKeywordsChart';
 import { useTranslation } from '../../../shared/i18n/translations';
 
 const TIME_RANGE_OPTIONS = [7, 30, 90] as const;
@@ -81,6 +82,11 @@ export function AnalyticsPage() {
           error={analytics.threatCategoriesError}
         />
       </div>
+      <TopKeywordsChart
+        data={analytics.topKeywords}
+        isLoading={analytics.topKeywordsLoading}
+        error={analytics.topKeywordsError}
+      />
     </section>
   );
 }

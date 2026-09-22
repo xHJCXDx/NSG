@@ -7,6 +7,7 @@ import {
   fetchSentimentOverTime,
   fetchThreatCategories,
   fetchThreatsBySeverity,
+  fetchTopKeywords,
 } from '../api';
 
 export function useAnalytics(days = 30) {
@@ -46,6 +47,12 @@ export function useAnalytics(days = 30) {
   const threatCategories = useQuery({
     queryKey: ['analytics', 'threat-categories', days, sub],
     queryFn: () => fetchThreatCategories(token, days),
+    enabled: !!token,
+  });
+
+  const topKeywords = useQuery({
+    queryKey: ['analytics', 'top-keywords', sub],
+    queryFn: () => fetchTopKeywords(token),
     enabled: !!token,
   });
 
@@ -89,6 +96,10 @@ export function useAnalytics(days = 30) {
     threatCategories: threatCategories.data ?? [],
     threatCategoriesLoading: threatCategories.isLoading,
     threatCategoriesError: threatCategories.error,
+
+    topKeywords: topKeywords.data ?? [],
+    topKeywordsLoading: topKeywords.isLoading,
+    topKeywordsError: topKeywords.error,
 
     isLoading,
     error,

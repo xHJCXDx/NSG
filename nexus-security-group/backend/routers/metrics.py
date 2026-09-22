@@ -3,7 +3,7 @@ from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from database import get_db
 from auth import require_permission
@@ -16,6 +16,7 @@ from schemas.metrics import (
     RecentMentionResponse,
     SentimentTimeSeriesPoint,
     TimeSeriesPoint,
+    TopKeywordEntry,
 )
 
 router = APIRouter(prefix="/api/metrics", tags=["metrics"])
@@ -237,3 +238,32 @@ def get_threat_categories(
         .all()
     )
     return [CategoryCount(label=row.label, count=row.count) for row in rows]
+
+
+@router.get("/top-keywords", response_model=list[TopKeywordEntry])
+def get_top_keywords(
+    db: Session = Depends(get_db),
+    limit: Annotated[int, Query(ge=1, le=50)] = 15,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    rows = db.execute(
+        text(
+            "SELECT keyword, detection_count, days_active,"
+            " avg_confidence, high_severity_count, last_detection"
+            " FROM top_keywords_stats"
+            " ORDER BY detection_count DESC"
+            " LIMIT :lim"
+        ),
+        {"lim": limit},
+    ).fetchall()
+    return [
+        TopKeywordEntry(
+            keyword=row.keyword,
+            detection_count=row.detection_count,
+            days_active=row.days_active,
+            avg_confidence=round(float(row.avg_confidence or 0), 3),
+            high_severity_count=row.high_severity_count,
+            last_detection=row.last_detection,
+        )
+        for row in rows
+    ]

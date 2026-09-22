@@ -15,6 +15,19 @@ class MetricsSummaryEndpointResponse(BaseModel):
     avg_sentiment_score: float | None = None
 
 
+class TopKeywordEntry(BaseModel):
+    """Keyword analytics from the top_keywords_stats materialized view."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    keyword: str
+    detection_count: int
+    days_active: int
+    avg_confidence: float
+    high_severity_count: int
+    last_detection: datetime | None = None
+
+
 class RecentMentionResponse(BaseModel):
     """Recent mention item returned by /api/metrics/mentions."""
 
