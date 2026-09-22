@@ -399,7 +399,7 @@ WHERE td.detected_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY keyword
 ORDER BY detection_count DESC;
 
-CREATE INDEX ON top_keywords_stats (detection_count DESC);
+CREATE UNIQUE INDEX ON top_keywords_stats (keyword);
 
 CREATE MATERIALIZED VIEW workflow_performance_stats AS
 SELECT
@@ -415,7 +415,7 @@ FROM execution_logs
 WHERE started_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY workflow_name, DATE(started_at);
 
-CREATE INDEX ON workflow_performance_stats (workflow_name, date DESC);
+CREATE UNIQUE INDEX ON workflow_performance_stats (workflow_name, date);
 
 CREATE OR REPLACE FUNCTION refresh_all_materialized_views()
 RETURNS void AS $$
