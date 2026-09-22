@@ -356,3 +356,10 @@ M03 (sanitización bypass — fix simple, alto impacto)
 M01 y M06 se pueden fusionar en un solo commit ya que M06 reemplaza completamente el bloque que M01 modifica. M04 y M05 son independientes entre sí pero ambos tocan `.env.example`.
 
 ---
+
+## Commits
+
+```
+755ec57 docs: add PLAN-009 for upstream n8n workflow fixes
+6661039 fix(workflow): correct upstream pipeline bugs and add auth (PLAN-009)
+```
