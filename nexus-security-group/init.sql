@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     last_updated TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_alerts_detection_id ON alerts(detection_id);
+CREATE UNIQUE INDEX idx_alerts_detection_id ON alerts(detection_id);
 CREATE INDEX idx_alerts_severity ON alerts(alert_severity);
 CREATE INDEX idx_alerts_created_at ON alerts(created_at DESC);
 CREATE INDEX idx_alerts_acknowledged ON alerts(acknowledged);
