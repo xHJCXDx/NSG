@@ -1,6 +1,6 @@
 # PLAN-008: Correcciones del Workflow n8n Post-Enrich
 
-**Estado:** PENDIENTE
+**Estado:** DONE
 **Prioridad:** HIGH
 **Origen:** Análisis de calidad del pipeline n8n downstream de `Enrich After Threat`. Se encontraron bugs funcionales, dead code, robustez faltante y deuda de documentación.
 **Arquitectura de referencia:** `docs/SYSTEM-ARCHITECTURE.md`, `workflow.json`
@@ -17,14 +17,14 @@
 
 | # | Prioridad | Área | Descripción | Estado |
 |---|-----------|------|-------------|--------|
-| M01 | CRITICAL | Send Slack Alert | Enviar `slack_blocks` en vez de `alert_message` como texto plano | PENDIENTE |
-| M02 | CRITICAL | Prep Alert Insert | Capturar `alert_message` desde `Build Alert Content` o fijar el flujo de datos | PENDIENTE |
-| M03 | HIGH | Log Execution | Capturar `$execution.startedAt` en `started_at` para duration real | PENDIENTE |
-| M04 | HIGH | Log Alert in DB | Agregar `continueOnFail` y `ON CONFLICT` para robustez | PENDIENTE |
-| M05 | HIGH | Check Existing IDs → Prep Log Execution | Agregar conexión faltante para log de runs all-duplicate | PENDIENTE |
-| M06 | MEDIUM | Slack webhook URL | Reemplazar URL hardcodeada con variable de entorno | PENDIENTE |
-| M07 | MEDIUM | SYSTEM-ARCHITECTURE.md | Actualizar umbrales de criticality (doc dice ≥80 critical, código dice ≥60) | PENDIENTE |
-| M08 | LOW | Summarize Skipped Items / slack_blocks | Limpiar dead code: eliminar nodo muerto y campo no consumido | PENDIENTE |
+| M01 | ✅ DONE | Send Slack Alert | Enviar `slack_blocks` en vez de `alert_message` como texto plano | DONE |
+| M02 | ✅ DONE | Prep Alert Insert | Generar `alert_message` descriptivo sin depender de rama paralela | DONE |
+| M03 | ✅ DONE | Log Execution | Capturar `$execution.startedAt` en `started_at` para duration real | DONE |
+| M04 | ✅ DONE | Log Alert in DB | Agregar `continueOnFail`, `ON CONFLICT` y UNIQUE index | DONE |
+| M05 | ✅ DONE | Check Existing IDs → Prep Log Execution | Agregar conexión faltante para log de runs all-duplicate | DONE |
+| M06 | ✅ DONE | Slack webhook URL | Reemplazar URL hardcodeada con `$env.SLACK_WEBHOOK_URL` | DONE |
+| M07 | ✅ DONE | SYSTEM-ARCHITECTURE.md | Actualizar umbrales de criticality a critical ≥60, high ≥40, medium ≥20 | DONE |
+| M08 | ✅ DONE | Summarize Skipped Items / slack_blocks | Eliminar nodo muerto y corregir emoji surrogate pair | DONE |
 
 ---
 
@@ -32,7 +32,7 @@
 
 **Prioridad:** CRITICAL
 **Área:** `workflow.json` → nodo `Send Slack Alert`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -64,7 +64,7 @@ El campo `text` se mantiene como fallback para clientes que no soporten Block Ki
 
 **Prioridad:** CRITICAL
 **Área:** `workflow.json` → nodo `Prep Alert Insert`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -93,7 +93,7 @@ Esto le da contenido real a la columna de auditoría sin cambiar la arquitectura
 
 **Prioridad:** HIGH
 **Área:** `workflow.json` → nodos `Prep Log Execution` y `Log Execution`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -123,7 +123,7 @@ INSERT INTO execution_logs (
 
 **Prioridad:** HIGH
 **Área:** `workflow.json` → nodos `Prep Alert Insert` y `Log Alert in DB`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -150,7 +150,7 @@ Verificar si `alerts` tiene un constraint UNIQUE en `detection_id`. Si no, agreg
 
 **Prioridad:** HIGH
 **Área:** `workflow.json` → bloque `connections`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -183,7 +183,7 @@ La lógica de deferral en `Prep Log Execution` ya maneja correctamente el caso m
 
 **Prioridad:** MEDIUM
 **Área:** `workflow.json` → nodo `Send Slack Alert`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -211,7 +211,7 @@ Agregar `SLACK_WEBHOOK_URL=change-me` a `.env.example`.
 
 **Prioridad:** MEDIUM
 **Área:** `docs/SYSTEM-ARCHITECTURE.md`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -241,7 +241,7 @@ Actualizar la sección de umbrales en `SYSTEM-ARCHITECTURE.md` para que coincida
 
 **Prioridad:** LOW
 **Área:** `workflow.json` → nodos `Summarize Skipped Items` y `Build Alert Content`
-**Estado:** PENDIENTE
+**Estado:** DONE
 
 ### Problema
 
@@ -273,3 +273,12 @@ M07 (doc, independiente)
 ```
 
 M01 y M06 van juntos al final porque ambos tocan `Send Slack Alert`. M08 va antes de M01 porque el emoji bug en `Build Alert Content` afectaría el output de Slack blocks.
+
+---
+
+## Commits
+
+```
+342a5fd docs: add PLAN-008 and fix criticality thresholds in architecture doc (M07)
+1ce33f5 fix(workflow): correct post-enrich pipeline bugs and robustness (M01-M06, M08)
+```
