@@ -7,6 +7,7 @@ import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
 import { TopKeywordsChart } from '../components/TopKeywordsChart';
+import { WorkflowHealthChart } from '../components/WorkflowHealthChart';
 import { useTranslation } from '../../../shared/i18n/translations';
 
 const TIME_RANGE_OPTIONS = [7, 30, 90] as const;
@@ -82,11 +83,18 @@ export function AnalyticsPage() {
           error={analytics.threatCategoriesError}
         />
       </div>
-      <TopKeywordsChart
-        data={analytics.topKeywords}
-        isLoading={analytics.topKeywordsLoading}
-        error={analytics.topKeywordsError}
-      />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TopKeywordsChart
+          data={analytics.topKeywords}
+          isLoading={analytics.topKeywordsLoading}
+          error={analytics.topKeywordsError}
+        />
+        <WorkflowHealthChart
+          data={analytics.workflowHealth}
+          isLoading={analytics.workflowHealthLoading}
+          error={analytics.workflowHealthError}
+        />
+      </div>
     </section>
   );
 }

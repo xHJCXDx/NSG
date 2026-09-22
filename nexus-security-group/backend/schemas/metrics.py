@@ -28,6 +28,20 @@ class TopKeywordEntry(BaseModel):
     last_detection: datetime | None = None
 
 
+class WorkflowHealthEntry(BaseModel):
+    """Daily workflow execution stats from workflow_performance_stats."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    date: str
+    execution_count: int
+    success_count: int
+    error_count: int
+    avg_duration_seconds: float | None = None
+    avg_mentions_processed: float | None = None
+    avg_detections_generated: float | None = None
+
+
 class RecentMentionResponse(BaseModel):
     """Recent mention item returned by /api/metrics/mentions."""
 

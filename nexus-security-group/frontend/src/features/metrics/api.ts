@@ -7,8 +7,9 @@ import {
   THREAT_CATEGORIES_ENDPOINT,
   THREATS_BY_SEVERITY_ENDPOINT,
   TOP_KEYWORDS_ENDPOINT,
+  WORKFLOW_HEALTH_ENDPOINT,
 } from './contract';
-import type { CategoryCount, MetricsSummary, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry } from './types';
+import type { CategoryCount, MetricsSummary, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
 
 export async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary> {
   const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);
@@ -50,4 +51,10 @@ export async function fetchTopKeywords(token: string | null, limit = 15): Promis
   const res = await authFetch(token, `${TOP_KEYWORDS_ENDPOINT}?limit=${limit}`);
   if (!res.ok) throw new Error(`Failed to fetch top keywords: ${res.status}`);
   return res.json() as Promise<TopKeywordEntry[]>;
+}
+
+export async function fetchWorkflowHealth(token: string | null, days = 30): Promise<WorkflowHealthEntry[]> {
+  const res = await authFetch(token, `${WORKFLOW_HEALTH_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch workflow health: ${res.status}`);
+  return res.json() as Promise<WorkflowHealthEntry[]>;
 }

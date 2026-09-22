@@ -17,6 +17,7 @@ from schemas.metrics import (
     SentimentTimeSeriesPoint,
     TimeSeriesPoint,
     TopKeywordEntry,
+    WorkflowHealthEntry,
 )
 
 router = APIRouter(prefix="/api/metrics", tags=["metrics"])
@@ -264,6 +265,37 @@ def get_top_keywords(
             avg_confidence=round(float(row.avg_confidence or 0), 3),
             high_severity_count=row.high_severity_count,
             last_detection=row.last_detection,
+        )
+        for row in rows
+    ]
+
+
+@router.get("/workflow-health", response_model=list[WorkflowHealthEntry])
+def get_workflow_health(
+    db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=90)] = 30,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    rows = db.execute(
+        text(
+            "SELECT date, execution_count, success_count, error_count,"
+            " avg_duration_seconds, avg_mentions_processed,"
+            " avg_detections_generated"
+            " FROM workflow_performance_stats"
+            " WHERE date >= CURRENT_DATE - :days * INTERVAL '1 day'"
+            " ORDER BY date"
+        ),
+        {"days": days},
+    ).fetchall()
+    return [
+        WorkflowHealthEntry(
+            date=str(row.date),
+            execution_count=row.execution_count,
+            success_count=row.success_count,
+            error_count=row.error_count,
+            avg_duration_seconds=round(float(row.avg_duration_seconds or 0), 1),
+            avg_mentions_processed=round(float(row.avg_mentions_processed or 0), 1),
+            avg_detections_generated=round(float(row.avg_detections_generated or 0), 1),
         )
         for row in rows
     ]

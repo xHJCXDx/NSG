@@ -8,6 +8,7 @@ import {
   fetchThreatCategories,
   fetchThreatsBySeverity,
   fetchTopKeywords,
+  fetchWorkflowHealth,
 } from '../api';
 
 export function useAnalytics(days = 30) {
@@ -56,6 +57,12 @@ export function useAnalytics(days = 30) {
     enabled: !!token,
   });
 
+  const workflowHealth = useQuery({
+    queryKey: ['analytics', 'workflow-health', days, sub],
+    queryFn: () => fetchWorkflowHealth(token, days),
+    enabled: !!token,
+  });
+
   const isLoading =
     summary.isLoading ||
     mentionsOverTime.isLoading ||
@@ -100,6 +107,10 @@ export function useAnalytics(days = 30) {
     topKeywords: topKeywords.data ?? [],
     topKeywordsLoading: topKeywords.isLoading,
     topKeywordsError: topKeywords.error,
+
+    workflowHealth: workflowHealth.data ?? [],
+    workflowHealthLoading: workflowHealth.isLoading,
+    workflowHealthError: workflowHealth.error,
 
     isLoading,
     error,

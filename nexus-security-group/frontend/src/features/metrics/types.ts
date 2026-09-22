@@ -22,6 +22,16 @@ export interface CategoryCount {
   count: number;
 }
 
+export interface WorkflowHealthEntry {
+  date: string;
+  execution_count: number;
+  success_count: number;
+  error_count: number;
+  avg_duration_seconds: number | null;
+  avg_mentions_processed: number | null;
+  avg_detections_generated: number | null;
+}
+
 export interface TopKeywordEntry {
   keyword: string;
   detection_count: number;
