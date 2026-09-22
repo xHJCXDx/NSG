@@ -458,7 +458,7 @@ Boosts:
 - Autor verificado: +10
 - URLs sospechosas: +15
 
-Resultado → criticality_level: low (<30), medium (30-59), high (60-79), critical (>=80)
+Resultado → criticality_level: low (<20), medium (20-39), high (40-59), critical (>=60)
 
 ### Mapeo de severidad para alertas
 
