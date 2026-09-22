@@ -27,20 +27,20 @@ export async function fetchSentimentOverTime(token: string | null, days = 30): P
   return res.json() as Promise<SentimentTimeSeriesPoint[]>;
 }
 
-export async function fetchThreatsBySeverity(token: string | null): Promise<CategoryCount[]> {
-  const res = await authFetch(token, THREATS_BY_SEVERITY_ENDPOINT);
+export async function fetchThreatsBySeverity(token: string | null, days = 30): Promise<CategoryCount[]> {
+  const res = await authFetch(token, `${THREATS_BY_SEVERITY_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch threats by severity: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
 }
 
-export async function fetchPlatformDistribution(token: string | null): Promise<CategoryCount[]> {
-  const res = await authFetch(token, PLATFORM_DISTRIBUTION_ENDPOINT);
+export async function fetchPlatformDistribution(token: string | null, days = 30): Promise<CategoryCount[]> {
+  const res = await authFetch(token, `${PLATFORM_DISTRIBUTION_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch platform distribution: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
 }
 
-export async function fetchThreatCategories(token: string | null): Promise<CategoryCount[]> {
-  const res = await authFetch(token, THREAT_CATEGORIES_ENDPOINT);
+export async function fetchThreatCategories(token: string | null, days = 30): Promise<CategoryCount[]> {
+  const res = await authFetch(token, `${THREAT_CATEGORIES_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch threat categories: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
 }

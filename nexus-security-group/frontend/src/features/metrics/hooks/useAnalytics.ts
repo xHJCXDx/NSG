@@ -32,20 +32,20 @@ export function useAnalytics(days = 30) {
   });
 
   const threatsBySeverity = useQuery({
-    queryKey: ['analytics', 'threats-by-severity', sub],
-    queryFn: () => fetchThreatsBySeverity(token),
+    queryKey: ['analytics', 'threats-by-severity', days, sub],
+    queryFn: () => fetchThreatsBySeverity(token, days),
     enabled: !!token,
   });
 
   const platformDistribution = useQuery({
-    queryKey: ['analytics', 'platform-distribution', sub],
-    queryFn: () => fetchPlatformDistribution(token),
+    queryKey: ['analytics', 'platform-distribution', days, sub],
+    queryFn: () => fetchPlatformDistribution(token, days),
     enabled: !!token,
   });
 
   const threatCategories = useQuery({
-    queryKey: ['analytics', 'threat-categories', sub],
-    queryFn: () => fetchThreatCategories(token),
+    queryKey: ['analytics', 'threat-categories', days, sub],
+    queryFn: () => fetchThreatCategories(token, days),
     enabled: !!token,
   });
 

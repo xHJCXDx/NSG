@@ -174,13 +174,16 @@ def get_sentiment_over_time(
 @router.get("/threats-by-severity", response_model=list[CategoryCount])
 def get_threats_by_severity(
     db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
     current_user: TokenData = Depends(require_permission("metrics", "read")),
 ):
+    since = datetime.now(UTC) - timedelta(days=days)
     rows = (
         db.query(
             ThreatDetection.criticality_level.label("label"),
             func.count().label("count"),
         )
+        .filter(ThreatDetection.detected_at >= since)
         .group_by(ThreatDetection.criticality_level)
         .order_by(func.count().desc())
         .all()
@@ -191,13 +194,16 @@ def get_threats_by_severity(
 @router.get("/platform-distribution", response_model=list[CategoryCount])
 def get_platform_distribution(
     db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
     current_user: TokenData = Depends(require_permission("metrics", "read")),
 ):
+    since = datetime.now(UTC) - timedelta(days=days)
     rows = (
         db.query(
             SocialMention.platform.label("label"),
             func.count().label("count"),
         )
+        .filter(SocialMention.created_at >= since)
         .group_by(SocialMention.platform)
         .order_by(func.count().desc())
         .all()
@@ -208,13 +214,16 @@ def get_platform_distribution(
 @router.get("/threat-categories", response_model=list[CategoryCount])
 def get_threat_categories(
     db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
     current_user: TokenData = Depends(require_permission("metrics", "read")),
 ):
+    since = datetime.now(UTC) - timedelta(days=days)
     rows = (
         db.query(
             func.coalesce(ThreatDetection.threat_category, "uncategorized").label("label"),
             func.count().label("count"),
         )
+        .filter(ThreatDetection.detected_at >= since)
         .group_by(ThreatDetection.threat_category)
         .order_by(func.count().desc())
         .all()
