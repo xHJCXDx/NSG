@@ -67,7 +67,7 @@ export function PlatformDistributionChart({ data, isLoading, error }: PlatformDi
               outerRadius={110}
               paddingAngle={2}
               strokeWidth={0}
-              label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+              label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
               labelLine={false}
             >
               {data.map((entry, index) => (
