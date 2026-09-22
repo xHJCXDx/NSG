@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { WorkflowHealthEntry } from '../types';
 import { ChartCard } from './ChartCard';
 import { useTranslation } from '../../../shared/i18n/translations';
@@ -69,7 +69,8 @@ export function WorkflowHealthChart({ data, isLoading, error }: WorkflowHealthCh
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
             <XAxis dataKey="date" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <YAxis yAxisId="left" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <YAxis yAxisId="right" orientation="right" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{
                 backgroundColor: chartColors.tooltipBg,
@@ -93,6 +94,8 @@ export function WorkflowHealthChart({ data, isLoading, error }: WorkflowHealthCh
                     <p style={{ color: '#22c55e' }}>{t.analytics.tooltips.success}: {entry.success_count}</p>
                     <p style={{ color: '#ef4444' }}>{t.analytics.tooltips.errors}: {entry.error_count}</p>
                     <p>{t.analytics.tooltips.duration}: {entry.avg_duration_seconds?.toFixed(1)}s</p>
+                    <p style={{ color: '#a78bfa' }}>{t.analytics.tooltips.mentionsProcessed}: {entry.avg_mentions_processed?.toFixed(1)}</p>
+                    <p style={{ color: '#fb923c' }}>{t.analytics.tooltips.detectionsGenerated}: {entry.avg_detections_generated?.toFixed(1)}</p>
                   </div>
                 );
               }}
@@ -103,12 +106,16 @@ export function WorkflowHealthChart({ data, isLoading, error }: WorkflowHealthCh
                 const labels: Record<string, string> = {
                   success_count: t.analytics.tooltips.success,
                   error_count: t.analytics.tooltips.errors,
+                  avg_mentions_processed: t.analytics.tooltips.mentionsProcessed,
+                  avg_detections_generated: t.analytics.tooltips.detectionsGenerated,
                 };
                 return labels[value] ?? value;
               }}
             />
-            <Area type="monotone" dataKey="success_count" stackId="1" stroke="#22c55e" fill="url(#successGradient)" strokeWidth={2} />
-            <Area type="monotone" dataKey="error_count" stackId="1" stroke="#ef4444" fill="url(#errorGradient)" strokeWidth={2} />
+            <Area yAxisId="left" type="monotone" dataKey="success_count" stackId="1" stroke="#22c55e" fill="url(#successGradient)" strokeWidth={2} />
+            <Area yAxisId="left" type="monotone" dataKey="error_count" stackId="1" stroke="#ef4444" fill="url(#errorGradient)" strokeWidth={2} />
+            <Line yAxisId="right" type="monotone" dataKey="avg_mentions_processed" stroke="#a78bfa" strokeWidth={2} dot={false} strokeDasharray="5 3" />
+            <Line yAxisId="right" type="monotone" dataKey="avg_detections_generated" stroke="#fb923c" strokeWidth={2} dot={false} strokeDasharray="5 3" />
           </AreaChart>
         </ResponsiveContainer>
       </div>

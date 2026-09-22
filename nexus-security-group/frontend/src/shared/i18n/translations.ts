@@ -258,6 +258,9 @@ export const translations = {
         success: 'Success',
         errors: 'Errors',
         duration: 'Avg. duration',
+        mentionsProcessed: 'Mentions processed',
+        detectionsGenerated: 'Detections generated',
+        lastDetection: 'Last detection',
       },
       severity: {
         critical: 'Critical',
@@ -999,6 +1002,9 @@ export const translations = {
         success: 'Éxitos',
         errors: 'Errores',
         duration: 'Duración prom.',
+        mentionsProcessed: 'Menciones procesadas',
+        detectionsGenerated: 'Detecciones generadas',
+        lastDetection: 'Última detección',
       },
       severity: {
         critical: 'Crítico',

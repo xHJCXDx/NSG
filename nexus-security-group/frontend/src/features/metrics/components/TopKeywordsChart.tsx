@@ -102,6 +102,7 @@ export function TopKeywordsChart({ data, isLoading, error }: TopKeywordsChartPro
                     <p>{t.analytics.tooltips.highSeverity}: {entry.high_severity_count}</p>
                     <p>{t.analytics.tooltips.daysActive}: {entry.days_active}</p>
                     <p>{t.analytics.tooltips.confidence}: {(entry.avg_confidence * 100).toFixed(0)}%</p>
+                    <p>{t.analytics.tooltips.lastDetection}: {entry.last_detection ? new Date(entry.last_detection).toLocaleDateString() : '—'}</p>
                   </div>
                 );
               }}
