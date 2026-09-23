@@ -69,6 +69,11 @@ describe('fetchThreats', () => {
         summary: 'Potential leaked credential in public post',
         evidence: ['password'],
         relatedMention: { id: 'mention-1', text: 'leaked password', platform: 'twitter' },
+        reviewStatus: 'pending',
+        reviewedBy: null,
+        reviewedAt: null,
+        reviewNotes: null,
+        remediationStatus: null,
       },
       {
         id: 'direct-id',
@@ -80,6 +85,11 @@ describe('fetchThreats', () => {
         detectedAt: '2026-07-03T11:00:00Z',
         source: null,
         evidence: ['lookalike domain'],
+        reviewStatus: 'pending',
+        reviewedBy: null,
+        reviewedAt: null,
+        reviewNotes: null,
+        remediationStatus: null,
       },
     ]);
     expect(result.total).toBe(2);

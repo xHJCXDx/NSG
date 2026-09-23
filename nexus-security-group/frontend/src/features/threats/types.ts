@@ -2,6 +2,22 @@ export type ThreatLoadStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error
 
 export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical' | string;
 
+export type ThreatReviewStatus =
+  | 'pending'
+  | 'reviewing'
+  | 'confirmed'
+  | 'false_positive'
+  | 'investigating'
+  | 'resolved';
+
+export type ThreatRemediationStatus = 'none' | 'in_progress' | 'completed' | 'not_required';
+
+export interface ThreatReviewRequest {
+  review_status: ThreatReviewStatus;
+  review_notes?: string;
+  remediation_status?: ThreatRemediationStatus;
+}
+
 export interface RelatedMention {
   id: string;
   text?: string;
@@ -21,6 +37,11 @@ export interface Threat {
   summary?: string;
   evidence?: string[];
   relatedMention?: RelatedMention;
+  reviewStatus: ThreatReviewStatus;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  remediationStatus?: ThreatRemediationStatus | null;
 }
 
 export interface RawRelatedMention {
@@ -56,6 +77,11 @@ export interface RawThreat {
   detection_rules_triggered?: string[] | null;
   related_mention?: RawRelatedMention | null;
   mention?: RawRelatedMention | null;
+  review_status?: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  review_notes?: string | null;
+  remediation_status?: string | null;
 }
 
 export interface RawThreatsResponse {

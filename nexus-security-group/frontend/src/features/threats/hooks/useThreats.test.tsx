@@ -30,6 +30,11 @@ const threats: Threat[] = [
     detectedAt: '2026-07-03T10:00:00Z',
     summary: 'Potential leaked credential',
     evidence: ['password'],
+    reviewStatus: 'pending',
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNotes: null,
+    remediationStatus: null,
   },
   {
     id: '2',
@@ -39,6 +44,11 @@ const threats: Threat[] = [
     riskScore: null,
     detectedAt: '2026-07-03T11:00:00Z',
     relatedMention: { id: 'mention-2', text: 'lookalike domain', platform: 'reddit' },
+    reviewStatus: 'reviewing',
+    reviewedBy: 'analyst1',
+    reviewedAt: '2026-07-03T11:30:00Z',
+    reviewNotes: null,
+    remediationStatus: 'in_progress',
   },
 ];
 
