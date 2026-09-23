@@ -77,15 +77,15 @@ export function ThreatCategoriesChart({ data, isLoading, error }: ThreatCategori
     <ChartCard title={t.analytics.charts.threatCategories}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
-            <XAxis dataKey="displayLabel" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 11 }} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" height={60} />
-            <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} />
+          <BarChart data={formattedData} layout="vertical" margin={{ top: 10, right: 30, left: 80, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+            <XAxis type="number" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <YAxis type="category" dataKey="displayLabel" stroke={chartColors.axis} tick={{ fill: chartColors.axis, fontSize: 12 }} axisLine={false} tickLine={false} width={80} />
             <Tooltip
               contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '0.75rem', color: chartColors.tooltipText }}
               labelFormatter={(_, payload) => payload[0]?.payload?.displayLabel ?? ''}
             />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="count" radius={[0, 4, 4, 0]}>
               {formattedData.map((entry) => (
                 <Cell key={entry.label} fill={CATEGORY_COLORS[entry.label] ?? '#6b7280'} />
               ))}
