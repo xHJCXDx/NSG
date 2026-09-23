@@ -32,6 +32,12 @@ export interface WorkflowHealthEntry {
   avg_detections_generated: number | null;
 }
 
+export interface RiskScoreBucket {
+  bucket: string;
+  count: number;
+  avg_score: number;
+}
+
 export interface TopKeywordEntry {
   keyword: string;
   detection_count: number;

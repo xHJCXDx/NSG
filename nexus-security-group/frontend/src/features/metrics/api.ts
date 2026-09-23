@@ -3,13 +3,14 @@ import {
   MENTIONS_OVER_TIME_ENDPOINT,
   METRICS_SUMMARY_ENDPOINT,
   PLATFORM_DISTRIBUTION_ENDPOINT,
+  RISK_SCORE_DISTRIBUTION_ENDPOINT,
   SENTIMENT_OVER_TIME_ENDPOINT,
   THREAT_CATEGORIES_ENDPOINT,
   THREATS_BY_SEVERITY_ENDPOINT,
   TOP_KEYWORDS_ENDPOINT,
   WORKFLOW_HEALTH_ENDPOINT,
 } from './contract';
-import type { CategoryCount, MetricsSummary, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
+import type { CategoryCount, MetricsSummary, RiskScoreBucket, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
 
 export async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary> {
   const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);
@@ -45,6 +46,12 @@ export async function fetchThreatCategories(token: string | null, days = 30): Pr
   const res = await authFetch(token, `${THREAT_CATEGORIES_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch threat categories: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
+}
+
+export async function fetchRiskScoreDistribution(token: string | null, days = 30): Promise<RiskScoreBucket[]> {
+  const res = await authFetch(token, `${RISK_SCORE_DISTRIBUTION_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch risk score distribution: ${res.status}`);
+  return res.json() as Promise<RiskScoreBucket[]>;
 }
 
 export async function fetchTopKeywords(token: string | null, limit = 15): Promise<TopKeywordEntry[]> {

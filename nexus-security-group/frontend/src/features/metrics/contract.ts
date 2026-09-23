@@ -4,6 +4,7 @@ export const SENTIMENT_OVER_TIME_ENDPOINT = '/api/metrics/sentiment-over-time';
 export const THREATS_BY_SEVERITY_ENDPOINT = '/api/metrics/threats-by-severity';
 export const PLATFORM_DISTRIBUTION_ENDPOINT = '/api/metrics/platform-distribution';
 export const THREAT_CATEGORIES_ENDPOINT = '/api/metrics/threat-categories';
+export const RISK_SCORE_DISTRIBUTION_ENDPOINT = '/api/metrics/risk-score-distribution';
 export const TOP_KEYWORDS_ENDPOINT = '/api/metrics/top-keywords';
 export const WORKFLOW_HEALTH_ENDPOINT = '/api/metrics/workflow-health';
 

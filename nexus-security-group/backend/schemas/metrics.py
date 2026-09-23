@@ -83,6 +83,16 @@ class CategoryCount(BaseModel):
     count: int
 
 
+class RiskScoreBucket(BaseModel):
+    """Risk score histogram bucket."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    bucket: str
+    count: int
+    avg_score: float
+
+
 class PaginatedMentionsResponse(BaseModel):
     """Paginated envelope for the /api/metrics/mentions endpoint."""
 

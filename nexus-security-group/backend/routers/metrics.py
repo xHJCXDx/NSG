@@ -14,6 +14,7 @@ from schemas.metrics import (
     MetricsSummaryEndpointResponse,
     PaginatedMentionsResponse,
     RecentMentionResponse,
+    RiskScoreBucket,
     SentimentTimeSeriesPoint,
     TimeSeriesPoint,
     TopKeywordEntry,
@@ -297,5 +298,43 @@ def get_workflow_health(
             avg_mentions_processed=round(float(row.avg_mentions_processed or 0), 1),
             avg_detections_generated=round(float(row.avg_detections_generated or 0), 1),
         )
+        for row in rows
+    ]
+
+
+@router.get("/risk-score-distribution", response_model=list[RiskScoreBucket])
+def get_risk_score_distribution(
+    db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    since = datetime.now(UTC) - timedelta(days=days)
+    rows = db.execute(
+        text(
+            "SELECT"
+            " CASE"
+            "   WHEN risk_score BETWEEN 0 AND 10 THEN '0-10'"
+            "   WHEN risk_score BETWEEN 11 AND 20 THEN '11-20'"
+            "   WHEN risk_score BETWEEN 21 AND 30 THEN '21-30'"
+            "   WHEN risk_score BETWEEN 31 AND 40 THEN '31-40'"
+            "   WHEN risk_score BETWEEN 41 AND 50 THEN '41-50'"
+            "   WHEN risk_score BETWEEN 51 AND 60 THEN '51-60'"
+            "   WHEN risk_score BETWEEN 61 AND 70 THEN '61-70'"
+            "   WHEN risk_score BETWEEN 71 AND 80 THEN '71-80'"
+            "   WHEN risk_score BETWEEN 81 AND 90 THEN '81-90'"
+            "   WHEN risk_score BETWEEN 91 AND 100 THEN '91-100'"
+            "   ELSE 'unknown'"
+            " END AS bucket,"
+            " COUNT(*) AS count,"
+            " ROUND(AVG(risk_score)::numeric, 1) AS avg_score"
+            " FROM threat_detections"
+            " WHERE detected_at >= :since AND risk_score IS NOT NULL"
+            " GROUP BY bucket"
+            " ORDER BY MIN(risk_score)"
+        ),
+        {"since": since},
+    ).fetchall()
+    return [
+        RiskScoreBucket(bucket=row.bucket, count=row.count, avg_score=float(row.avg_score))
         for row in rows
     ]

@@ -246,6 +246,7 @@ export const translations = {
         platformDistribution: 'Platform Distribution',
         threatsBySeverity: 'Threats by Severity',
         threatCategories: 'Threat Categories',
+        riskScoreDistribution: 'Risk Score Distribution',
         topKeywords: 'Top Keywords (Last 30 Days)',
         workflowHealth: 'Pipeline Health',
         noData: 'No data available.',
@@ -253,6 +254,8 @@ export const translations = {
       tooltips: {
         detections: 'Detections',
         highSeverity: 'High/Critical',
+        riskRange: 'Risk range',
+        avgScore: 'Avg. score',
         daysActive: 'Days active',
         confidence: 'Avg. confidence',
         success: 'Success',
@@ -990,6 +993,7 @@ export const translations = {
         platformDistribution: 'Distribución por plataforma',
         threatsBySeverity: 'Amenazas por severidad',
         threatCategories: 'Categorías de amenazas',
+        riskScoreDistribution: 'Distribución de Risk Score',
         topKeywords: 'Top Keywords (Últimos 30 Días)',
         workflowHealth: 'Salud del Pipeline',
         noData: 'Sin datos disponibles.',
@@ -997,6 +1001,8 @@ export const translations = {
       tooltips: {
         detections: 'Detecciones',
         highSeverity: 'Alta/Crítica',
+        riskRange: 'Rango de riesgo',
+        avgScore: 'Score prom.',
         daysActive: 'Días activo',
         confidence: 'Confianza prom.',
         success: 'Éxitos',

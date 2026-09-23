@@ -6,6 +6,7 @@ import { SentimentTrendChart } from '../components/SentimentTrendChart';
 import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
+import { RiskScoreChart } from '../components/RiskScoreChart';
 import { TopKeywordsChart } from '../components/TopKeywordsChart';
 import { WorkflowHealthChart } from '../components/WorkflowHealthChart';
 import { useTranslation } from '../../../shared/i18n/translations';
@@ -77,6 +78,13 @@ export function AnalyticsPage() {
           isLoading={analytics.threatsBySeverityLoading}
           error={analytics.threatsBySeverityError}
         />
+        <RiskScoreChart
+          data={analytics.riskScoreDistribution}
+          isLoading={analytics.riskScoreDistributionLoading}
+          error={analytics.riskScoreDistributionError}
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ThreatCategoriesChart
           data={analytics.threatCategories}
           isLoading={analytics.threatCategoriesLoading}
