@@ -6,6 +6,7 @@ import {
   fetchPlatformDistribution,
   fetchRiskScoreDistribution,
   fetchSentimentOverTime,
+  fetchThreatReviewStatus,
   fetchThreatCategories,
   fetchThreatsBySeverity,
   fetchTopKeywords,
@@ -49,6 +50,12 @@ export function useAnalytics(days = 30) {
   const threatCategories = useQuery({
     queryKey: ['analytics', 'threat-categories', days, sub],
     queryFn: () => fetchThreatCategories(token, days),
+    enabled: !!token,
+  });
+
+  const threatReviewStatus = useQuery({
+    queryKey: ['analytics', 'threat-review-status', days, sub],
+    queryFn: () => fetchThreatReviewStatus(token, days),
     enabled: !!token,
   });
 
@@ -110,6 +117,10 @@ export function useAnalytics(days = 30) {
     threatCategories: threatCategories.data ?? [],
     threatCategoriesLoading: threatCategories.isLoading,
     threatCategoriesError: threatCategories.error,
+
+    threatReviewStatus: threatReviewStatus.data ?? [],
+    threatReviewStatusLoading: threatReviewStatus.isLoading,
+    threatReviewStatusError: threatReviewStatus.error,
 
     riskScoreDistribution: riskScoreDistribution.data ?? [],
     riskScoreDistributionLoading: riskScoreDistribution.isLoading,

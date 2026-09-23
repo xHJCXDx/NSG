@@ -338,3 +338,23 @@ def get_risk_score_distribution(
         RiskScoreBucket(bucket=row.bucket, count=row.count, avg_score=float(row.avg_score))
         for row in rows
     ]
+
+
+@router.get("/threat-review-status", response_model=list[CategoryCount])
+def get_threat_review_status(
+    db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    since = datetime.now(UTC) - timedelta(days=days)
+    rows = (
+        db.query(
+            func.coalesce(ThreatDetection.review_status, "pending").label("label"),
+            func.count().label("count"),
+        )
+        .filter(ThreatDetection.detected_at >= since)
+        .group_by(ThreatDetection.review_status)
+        .order_by(func.count().desc())
+        .all()
+    )
+    return [CategoryCount(label=row.label, count=row.count) for row in rows]

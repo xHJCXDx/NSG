@@ -7,6 +7,7 @@ import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
 import { RiskScoreChart } from '../components/RiskScoreChart';
+import { ThreatReviewChart } from '../components/ThreatReviewChart';
 import { TopKeywordsChart } from '../components/TopKeywordsChart';
 import { WorkflowHealthChart } from '../components/WorkflowHealthChart';
 import { useTranslation } from '../../../shared/i18n/translations';
@@ -89,6 +90,11 @@ export function AnalyticsPage() {
           data={analytics.threatCategories}
           isLoading={analytics.threatCategoriesLoading}
           error={analytics.threatCategoriesError}
+        />
+        <ThreatReviewChart
+          data={analytics.threatReviewStatus}
+          isLoading={analytics.threatReviewStatusLoading}
+          error={analytics.threatReviewStatusError}
         />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -6,6 +6,7 @@ import {
   RISK_SCORE_DISTRIBUTION_ENDPOINT,
   SENTIMENT_OVER_TIME_ENDPOINT,
   THREAT_CATEGORIES_ENDPOINT,
+  THREAT_REVIEW_STATUS_ENDPOINT,
   THREATS_BY_SEVERITY_ENDPOINT,
   TOP_KEYWORDS_ENDPOINT,
   WORKFLOW_HEALTH_ENDPOINT,
@@ -45,6 +46,12 @@ export async function fetchPlatformDistribution(token: string | null, days = 30)
 export async function fetchThreatCategories(token: string | null, days = 30): Promise<CategoryCount[]> {
   const res = await authFetch(token, `${THREAT_CATEGORIES_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch threat categories: ${res.status}`);
+  return res.json() as Promise<CategoryCount[]>;
+}
+
+export async function fetchThreatReviewStatus(token: string | null, days = 30): Promise<CategoryCount[]> {
+  const res = await authFetch(token, `${THREAT_REVIEW_STATUS_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch threat review status: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
 }
 
