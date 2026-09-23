@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import type { Threat, ThreatSeverity } from '../types';
+import type { Threat, ThreatReviewStatus, ThreatSeverity } from '../types';
 import { useTranslation } from '../../../shared/i18n/translations';
+import { useAuth } from '../../auth';
+import { ThreatReviewPanel } from './ThreatReviewPanel';
 
 interface ThreatCardProps {
   threat: Threat;
@@ -23,6 +25,15 @@ const SEVERITY_STYLES: Record<string, { badge: string; border: string }> = {
     badge: 'border-red-400/30 bg-red-500/10 text-red-200',
     border: 'border-l-red-500',
   },
+};
+
+const REVIEW_STATUS_BADGE: Record<ThreatReviewStatus, string> = {
+  pending: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-200',
+  reviewing: 'border-blue-400/30 bg-blue-500/10 text-blue-200',
+  investigating: 'border-indigo-400/30 bg-indigo-500/10 text-indigo-200',
+  confirmed: 'border-red-400/30 bg-red-500/10 text-red-200',
+  false_positive: 'border-zinc-400/30 bg-zinc-500/10 text-zinc-300',
+  resolved: 'border-green-400/30 bg-green-500/10 text-green-200',
 };
 
 const EVIDENCE_VISIBLE_LIMIT = 5;
@@ -76,9 +87,12 @@ const RELATED_MENTION_TRUNCATE_LENGTH = 80;
 
 export function ThreatCard({ threat }: ThreatCardProps) {
   const t = useTranslation();
+  const { hasPermission } = useAuth();
+  const canWrite = hasPermission('threats', 'write');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [evidenceExpanded, setEvidenceExpanded] = useState(false);
   const [relatedMentionExpanded, setRelatedMentionExpanded] = useState(false);
+  const [reviewExpanded, setReviewExpanded] = useState(false);
 
   const { badge, border } = getSeverityStyles(threat.severity);
   const evidence = threat.evidence ?? [];
@@ -109,6 +123,9 @@ export function ThreatCard({ threat }: ThreatCardProps) {
               {t.threats.card.riskLabel} {threat.riskScore}
             </span>
           )}
+          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${REVIEW_STATUS_BADGE[threat.reviewStatus]}`}>
+            {t.analytics.reviewStatus[threat.reviewStatus]}
+          </span>
         </div>
       </div>
 
@@ -184,6 +201,26 @@ export function ThreatCard({ threat }: ThreatCardProps) {
           <span>{t.threats.card.relatedMentionIdLabel}: {threat.mentionId}</span>
         ) : null}
       </div>
+
+      {/* Review info + expandable panel */}
+      {threat.reviewedBy && !reviewExpanded && (
+        <p className="text-xs text-content-muted">
+          {t.threats.review.reviewedBy} {threat.reviewedBy}
+          {threat.reviewedAt && <> · {new Date(threat.reviewedAt).toLocaleString()}</>}
+        </p>
+      )}
+
+      {canWrite && (
+        <button
+          type="button"
+          onClick={() => setReviewExpanded((prev) => !prev)}
+          className="text-xs text-brand-400 hover:underline"
+        >
+          {reviewExpanded ? t.threats.card.showLess : t.threats.review.statusLabel}
+        </button>
+      )}
+
+      {canWrite && reviewExpanded && <ThreatReviewPanel threat={threat} />}
     </article>
   );
 }
