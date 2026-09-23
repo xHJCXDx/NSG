@@ -118,6 +118,8 @@ export const translations = {
         success: 'Review saved successfully',
         error: 'Failed to save review',
         reviewedBy: 'Reviewed by',
+        reviewedAt: 'Reviewed at',
+        notReviewed: 'Not reviewed yet',
         currentLabel: 'Current:',
         remediationOptions: {
           none: 'None',
@@ -907,6 +909,8 @@ export const translations = {
         success: 'Revisión guardada',
         error: 'Error al guardar revisión',
         reviewedBy: 'Revisado por',
+        reviewedAt: 'Revisado el',
+        notReviewed: 'Sin revisar',
         currentLabel: 'Actual:',
         remediationOptions: {
           none: 'Ninguna',
