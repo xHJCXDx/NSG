@@ -1,5 +1,6 @@
 import { authFetch } from '../../shared/api/apiClient';
 import {
+  ALERT_HEALTH_ENDPOINT,
   MENTIONS_OVER_TIME_ENDPOINT,
   METRICS_SUMMARY_ENDPOINT,
   PLATFORM_DISTRIBUTION_ENDPOINT,
@@ -11,7 +12,13 @@ import {
   TOP_KEYWORDS_ENDPOINT,
   WORKFLOW_HEALTH_ENDPOINT,
 } from './contract';
-import type { CategoryCount, MetricsSummary, RiskScoreBucket, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
+import type { AlertHealthSummary, CategoryCount, MetricsSummary, RiskScoreBucket, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
+
+export async function fetchAlertHealth(token: string | null, days = 30): Promise<AlertHealthSummary> {
+  const res = await authFetch(token, `${ALERT_HEALTH_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch alert health: ${res.status}`);
+  return res.json() as Promise<AlertHealthSummary>;
+}
 
 export async function fetchMetricsSummary(token: string | null): Promise<MetricsSummary> {
   const res = await authFetch(token, METRICS_SUMMARY_ENDPOINT);

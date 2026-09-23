@@ -10,6 +10,7 @@ from auth import require_permission
 from models import Alert, SentimentAnalysis, SocialMention, ThreatDetection
 from schemas.auth import TokenData
 from schemas.metrics import (
+    AlertHealthSummary,
     CategoryCount,
     MetricsSummaryEndpointResponse,
     PaginatedMentionsResponse,
@@ -358,3 +359,34 @@ def get_threat_review_status(
         .all()
     )
     return [CategoryCount(label=row.label, count=row.count) for row in rows]
+
+
+@router.get("/alert-health", response_model=AlertHealthSummary)
+def get_alert_health(
+    db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    since = datetime.now(UTC) - timedelta(days=days)
+    base = db.query(Alert).filter(Alert.created_at >= since)
+    total = base.count()
+
+    delivery_rows = (
+        base.with_entities(
+            Alert.delivery_status.label("label"),
+            func.count().label("count"),
+        )
+        .group_by(Alert.delivery_status)
+        .all()
+    )
+
+    ack_count = base.filter(Alert.acknowledged.is_(True)).count()
+    unack_count = total - ack_count
+
+    return AlertHealthSummary(
+        total=total,
+        by_delivery_status=[CategoryCount(label=r.label or "unknown", count=r.count) for r in delivery_rows],
+        acknowledged_count=ack_count,
+        unacknowledged_count=unack_count,
+        acknowledgement_rate=round(ack_count / total, 3) if total > 0 else 0.0,
+    )

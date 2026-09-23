@@ -32,6 +32,14 @@ export interface WorkflowHealthEntry {
   avg_detections_generated: number | null;
 }
 
+export interface AlertHealthSummary {
+  total: number;
+  by_delivery_status: CategoryCount[];
+  acknowledged_count: number;
+  unacknowledged_count: number;
+  acknowledgement_rate: number;
+}
+
 export interface RiskScoreBucket {
   bucket: string;
   count: number;

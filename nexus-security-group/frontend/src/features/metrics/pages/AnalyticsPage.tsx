@@ -6,6 +6,7 @@ import { SentimentTrendChart } from '../components/SentimentTrendChart';
 import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
+import { AlertHealthChart } from '../components/AlertHealthChart';
 import { RiskScoreChart } from '../components/RiskScoreChart';
 import { ThreatReviewChart } from '../components/ThreatReviewChart';
 import { TopKeywordsChart } from '../components/TopKeywordsChart';
@@ -107,6 +108,13 @@ export function AnalyticsPage() {
           data={analytics.workflowHealth}
           isLoading={analytics.workflowHealthLoading}
           error={analytics.workflowHealthError}
+        />
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <AlertHealthChart
+          data={analytics.alertHealth}
+          isLoading={analytics.alertHealthLoading}
+          error={analytics.alertHealthError}
         />
       </div>
     </section>

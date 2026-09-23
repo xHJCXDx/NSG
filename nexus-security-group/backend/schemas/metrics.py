@@ -83,6 +83,18 @@ class CategoryCount(BaseModel):
     count: int
 
 
+class AlertHealthSummary(BaseModel):
+    """Alert delivery and acknowledgement metrics."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    total: int
+    by_delivery_status: list["CategoryCount"]
+    acknowledged_count: int
+    unacknowledged_count: int
+    acknowledgement_rate: float
+
+
 class RiskScoreBucket(BaseModel):
     """Risk score histogram bucket."""
 
