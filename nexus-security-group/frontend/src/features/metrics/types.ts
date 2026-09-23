@@ -32,6 +32,14 @@ export interface WorkflowHealthEntry {
   avg_detections_generated: number | null;
 }
 
+export interface PlatformSentimentEntry {
+  platform: string;
+  positive: number;
+  neutral: number;
+  negative: number;
+  total: number;
+}
+
 export interface AlertHealthSummary {
   total: number;
   by_delivery_status: CategoryCount[];

@@ -14,6 +14,7 @@ from schemas.metrics import (
     CategoryCount,
     MetricsSummaryEndpointResponse,
     PaginatedMentionsResponse,
+    PlatformSentimentEntry,
     RecentMentionResponse,
     RiskScoreBucket,
     SentimentTimeSeriesPoint,
@@ -390,3 +391,38 @@ def get_alert_health(
         unacknowledged_count=unack_count,
         acknowledgement_rate=round(ack_count / total, 3) if total > 0 else 0.0,
     )
+
+
+@router.get("/platform-sentiment", response_model=list[PlatformSentimentEntry])
+def get_platform_sentiment(
+    db: Session = Depends(get_db),
+    days: Annotated[int, Query(ge=1, le=365)] = 30,
+    current_user: TokenData = Depends(require_permission("metrics", "read")),
+):
+    since = datetime.now(UTC) - timedelta(days=days)
+    rows = db.execute(
+        text(
+            "SELECT"
+            " sm.platform,"
+            " COUNT(*) FILTER (WHERE sa.sentiment_label = 'positive') AS positive,"
+            " COUNT(*) FILTER (WHERE sa.sentiment_label = 'neutral') AS neutral,"
+            " COUNT(*) FILTER (WHERE sa.sentiment_label = 'negative') AS negative,"
+            " COUNT(*) AS total"
+            " FROM social_mentions sm"
+            " LEFT JOIN sentiment_analysis sa ON sm.mention_id = sa.mention_id"
+            " WHERE sm.created_at >= :since"
+            " GROUP BY sm.platform"
+            " ORDER BY total DESC"
+        ),
+        {"since": since},
+    ).fetchall()
+    return [
+        PlatformSentimentEntry(
+            platform=row.platform,
+            positive=row.positive,
+            neutral=row.neutral,
+            negative=row.negative,
+            total=row.total,
+        )
+        for row in rows
+    ]

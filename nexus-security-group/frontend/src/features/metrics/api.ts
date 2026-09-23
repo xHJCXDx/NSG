@@ -4,6 +4,7 @@ import {
   MENTIONS_OVER_TIME_ENDPOINT,
   METRICS_SUMMARY_ENDPOINT,
   PLATFORM_DISTRIBUTION_ENDPOINT,
+  PLATFORM_SENTIMENT_ENDPOINT,
   RISK_SCORE_DISTRIBUTION_ENDPOINT,
   SENTIMENT_OVER_TIME_ENDPOINT,
   THREAT_CATEGORIES_ENDPOINT,
@@ -12,7 +13,7 @@ import {
   TOP_KEYWORDS_ENDPOINT,
   WORKFLOW_HEALTH_ENDPOINT,
 } from './contract';
-import type { AlertHealthSummary, CategoryCount, MetricsSummary, RiskScoreBucket, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
+import type { AlertHealthSummary, CategoryCount, MetricsSummary, PlatformSentimentEntry, RiskScoreBucket, SentimentTimeSeriesPoint, TimeSeriesPoint, TopKeywordEntry, WorkflowHealthEntry } from './types';
 
 export async function fetchAlertHealth(token: string | null, days = 30): Promise<AlertHealthSummary> {
   const res = await authFetch(token, `${ALERT_HEALTH_ENDPOINT}?days=${days}`);
@@ -42,6 +43,12 @@ export async function fetchThreatsBySeverity(token: string | null, days = 30): P
   const res = await authFetch(token, `${THREATS_BY_SEVERITY_ENDPOINT}?days=${days}`);
   if (!res.ok) throw new Error(`Failed to fetch threats by severity: ${res.status}`);
   return res.json() as Promise<CategoryCount[]>;
+}
+
+export async function fetchPlatformSentiment(token: string | null, days = 30): Promise<PlatformSentimentEntry[]> {
+  const res = await authFetch(token, `${PLATFORM_SENTIMENT_ENDPOINT}?days=${days}`);
+  if (!res.ok) throw new Error(`Failed to fetch platform sentiment: ${res.status}`);
+  return res.json() as Promise<PlatformSentimentEntry[]>;
 }
 
 export async function fetchPlatformDistribution(token: string | null, days = 30): Promise<CategoryCount[]> {

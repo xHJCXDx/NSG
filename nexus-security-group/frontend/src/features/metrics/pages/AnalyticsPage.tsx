@@ -7,6 +7,7 @@ import { ThreatsBySeverityChart } from '../components/ThreatsBySeverityChart';
 import { PlatformDistributionChart } from '../components/PlatformDistributionChart';
 import { ThreatCategoriesChart } from '../components/ThreatCategoriesChart';
 import { AlertHealthChart } from '../components/AlertHealthChart';
+import { PlatformSentimentChart } from '../components/PlatformSentimentChart';
 import { RiskScoreChart } from '../components/RiskScoreChart';
 import { ThreatReviewChart } from '../components/ThreatReviewChart';
 import { TopKeywordsChart } from '../components/TopKeywordsChart';
@@ -111,6 +112,11 @@ export function AnalyticsPage() {
         />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <PlatformSentimentChart
+          data={analytics.platformSentiment}
+          isLoading={analytics.platformSentimentLoading}
+          error={analytics.platformSentimentError}
+        />
         <AlertHealthChart
           data={analytics.alertHealth}
           isLoading={analytics.alertHealthLoading}

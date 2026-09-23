@@ -95,6 +95,18 @@ class AlertHealthSummary(BaseModel):
     acknowledgement_rate: float
 
 
+class PlatformSentimentEntry(BaseModel):
+    """Sentiment breakdown per platform."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    platform: str
+    positive: int
+    neutral: int
+    negative: int
+    total: int
+
+
 class RiskScoreBucket(BaseModel):
     """Risk score histogram bucket."""
 
