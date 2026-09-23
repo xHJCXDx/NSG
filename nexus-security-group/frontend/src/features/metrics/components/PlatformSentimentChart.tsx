@@ -75,8 +75,8 @@ export function PlatformSentimentChart({ data, isLoading, error }: PlatformSenti
                 borderRadius: '0.75rem',
                 color: chartColors.tooltipText,
               }}
-              formatter={(value: number, name: string) => {
-                return [value, sentimentLabels[name] ?? name];
+              formatter={(value, name) => {
+                return [value, sentimentLabels[String(name)] ?? String(name)];
               }}
               labelFormatter={(label, payload) => {
                 const entry = payload?.[0]?.payload as PlatformSentimentEntry | undefined;

@@ -94,9 +94,10 @@ export function AlertHealthChart({ data, isLoading, error }: AlertHealthChartPro
                   borderRadius: '0.75rem',
                   color: chartColors.tooltipText,
                 }}
-                formatter={(value: number, name: string) => {
-                  const pct = data.total > 0 ? ((value / data.total) * 100).toFixed(1) : '0';
-                  return [`${value} (${pct}%)`, name];
+                formatter={(value, name) => {
+                  const v = Number(value);
+                  const pct = data.total > 0 ? ((v / data.total) * 100).toFixed(1) : '0';
+                  return [`${v} (${pct}%)`, String(name)];
                 }}
               />
             </PieChart>

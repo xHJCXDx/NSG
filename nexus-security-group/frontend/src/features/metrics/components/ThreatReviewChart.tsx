@@ -87,9 +87,10 @@ export function ThreatReviewChart({ data, isLoading, error }: ThreatReviewChartP
                 color: chartColors.tooltipText,
               }}
               labelFormatter={(_, payload) => payload[0]?.payload?.displayLabel ?? ''}
-              formatter={(value: number) => {
-                const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-                return [`${value} (${pct}%)`, t.analytics.tooltips.detections];
+              formatter={(value) => {
+                const v = Number(value);
+                const pct = total > 0 ? ((v / total) * 100).toFixed(1) : '0';
+                return [`${v} (${pct}%)`, t.analytics.tooltips.detections];
               }}
             />
             <Bar dataKey="count" radius={[0, 4, 4, 0]}>
