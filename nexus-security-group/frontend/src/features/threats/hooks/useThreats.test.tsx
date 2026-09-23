@@ -123,13 +123,13 @@ describe('useThreats', () => {
     expect(result.current.availableFilters.severityOptions).toEqual(['critical', 'high']);
     expect(result.current.availableFilters.classificationOptions).toEqual(['brand_impersonation', 'credential_leak', 'data exposure']);
 
-    act(() => result.current.setFilters({ search: 'lookalike', severity: '', classification: '' }));
+    act(() => result.current.setFilters({ search: 'lookalike', severity: '', classification: '', reviewStatus: '' }));
     expect(result.current.filteredThreats).toEqual([threats[1]]);
 
-    act(() => result.current.setFilters({ search: '', severity: '', classification: 'brand_impersonation' }));
+    act(() => result.current.setFilters({ search: '', severity: '', classification: 'brand_impersonation', reviewStatus: '' }));
     expect(result.current.filteredThreats).toEqual([threats[1]]);
 
-    act(() => result.current.setFilters({ search: 'missing', severity: '', classification: '' }));
+    act(() => result.current.setFilters({ search: 'missing', severity: '', classification: '', reviewStatus: '' }));
     expect(result.current.status).toBe('empty');
     expect(result.current.emptyReason).toBe('no-results');
   });
@@ -140,7 +140,7 @@ describe('useThreats', () => {
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('success'));
 
-    act(() => result.current.setFilters({ search: '', severity: 'high', classification: '' }));
+    act(() => result.current.setFilters({ search: '', severity: 'high', classification: '', reviewStatus: '' }));
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ criticality_level: 'high' })));
   });
 });

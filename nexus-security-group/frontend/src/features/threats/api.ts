@@ -136,6 +136,9 @@ export async function fetchThreats(token: string | null, query: ThreatsQuery = {
   if (query.criticality_level) {
     params.set('criticality_level', query.criticality_level);
   }
+  if (query.review_status) {
+    params.set('review_status', query.review_status);
+  }
   const res = await authFetch(token, `${THREATS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {

@@ -91,6 +91,9 @@ export const translations = {
         severityPlaceholder: 'Severity',
         classificationLabel: 'Filter by classification',
         classificationPlaceholder: 'Classification',
+        reviewStatusLabel: 'Filter by review status',
+        reviewStatusPlaceholder: 'Review Status',
+        allStatuses: 'All Statuses',
       },
       card: {
         unknownDate: 'Unknown date',
@@ -877,6 +880,9 @@ export const translations = {
         severityPlaceholder: 'Severidad',
         classificationLabel: 'Filtrar por clasificación',
         classificationPlaceholder: 'Clasificación',
+        reviewStatusLabel: 'Filtrar por estado de revisión',
+        reviewStatusPlaceholder: 'Estado de revisión',
+        allStatuses: 'Todos los estados',
       },
       card: {
         unknownDate: 'Fecha desconocida',

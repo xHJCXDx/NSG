@@ -62,6 +62,22 @@ export function ThreatsToolbar({ filters, availableFilters, onFiltersChange }: T
           </select>
         </label>
       )}
+
+      <label className="md:w-48 text-sm text-content-secondary">
+        <span className="sr-only">{t.threats.toolbar.reviewStatusLabel}</span>
+        <select
+          value={filters.reviewStatus}
+          onChange={(event) => onFiltersChange({ ...filters, reviewStatus: event.target.value })}
+          className="w-full rounded-xl border border-edge-input bg-surface-input px-4 py-3 text-content-primary focus:border-brand-400 focus:outline-none"
+        >
+          <option value="">{t.threats.toolbar.allStatuses}</option>
+          {(['pending', 'reviewing', 'investigating', 'confirmed', 'false_positive', 'resolved'] as const).map((status) => (
+            <option key={status} value={status} className="bg-surface-primary text-content-primary">
+              {t.analytics.reviewStatus[status]}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }

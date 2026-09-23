@@ -94,10 +94,12 @@ export interface ThreatFilters {
   search: string;
   severity: string;
   classification: string;
+  reviewStatus: string;
 }
 
 export interface ThreatsQuery {
   page?: number;
   pageSize?: number;
   criticality_level?: string;
+  review_status?: string;
 }

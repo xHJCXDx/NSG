@@ -4,7 +4,7 @@ import { useAuth } from '../../auth';
 import { fetchThreats } from '../api';
 import type { ThreatFilters, ThreatLoadStatus } from '../types';
 
-const initialFilters: ThreatFilters = { search: '', severity: '', classification: '' };
+const initialFilters: ThreatFilters = { search: '', severity: '', classification: '', reviewStatus: '' };
 
 export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 
@@ -14,17 +14,18 @@ export function useThreats() {
   const [page, setPage] = useState(1);
 
   const severityFilter = filters.severity.trim() || undefined;
+  const reviewStatusFilter = filters.reviewStatus.trim() || undefined;
 
   const setFiltersAndResetPage = (newFilters: ThreatFilters) => {
     setFilters(newFilters);
-    if (newFilters.severity !== filters.severity) {
+    if (newFilters.severity !== filters.severity || newFilters.reviewStatus !== filters.reviewStatus) {
       setPage(1);
     }
   };
 
   const { data: response, isLoading, isError, refetch } = useQuery({
-    queryKey: ['threats', claims.sub, page, severityFilter],
-    queryFn: () => fetchThreats(token, { page, criticality_level: severityFilter }),
+    queryKey: ['threats', claims.sub, page, severityFilter, reviewStatusFilter],
+    queryFn: () => fetchThreats(token, { page, criticality_level: severityFilter, review_status: reviewStatusFilter }),
     enabled: !!token,
   });
 
@@ -57,6 +58,7 @@ export function useThreats() {
     const search = filters.search.trim().toLowerCase();
     const severity = filters.severity.trim().toLowerCase();
     const classification = filters.classification.trim().toLowerCase();
+    const reviewStatusLocal = filters.reviewStatus.trim().toLowerCase();
 
     return threats
       .filter((threat) => {
@@ -80,8 +82,10 @@ export function useThreats() {
           classification.length === 0 ||
           threat.type.toLowerCase() === classification ||
           threat.category?.toLowerCase() === classification;
+        const matchesReviewStatus =
+          reviewStatusLocal.length === 0 || threat.reviewStatus.toLowerCase() === reviewStatusLocal;
 
-        return matchesSearch && matchesSeverity && matchesClassification;
+        return matchesSearch && matchesSeverity && matchesClassification && matchesReviewStatus;
       })
       .sort((left, right) => {
         const rightDate = new Date(right.detectedAt).getTime();
@@ -96,7 +100,7 @@ export function useThreats() {
   }, [filters, threats]);
 
   const hasActiveFilters =
-    filters.search.trim().length > 0 || filters.severity.trim().length > 0 || filters.classification.trim().length > 0;
+    filters.search.trim().length > 0 || filters.severity.trim().length > 0 || filters.classification.trim().length > 0 || filters.reviewStatus.trim().length > 0;
   const emptyReason: ThreatEmptyReason = threats.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: ThreatLoadStatus =
     baseStatus === 'success' && hasActiveFilters && filteredThreats.length === 0 ? 'empty' : baseStatus;
