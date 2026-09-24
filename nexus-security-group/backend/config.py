@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ADMIN_USER: str
     ADMIN_PASSWORD: str
     N8N_INTERNAL_URL: str = "http://n8n:5678"
+    WEBHOOK_SECRET: str = ""
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost"
 
     model_config = SettingsConfigDict(env_file=".env")
