@@ -33,6 +33,13 @@ class UserUpdate(BaseModel):
         return self
 
 
+class ChangePasswordRequest(BaseModel):
+    """Self-service password change payload; requires current password verification."""
+
+    current_password: Password
+    new_password: Password
+
+
 class UserResponse(BaseModel):
     """Public user response; intentionally excludes password_hash."""
 

@@ -4,17 +4,18 @@ Import any schema directly from `schemas`:
     from schemas import AlertResponse, KeywordCreate
 """
 from schemas.activity import UserActivityResponse
-from schemas.alert import AcknowledgeRequest, AlertResponse
+from schemas.alert import AlertResponse
 from schemas.auth import Token, TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
 from schemas.log import ExecutionLogResponse
 from schemas.mention import MentionDetail, MentionListItem
 from schemas.metrics import (
     MetricsSummaryEndpointResponse,
-    MetricsSummaryResponse,
     RecentMentionResponse,
-    SentimentDistribution,
 )
+from schemas.dashboard import DashboardSummaryResponse
+from schemas.permission import PermissionMatrixResponse, PermissionResponse, RolePermissionsResponse, RolePermissionsUpdate
+from schemas.user import UserCreate, UserResponse, UserUpdate
 from schemas.sentiment import SentimentResponse
 from schemas.threat import (
     RelatedMentionResponse,
@@ -30,9 +31,7 @@ __all__ = [
     "TokenData",
     # metrics
     "MetricsSummaryEndpointResponse",
-    "MetricsSummaryResponse",
     "RecentMentionResponse",
-    "SentimentDistribution",
     # mention
     "MentionListItem",
     "MentionDetail",
@@ -46,7 +45,6 @@ __all__ = [
     "ThreatReviewRequest",
     # alert
     "AlertResponse",
-    "AcknowledgeRequest",
     # keyword
     "KeywordResponse",
     "KeywordCreate",
@@ -55,4 +53,15 @@ __all__ = [
     "ExecutionLogResponse",
     # activity
     "UserActivityResponse",
+    # user
+    "UserCreate",
+    "UserResponse",
+    "UserUpdate",
+    # permission
+    "PermissionResponse",
+    "PermissionMatrixResponse",
+    "RolePermissionsUpdate",
+    "RolePermissionsResponse",
+    # dashboard
+    "DashboardSummaryResponse",
 ]

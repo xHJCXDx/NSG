@@ -5,11 +5,12 @@ from types import SimpleNamespace
 
 import pytest
 from httpx import AsyncClient, ASGITransport
-from jose import jwt
+import jwt
 from sqlalchemy.exc import SQLAlchemyError
 
 
-AUTH_PATH = Path(__file__).parent.parent / "auth.py"
+AUTH_PKG = Path(__file__).parent.parent / "auth"
+AUTH_FILES = sorted(AUTH_PKG.glob("*.py"))
 
 
 class FakeQuery:
@@ -29,10 +30,33 @@ class FakeDb:
     def __init__(self, first_result=None):
         self.query_obj = FakeQuery(first_result=first_result)
         self.query_args = []
+        self.added = []
+        self.commit_count = 0
+        self.rollback_count = 0
 
     def query(self, *args):
         self.query_args.append(args)
         return self.query_obj
+
+    def add(self, obj):
+        self.added.append(obj)
+
+    def commit(self):
+        self.commit_count += 1
+
+    def rollback(self):
+        self.rollback_count += 1
+
+
+class SequencedFakeDb(FakeDb):
+    def __init__(self, first_results):
+        super().__init__(first_result=None)
+        self.first_results = list(first_results)
+
+    def query(self, *args):
+        self.query_args.append(args)
+        first_result = self.first_results.pop(0) if self.first_results else None
+        return FakeQuery(first_result=first_result)
 
 
 class FailingDb:
@@ -40,34 +64,41 @@ class FailingDb:
         raise SQLAlchemyError("database unavailable")
 
 
+class PermissionAccessError:
+    @property
+    def permissions(self):
+        raise SQLAlchemyError("permissions relationship unavailable")
+
+
 @pytest.fixture(autouse=True)
 def auth_env(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret")
+    monkeypatch.setenv("JWT_SECRET_KEY", "test-jwt-secret-that-is-at-least-32-characters-long")
     monkeypatch.setenv("ADMIN_USER", "test-admin")
     monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
 
 
 def test_auth_no_os_getenv():
-    """auth.py must not call os.getenv() anywhere."""
-    source = AUTH_PATH.read_text()
-    tree = ast.parse(source)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            # os.getenv(...)
-            if (
-                isinstance(node.func, ast.Attribute)
-                and node.func.attr == "getenv"
-                and isinstance(node.func.value, ast.Name)
-                and node.func.value.id == "os"
-            ):
-                pytest.fail("auth.py still contains os.getenv() call — migrate to settings")
+    """auth package must not call os.getenv() anywhere."""
+    for path in AUTH_FILES:
+        source = path.read_text()
+        tree = ast.parse(source)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                if (
+                    isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "getenv"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "os"
+                ):
+                    pytest.fail(f"{path.name} still contains os.getenv() call — migrate to settings")
 
 
 def test_auth_no_import_os():
-    """auth.py must not have 'import os'."""
-    source = AUTH_PATH.read_text()
-    assert "import os" not in source, "auth.py still contains 'import os' — remove it"
+    """auth package must not have 'import os'."""
+    for path in AUTH_FILES:
+        source = path.read_text()
+        assert "import os" not in source, f"{path.name} still contains 'import os' — remove it"
 
 
 @pytest.mark.anyio
@@ -76,8 +107,10 @@ async def test_login_success():
     import auth
     from main import app
 
+    db = FakeDb(first_result=None)
+
     def override_db():
-        yield FakeDb(first_result=None)
+        yield db
 
     app.dependency_overrides[auth.get_db] = override_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -90,10 +123,23 @@ async def test_login_success():
     body = response.json()
     assert "access_token" in body
     assert body["token_type"] == "bearer"
-    claims = jwt.decode(body["access_token"], "test-jwt-secret", algorithms=["HS256"])
+    claims = jwt.decode(body["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
     assert claims["role"] == "admin"
     assert claims["auth_source"] == "bootstrap"
+    assert claims["permissions"] == auth.ADMIN_PERMISSION_CLAIMS
+    assert "users:write" in claims["permissions"]
+    assert "workflows:execute" in claims["permissions"]
     assert "user_id" not in claims
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "test-admin"
+    assert activity.user_role == "admin"
+    assert activity.activity_type == "login_success"
+    assert activity.activity_data == {"auth_source": "bootstrap"}
+    assert "access_token" not in activity.activity_data
+    assert "token" not in activity.activity_data
+    assert "test-admin-password" not in str(activity.activity_data)
+    assert db.commit_count == 1
 
 
 @pytest.mark.anyio
@@ -108,7 +154,55 @@ async def test_login_db_user_success():
         password_hash=password_hash,
         role="analyst",
         is_active=True,
+        permissions=[
+            SimpleNamespace(resource="workflows", action="execute"),
+            SimpleNamespace(resource="threats", action="read"),
+            SimpleNamespace(resource="threats", action="read"),
+            SimpleNamespace(resource=None, action="read"),
+        ],
     )
+
+    db = FakeDb(first_result=user)
+
+    def override_db():
+        yield db
+
+    app.dependency_overrides[auth.get_db] = override_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/auth/login",
+            data={"username": "analyst1", "password": "user-password"},
+        )
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
+    assert claims["sub"] == "analyst1"
+    assert claims["role"] == "analyst"
+    assert claims["auth_source"] == "database"
+    assert claims["user_id"] == 42
+    assert claims["permissions"] == ["threats:read", "workflows:execute"]
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "analyst1"
+    assert activity.user_role == "analyst"
+    assert activity.activity_type == "login_success"
+    assert activity.activity_data == {"auth_source": "database"}
+    assert "user-password" not in str(activity.activity_data)
+    assert "access_token" not in activity.activity_data
+
+
+@pytest.mark.anyio
+async def test_login_db_user_handles_unavailable_permissions_relation():
+    import auth
+    from main import app
+
+    user = PermissionAccessError()
+    user.username = "analyst1"
+    user.user_id = 42
+    user.password_hash = auth.hash_password("user-password")
+    user.role = "analyst"
+    user.is_active = True
 
     def override_db():
         yield FakeDb(first_result=user)
@@ -122,11 +216,8 @@ async def test_login_db_user_success():
     app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret", algorithms=["HS256"])
-    assert claims["sub"] == "analyst1"
-    assert claims["role"] == "analyst"
-    assert claims["auth_source"] == "database"
-    assert claims["user_id"] == 42
+    claims = jwt.decode(response.json()["access_token"], "test-jwt-secret-that-is-at-least-32-characters-long", algorithms=["HS256"])
+    assert claims["permissions"] == []
 
 
 @pytest.mark.anyio
@@ -142,8 +233,10 @@ async def test_login_inactive_db_user_returns_401():
         is_active=False,
     )
 
+    db = FakeDb(first_result=user)
+
     def override_db():
-        yield FakeDb(first_result=user)
+        yield db
 
     app.dependency_overrides[auth.get_db] = override_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -154,6 +247,43 @@ async def test_login_inactive_db_user_returns_401():
     app.dependency_overrides.clear()
 
     assert response.status_code == 401
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "analyst1"
+    assert activity.user_role is None
+    assert activity.activity_type == "login_failed"
+    assert activity.activity_data == {"auth_source": "database", "reason": "inactive_user"}
+    assert "user-password" not in str(activity.activity_data)
+    assert "access_token" not in activity.activity_data
+
+
+@pytest.mark.anyio
+async def test_login_nonexistent_db_user_audits_failed_login_without_secret_exposure():
+    import auth
+    from main import app
+
+    db = SequencedFakeDb(first_results=[SimpleNamespace(user_id=1), None])
+
+    def override_db():
+        yield db
+
+    app.dependency_overrides[auth.get_db] = override_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/auth/login",
+            data={"username": "missing-user", "password": "candidate-password"},
+        )
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 401
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "missing-user"
+    assert activity.user_role is None
+    assert activity.activity_type == "login_failed"
+    assert activity.activity_data == {"auth_source": "database", "reason": "invalid_credentials"}
+    assert "candidate-password" not in str(activity.activity_data)
+    assert "access_token" not in activity.activity_data
 
 
 @pytest.mark.anyio
@@ -209,8 +339,10 @@ async def test_login_wrong_password():
     import auth
     from main import app
 
+    db = FakeDb(first_result=None)
+
     def override_db():
-        yield FakeDb(first_result=None)
+        yield db
 
     app.dependency_overrides[auth.get_db] = override_db
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -220,6 +352,67 @@ async def test_login_wrong_password():
         )
     app.dependency_overrides.clear()
     assert response.status_code == 401
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "admin"
+    assert activity.user_role is None
+    assert activity.activity_type == "login_failed"
+    assert activity.activity_data == {"auth_source": "bootstrap", "reason": "invalid_credentials"}
+    assert "wrong" not in str(activity.activity_data)
+    assert "access_token" not in activity.activity_data
+
+
+@pytest.mark.anyio
+async def test_logout_with_valid_token_audits_user_without_exposing_token():
+    import auth
+    from main import app
+
+    db = FakeDb(first_result=None)
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "auth_source": "database", "permissions": []}
+    )
+
+    def override_db():
+        yield db
+
+    app.dependency_overrides[auth.get_db] = override_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logged out successfully"}
+    assert len(db.added) == 1
+    activity = db.added[0]
+    assert activity.username == "analyst1"
+    assert activity.user_role == "analyst"
+    assert activity.activity_type == "logout"
+    assert activity.activity_data == {"auth_source": "database"}
+    assert access_token not in str(activity.activity_data)
+    assert "token" not in activity.activity_data
+
+
+@pytest.mark.anyio
+async def test_logout_without_token_preserves_ack_and_skips_audit():
+    import auth
+    from main import app
+
+    db = FakeDb(first_result=None)
+
+    def override_db():
+        yield db
+
+    app.dependency_overrides[auth.get_db] = override_db
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.post("/api/auth/logout")
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logged out successfully"}
+    assert db.added == []
 
 
 @pytest.mark.anyio
@@ -231,3 +424,61 @@ async def test_invalid_token_rejected():
         await get_current_user(token="not-a-jwt")
 
     assert exc_info.value.status_code == 401
+
+
+@pytest.mark.anyio
+async def test_get_current_user_decodes_permissions_from_token():
+    import auth
+
+    access_token = auth.create_access_token(
+        {
+            "sub": "analyst1",
+            "role": "analyst",
+            "auth_source": "database",
+            "permissions": ["threats:read", "workflows:execute"],
+        }
+    )
+
+    token_data = await auth.get_current_user(token=access_token)
+
+    assert token_data.permissions == ["threats:read", "workflows:execute"]
+
+
+def test_require_permission_allows_authenticated_user_with_required_permission():
+    from auth import require_permission
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="analyst1", permissions=["threats:read"])
+    dependency = require_permission("threats", "read")
+
+    assert dependency(current_user=current_user) == current_user
+
+
+def test_require_permission_denies_authenticated_user_without_required_permission():
+    from auth import require_permission
+    from fastapi import HTTPException
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="analyst1", permissions=["mentions:read"])
+    dependency = require_permission("threats", "read")
+
+    with pytest.raises(HTTPException) as exc_info:
+        dependency(current_user=current_user)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Permission required: threats:read"
+
+
+def test_require_permission_denies_by_default_without_token_permissions():
+    from auth import require_permission
+    from fastapi import HTTPException
+    from schemas.auth import TokenData
+
+    current_user = TokenData(username="admin", role="admin")
+    dependency = require_permission("users", "write")
+
+    with pytest.raises(HTTPException) as exc_info:
+        dependency(current_user=current_user)
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Permission required: users:write"

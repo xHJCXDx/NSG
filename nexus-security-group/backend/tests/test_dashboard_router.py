@@ -1,17 +1,12 @@
-import sys
-import types
-
-from fastapi import APIRouter
 from fastapi.routing import APIRoute
+from fastapi.testclient import TestClient
 
-auth_stub = types.ModuleType("auth")
-auth_stub.get_current_user = lambda: None
-auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
-sys.modules.setdefault("auth", auth_stub)
-
+import auth
+from database import get_db
 from main import app
 from routers.dashboard import get_dashboard_summary
 from schemas.dashboard import DashboardSummaryResponse
+from services.activity_audit import record_user_activity
 
 
 class FakeQuery:
@@ -31,10 +26,14 @@ class FakeDb:
     def __init__(self, queries):
         self.queries = queries
         self.query_args = []
+        self.added = []
 
     def query(self, *args):
         self.query_args.append(args)
         return self.queries.pop(0)
+
+    def add(self, obj):
+        self.added.append(obj)
 
 
 def test_main_registers_api_dashboard_summary_route():
@@ -47,6 +46,74 @@ def test_main_registers_api_dashboard_summary_route():
 
     assert "/api/dashboard/summary" in route_paths
     assert "GET" in route_methods_by_path["/api/dashboard/summary"]
+
+
+def test_dashboard_summary_requires_dashboard_read_permission():
+    from routers.dashboard import router as dashboard_router
+
+    summary_route = next(
+        route
+        for route in dashboard_router.routes
+        if isinstance(route, APIRoute) and route.path == "/api/dashboard/summary"
+    )
+
+    assert any(
+        getattr(dep.call, "required_permission", None) == "dashboard:read"
+        for dep in summary_route.dependant.dependencies
+    )
+
+
+def test_dashboard_summary_rejects_missing_bearer_token():
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(count_result=0) for _ in range(7)])
+    try:
+        response = TestClient(app).get("/api/dashboard/summary")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
+
+
+def test_dashboard_summary_rejects_authenticated_user_without_dashboard_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["threats:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(count_result=0) for _ in range(7)])
+    try:
+        response = TestClient(app).get(
+            "/api/dashboard/summary",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Permission required: dashboard:read"
+
+
+def test_dashboard_summary_allows_authenticated_user_with_dashboard_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["dashboard:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb([FakeQuery(count_result=None) for _ in range(7)])
+    try:
+        response = TestClient(app).get(
+            "/api/dashboard/summary",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "total_threats": 0,
+        "pending_threats": 0,
+        "total_alerts": 0,
+        "unacknowledged_alerts": 0,
+        "active_keywords": 0,
+        "execution_logs_count": 0,
+        "activity_count": 0,
+    }
 
 
 def test_dashboard_summary_counts_existing_domain_models():
@@ -80,6 +147,36 @@ def test_dashboard_summary_counts_existing_domain_models():
     assert len(pending_threats_query.filter_args) == 1
     assert len(unacknowledged_alerts_query.filter_args) == 1
     assert len(active_keywords_query.filter_args) == 1
+
+
+def test_dashboard_summary_counts_helper_generated_user_activity_rows():
+    fake_db = FakeDb([FakeQuery(count_result=0) for _ in range(6)])
+
+    record_user_activity(
+        fake_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="login_success",
+        activity_description="User logged in",
+    )
+    record_user_activity(
+        fake_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="acknowledge_alert",
+        activity_description="Acknowledged alert",
+        related_alert_id=99,
+    )
+    fake_db.queries.append(FakeQuery(count_result=len(fake_db.added)))
+
+    result = get_dashboard_summary(db=fake_db, current_user=object())
+
+    assert result["activity_count"] == 2
+    assert [activity.activity_type for activity in fake_db.added] == [
+        "login_success",
+        "acknowledge_alert",
+    ]
+    assert len(fake_db.query_args) == 7
 
 
 def test_dashboard_summary_coerces_empty_counts_to_zero():

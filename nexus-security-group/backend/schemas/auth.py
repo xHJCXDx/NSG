@@ -5,7 +5,7 @@ to keep schema definitions separate from business logic.
 """
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Token(BaseModel):
@@ -22,6 +22,7 @@ class TokenData(BaseModel):
     user_id: Optional[int] = None
     role: Optional[str] = None
     auth_source: Optional[str] = None
+    permissions: list[str] = Field(default_factory=list)
 
     @property
     def is_admin(self) -> bool:

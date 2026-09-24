@@ -1,6 +1,8 @@
 from sqlalchemy import BigInteger, Boolean, CheckConstraint, Column, DateTime, String, func
+from sqlalchemy.orm import foreign, relationship
 
 from database import Base
+from models.permission import Permission, RolePermission
 
 
 class SystemUser(Base):
@@ -23,4 +25,12 @@ class SystemUser(Base):
     is_active = Column(Boolean, nullable=False, server_default="true", index=True)
     created_by = Column(String(100))
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())  # Maintained by DB trigger update_system_users_updated_at
+
+    permissions = relationship(
+        "Permission",
+        secondary=RolePermission.__table__,
+        primaryjoin=role == foreign(RolePermission.role),
+        secondaryjoin=foreign(RolePermission.permission_id) == Permission.permission_id,
+        viewonly=True,
+    )

@@ -41,7 +41,7 @@ class ThreatDetection(Base):
 
     threat_type = Column(String(100), nullable=False)
     threat_category = Column(String(50))
-    criticality_level = Column(String(20), nullable=False)
+    criticality_level = Column(String(20), nullable=False, index=True)
     confidence_score = Column(Numeric(4, 3), nullable=False)
     risk_score = Column(Integer)
 
@@ -60,7 +60,7 @@ class ThreatDetection(Base):
         server_default=func.now(),
     )
 
-    review_status = Column(String(20), server_default="pending")
+    review_status = Column(String(20), server_default="pending", index=True)
     reviewed_by = Column(String(100))
     reviewed_at = Column(DateTime(timezone=True))
     review_notes = Column(Text)

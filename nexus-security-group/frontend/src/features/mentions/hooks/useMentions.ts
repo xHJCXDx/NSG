@@ -1,76 +1,78 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../auth';
 import { fetchMentions } from '../api';
-import { MENTIONS_COPY } from '../contract';
-import type { Mention, MentionFilters, MentionLoadStatus } from '../types';
+import type { MentionFilters, MentionLoadStatus } from '../types';
 
 const initialFilters: MentionFilters = { search: '', platform: '' };
 
 export type MentionEmptyReason = 'initial-empty' | 'no-results';
 
-export function useMentions(token: string | null) {
-  const [mentions, setMentions] = useState<Mention[]>([]);
-  const [status, setStatus] = useState<MentionLoadStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
+export function useMentions() {
+  const { token, claims } = useAuth();
   const [filters, setFilters] = useState<MentionFilters>(initialFilters);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let active = true;
+  const platformFilter = filters.platform.trim() || undefined;
 
-    setStatus('loading');
-    setError(null);
+  const { data: response, isLoading, isError } = useQuery({
+    queryKey: ['mentions', claims.sub, page, platformFilter],
+    queryFn: () => fetchMentions(token, { page, platform: platformFilter }),
+    enabled: !!token,
+  });
 
-    fetchMentions(token)
-      .then((loadedMentions) => {
-        if (!active) {
-          return;
-        }
+  const mentions = response?.data ?? [];
+  const total = response?.total ?? 0;
+  const totalPages = response?.total_pages ?? 1;
 
-        setMentions(loadedMentions);
-        setStatus(loadedMentions.length > 0 ? 'success' : 'empty');
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
-
-        setMentions([]);
-        setError(MENTIONS_COPY.error.title);
-        setStatus('error');
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [token]);
+  const baseStatus: MentionLoadStatus = isLoading
+    ? 'loading'
+    : isError
+      ? 'error'
+      : mentions.length > 0
+        ? 'success'
+        : 'empty';
 
   const filteredMentions = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
-    const platform = filters.platform.trim().toLowerCase();
 
-    return mentions.filter((mention) => {
-      const matchesSearch =
-        search.length === 0 ||
-        mention.text.toLowerCase().includes(search) ||
-        mention.platform.toLowerCase().includes(search) ||
-        (mention.author?.toLowerCase().includes(search) ?? false);
-      const matchesPlatform = platform.length === 0 || mention.platform.toLowerCase() === platform;
+    if (search.length === 0) return mentions;
 
-      return matchesSearch && matchesPlatform;
-    });
-  }, [filters, mentions]);
+    return mentions.filter((mention) =>
+      mention.text.toLowerCase().includes(search) ||
+      mention.platform.toLowerCase().includes(search) ||
+      (mention.author?.toLowerCase().includes(search) ?? false),
+    );
+  }, [filters.search, mentions]);
 
   const hasActiveFilters = filters.search.trim().length > 0 || filters.platform.trim().length > 0;
   const emptyReason: MentionEmptyReason = mentions.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: MentionLoadStatus =
-    status === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : status;
+    baseStatus === 'success' && hasActiveFilters && filteredMentions.length === 0 ? 'empty' : baseStatus;
+
+  const availableFilters = useMemo(() => ({
+    platformOptions: response?.available_platforms ?? [],
+  }), [response?.available_platforms]);
+
+  const setFiltersAndResetPage = (newFilters: MentionFilters) => {
+    setFilters(newFilters);
+    if (newFilters.platform !== filters.platform) {
+      setPage(1);
+    }
+  };
 
   return {
     mentions,
     filteredMentions,
     status: derivedStatus,
-    error,
+    error: isError ? 'Failed to load mentions' : null,
     filters,
-    setFilters,
+    setFilters: setFiltersAndResetPage,
     emptyReason,
+    availableFilters,
+    page,
+    setPage,
+    totalPages,
+    total,
   };
 }

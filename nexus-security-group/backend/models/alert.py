@@ -54,9 +54,9 @@ class Alert(Base):
         server_default=func.now(),
     )
     sent_at = Column(DateTime(timezone=True))
-    delivery_status = Column(String(20), server_default="pending")
+    delivery_status = Column(String(20), server_default="pending", index=True)
 
-    acknowledged = Column(Boolean, server_default="false")
+    acknowledged = Column(Boolean, server_default="false", index=True)
     acknowledged_by = Column(String(100))
     acknowledged_at = Column(DateTime(timezone=True))
 

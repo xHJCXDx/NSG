@@ -103,5 +103,16 @@ class ThreatReviewRequest(BaseModel):
 
     review_status: ThreatReviewStatus
     review_notes: Optional[str] = None
-    reviewed_by: Optional[str] = None
     remediation_status: Optional[ThreatRemediationStatus] = None
+
+
+class PaginatedThreatsResponse(BaseModel):
+    """Paginated envelope for the /api/threats endpoint."""
+
+    data: list[ThreatListResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    available_severities: list[str] = []
+    available_classifications: list[str] = []

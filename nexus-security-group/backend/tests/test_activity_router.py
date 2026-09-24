@@ -9,49 +9,27 @@ from fastapi.testclient import TestClient
 
 auth_stub = types.ModuleType("auth")
 auth_stub.get_current_user = lambda: None
+
+
+def _stub_require_permission(resource, action):
+    auth_stub.get_current_user.required_permission = f"{resource}:{action}"
+    return auth_stub.get_current_user
+
+
+auth_stub.require_permission = _stub_require_permission
 auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
+import auth
+from auth import get_current_user
+from database import get_db
 from main import app
-from routers.activity import get_activities, get_activity, get_current_user, router
+from routers.activity import get_activities, get_activity, router
+from schemas.auth import TokenData
 from schemas.activity import UserActivityResponse
+from services.activity_audit import record_user_activity
+from tests.conftest import FakeDb, FakeQuery
 
-
-class FakeQuery:
-    def __init__(self, *, all_result=None, first_result=None):
-        self.all_result = all_result or []
-        self.first_result = first_result
-        self.order_by_args = None
-        self.limit_value = None
-        self.filter_args = []
-
-    def order_by(self, *args):
-        self.order_by_args = args
-        return self
-
-    def limit(self, value):
-        self.limit_value = value
-        return self
-
-    def filter(self, *args):
-        self.filter_args.append(args)
-        return self
-
-    def all(self):
-        return self.all_result
-
-    def first(self):
-        return self.first_result
-
-
-class FakeDb:
-    def __init__(self, query):
-        self.query_obj = query
-        self.query_args = []
-
-    def query(self, *args):
-        self.query_args.append(args)
-        return self.query_obj
 
 
 def _activity_row(**overrides):
@@ -96,6 +74,32 @@ def test_get_activities_lists_recent_user_activity_with_limit():
     response = UserActivityResponse.model_validate(result[0])
     assert response.activity_id == 10
     assert response.activity_type == "review_threat"
+
+
+def test_get_activities_lists_helper_generated_user_activity():
+    write_db = FakeDb(FakeQuery())
+    record_user_activity(
+        write_db,
+        username="analyst1",
+        user_role="analyst",
+        activity_type="create_keyword",
+        activity_description="Created keyword monitor",
+        activity_data={"keyword_id": 123},
+    )
+    activity = write_db.added[0]
+    activity.activity_id = 11
+    activity.activity_timestamp = datetime(2026, 7, 5, 16, 0, tzinfo=timezone.utc)
+
+    query = FakeQuery(all_result=[activity])
+    result = get_activities(db=FakeDb(query), limit=10, current_user=object())
+
+    response = UserActivityResponse.model_validate(result[0])
+    assert response.activity_id == 11
+    assert response.username == "analyst1"
+    assert response.activity_type == "create_keyword"
+    assert response.activity_data == {"keyword_id": 123}
+    assert query.order_by_args is not None
+    assert query.limit_value == 10
 
 
 def test_get_activities_limit_defaults_to_fifty_when_called_directly():
@@ -159,14 +163,128 @@ def test_activity_routes_declare_response_models_and_auth_dependency():
 
     assert list_route.response_model == list[UserActivityResponse]
     assert detail_route.response_model is UserActivityResponse
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "logs:read"
+        for dep in detail_route.dependant.dependencies
+    )
+
+
+def test_activity_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    list_response = client.get("/api/activity")
+    detail_response = client.get("/api/activity/42")
+
+    assert list_response.status_code == 401
+    assert list_response.json()["detail"] == "Not authenticated"
+    assert detail_response.status_code == 401
+    assert detail_response.json()["detail"] == "Not authenticated"
+
+
+def test_activity_routes_reject_authenticated_user_without_logs_read_permission():
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["dashboard:read"]}
+    )
+    client = TestClient(app)
+
+    list_response = client.get(
+        "/api/activity",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    detail_response = client.get(
+        "/api/activity/42",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert list_response.status_code == 403
+    assert list_response.json()["detail"] == "Permission required: logs:read"
+    assert detail_response.status_code == 403
+    assert detail_response.json()["detail"] == "Permission required: logs:read"
+
+
+def test_get_activities_allows_authenticated_user_with_logs_read_permission():
+    activity = _activity_row()
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(all_result=[activity]))
+    try:
+        response = TestClient(app).get(
+            "/api/activity?limit=7",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["activity_id"] == 10
+    assert response.json()[0]["activity_type"] == "review_threat"
+
+
+def test_get_activities_endpoint_returns_helper_generated_activity_with_logs_read_permission():
+    write_db = FakeDb(FakeQuery())
+    record_user_activity(
+        write_db,
+        username="admin1",
+        user_role="admin",
+        activity_type="deactivate_user",
+        activity_description="Deactivated user",
+        activity_data={"target_username": "inactive-user"},
+    )
+    activity = write_db.added[0]
+    activity.activity_id = 12
+    activity.activity_timestamp = datetime(2026, 7, 5, 17, 0, tzinfo=timezone.utc)
+
+    access_token = auth.create_access_token(
+        {"sub": "admin1", "role": "admin", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(all_result=[activity]))
+    try:
+        response = TestClient(app).get(
+            "/api/activity?limit=10",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()[0]["activity_id"] == 12
+    assert response.json()[0]["username"] == "admin1"
+    assert response.json()[0]["activity_type"] == "deactivate_user"
+    assert response.json()[0]["activity_data"] == {"target_username": "inactive-user"}
+
+
+def test_get_activity_allows_authenticated_user_with_logs_read_permission():
+    activity = _activity_row(activity_id=42, activity_type="acknowledge_alert")
+    access_token = auth.create_access_token(
+        {"sub": "analyst1", "role": "analyst", "permissions": ["logs:read"]}
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(FakeQuery(first_result=activity))
+    try:
+        response = TestClient(app).get(
+            "/api/activity/42",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["activity_id"] == 42
+    assert response.json()["activity_type"] == "acknowledge_alert"
 
 
 def test_get_activities_rejects_invalid_limit_username_and_activity_type():
     app = FastAPI()
     app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        permissions=["logs:read"],
+    )
 
     response = TestClient(app).get(
         "/api/activity",

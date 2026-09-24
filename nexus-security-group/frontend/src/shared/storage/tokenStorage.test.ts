@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createAuthHeaders } from '../api/authHeaders';
-import { getToken, removeToken, setToken } from './tokenStorage';
+import { getToken, removeToken, setToken, TOKEN_STORAGE_KEY } from './tokenStorage';
 
 describe('token storage and auth headers', () => {
   afterEach(() => {
@@ -10,12 +10,12 @@ describe('token storage and auth headers', () => {
   it('preserves the localStorage token key contract', () => {
     setToken('fake-jwt');
 
-    expect(localStorage.getItem('token')).toBe('fake-jwt');
+    expect(localStorage.getItem(TOKEN_STORAGE_KEY)).toBe('fake-jwt');
     expect(getToken()).toBe('fake-jwt');
 
     removeToken();
 
-    expect(localStorage.getItem('token')).toBeNull();
+    expect(localStorage.getItem('nsg:auth:token')).toBeNull();
     expect(getToken()).toBeNull();
   });
 

@@ -52,6 +52,10 @@ export interface MentionFilters {
   platform: string;
 }
 
+export type { PaginatedResponse } from '../../shared/types';
+
 export interface MentionsQuery {
-  limit?: number;
+  page?: number;
+  pageSize?: number;
+  platform?: string;
 }

@@ -18,11 +18,12 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Documentation policy: root README.md and curated docs/*.md belong in the repo
+# Documentation policy: root README.md, docs/, and project documentation belong in the repo
 *.md
 !/README.md
 !/docs/
 !/docs/*.md
+!/nexus-security-group/**/*.md
 *.mdx
 *.markdown
 *.docx
@@ -30,6 +31,7 @@ __pycache__/
 *.pptx
 Informes/
 nsg-docs-exploration/
+# SDD artifacts live in engram (persistent memory), not in git
 **/openspec/
 .atl/
 CLAUDE.md

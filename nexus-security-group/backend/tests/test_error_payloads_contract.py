@@ -5,15 +5,23 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 
+from auth import get_current_user
+from database import get_db
 from routers import alerts, keywords, n8n
+from schemas.auth import TokenData
 
 
 BACKEND_DIR = Path(__file__).parent.parent
 
 EXPECTED_ERROR_STATUS_BY_FILE = {
-    "auth.py": {
+    "auth/tokens.py": {
         "status.HTTP_401_UNAUTHORIZED",
+    },
+    "auth/permissions.py": {
         "status.HTTP_403_FORBIDDEN",
+    },
+    "auth/routes.py": {
+        "status.HTTP_401_UNAUTHORIZED",
         "status.HTTP_503_SERVICE_UNAVAILABLE",
     },
     "routers/activity.py": {"status.HTTP_404_NOT_FOUND"},
@@ -26,6 +34,8 @@ EXPECTED_ERROR_STATUS_BY_FILE = {
     "routers/n8n.py": {"status.HTTP_502_BAD_GATEWAY"},
     "routers/threats.py": {"status.HTTP_404_NOT_FOUND"},
     "routers/users.py": {
+        "status.HTTP_400_BAD_REQUEST",
+        "status.HTTP_401_UNAUTHORIZED",
         "status.HTTP_404_NOT_FOUND",
         "status.HTTP_409_CONFLICT",
     },
@@ -51,6 +61,9 @@ class CommitConflictDb:
 
     def add(self, obj):
         self.added = obj
+
+    def flush(self):
+        raise IntegrityError("duplicate", params=None, orig=None)
 
     def commit(self):
         raise IntegrityError("duplicate", params=None, orig=None)
@@ -83,9 +96,12 @@ def test_http_exceptions_use_documented_statuses_and_string_detail_payloads():
 
             assert status_code is not None, f"{relative_path} has HTTPException without status_code"
             assert detail is not None, f"{relative_path} has HTTPException without detail"
-            assert isinstance(detail, ast.Constant), f"{relative_path} HTTPException detail must be a string literal"
-            assert isinstance(detail.value, str), f"{relative_path} HTTPException detail must serialize as a string"
-            assert detail.value.strip(), f"{relative_path} HTTPException detail must not be empty"
+            assert isinstance(detail, (ast.Constant, ast.JoinedStr)), (
+                f"{relative_path} HTTPException detail must be a string literal or f-string"
+            )
+            if isinstance(detail, ast.Constant):
+                assert isinstance(detail.value, str), f"{relative_path} HTTPException detail must serialize as a string"
+                assert detail.value.strip(), f"{relative_path} HTTPException detail must not be empty"
 
             observed_statuses.add(ast.unparse(status_code))
 
@@ -95,8 +111,10 @@ def test_http_exceptions_use_documented_statuses_and_string_detail_payloads():
 def test_not_found_errors_serialize_as_fastapi_detail_string_payload():
     app = FastAPI()
     app.include_router(alerts.router)
-    app.dependency_overrides[alerts.get_current_user] = lambda: object()
-    app.dependency_overrides[alerts.get_db] = lambda: MissingRowDb()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="test", permissions=["alerts:read"],
+    )
+    app.dependency_overrides[get_db] = lambda: MissingRowDb()
 
     response = TestClient(app).get("/api/alerts/999")
 
@@ -107,8 +125,10 @@ def test_not_found_errors_serialize_as_fastapi_detail_string_payload():
 def test_conflict_errors_serialize_as_fastapi_detail_string_payload():
     app = FastAPI()
     app.include_router(keywords.router)
-    app.dependency_overrides[keywords.get_current_user] = lambda: object()
-    app.dependency_overrides[keywords.get_db] = lambda: CommitConflictDb()
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="test", permissions=["keywords:write"],
+    )
+    app.dependency_overrides[get_db] = lambda: CommitConflictDb()
 
     response = TestClient(app).post("/api/keywords", json={"keyword_text": "credential leak"})
 

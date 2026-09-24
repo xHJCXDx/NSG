@@ -1,4 +1,4 @@
-export type AutomationRunMode = 'scheduled' | 'manual_pending';
+export type AutomationRunMode = 'scheduled' | 'manual';
 
 export interface AutomationStatus {
   title: string;
@@ -7,4 +7,12 @@ export interface AutomationStatus {
   scheduleLabel: string;
   manualTriggerLabel: string;
   manualTriggerEnabled: boolean;
+  webhookId: string;
+}
+
+export type TriggerState = 'idle' | 'running' | 'success' | 'error';
+
+export interface TriggerResult {
+  state: TriggerState;
+  message?: string;
 }

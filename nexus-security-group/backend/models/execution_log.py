@@ -30,10 +30,10 @@ class ExecutionLog(Base):
         server_default=text("uuid_generate_v4()"),
     )
 
-    workflow_name = Column(String(100), nullable=False)
+    workflow_name = Column(String(100), nullable=False, index=True)
     execution_id = Column(String(255))
 
-    status = Column(String(20), nullable=False)
+    status = Column(String(20), nullable=False, index=True)
 
     mentions_collected = Column(Integer, server_default="0")
     mentions_processed = Column(Integer, server_default="0")

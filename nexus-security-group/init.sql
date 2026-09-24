@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS sentiment_analysis (
     textblob_subjectivity NUMERIC(4,3) CHECK (textblob_subjectivity BETWEEN 0 AND 1),
 
     final_sentiment_score NUMERIC(5,4) CHECK (final_sentiment_score BETWEEN -1 AND 1) NOT NULL,
-    sentiment_label VARCHAR(20) CHECK (sentiment_label IN ('positive', 'neutral', 'negative', 'mixed')) NOT NULL,
+    sentiment_label VARCHAR(20) CHECK (sentiment_label IN ('positive', 'neutral', 'negative')) NOT NULL,
     confidence_score NUMERIC(4,3) CHECK (confidence_score BETWEEN 0 AND 1),
 
     analysis_method VARCHAR(50) NOT NULL,
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS alerts (
     last_updated TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_alerts_detection_id ON alerts(detection_id);
+CREATE UNIQUE INDEX idx_alerts_detection_id ON alerts(detection_id);
 CREATE INDEX idx_alerts_severity ON alerts(alert_severity);
 CREATE INDEX idx_alerts_created_at ON alerts(created_at DESC);
 CREATE INDEX idx_alerts_acknowledged ON alerts(acknowledged);
@@ -399,7 +399,7 @@ WHERE td.detected_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY keyword
 ORDER BY detection_count DESC;
 
-CREATE INDEX ON top_keywords_stats (detection_count DESC);
+CREATE UNIQUE INDEX ON top_keywords_stats (keyword);
 
 CREATE MATERIALIZED VIEW workflow_performance_stats AS
 SELECT
@@ -415,7 +415,7 @@ FROM execution_logs
 WHERE started_at >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY workflow_name, DATE(started_at);
 
-CREATE INDEX ON workflow_performance_stats (workflow_name, date DESC);
+CREATE UNIQUE INDEX ON workflow_performance_stats (workflow_name, date);
 
 CREATE OR REPLACE FUNCTION refresh_all_materialized_views()
 RETURNS void AS $$
@@ -517,6 +517,33 @@ WHERE td.review_status IN ('pending', 'reviewing', 'investigating')
   AND td.criticality_level IN ('high', 'critical')
 ORDER BY td.criticality_level DESC, td.detected_at ASC;
 
+CREATE OR REPLACE VIEW recent_mentions_dashboard AS
+SELECT
+    sm.mention_id,
+    sm.created_at,
+    sm.platform,
+    sm.author_username,
+    sm.processing_status,
+    sm.text_content,
+    sa.sentiment_label,
+    sa.final_sentiment_score
+FROM social_mentions sm
+LEFT JOIN sentiment_analysis sa ON sm.mention_id = sa.mention_id;
+
+CREATE OR REPLACE VIEW recent_alerts_dashboard AS
+SELECT
+    a.alert_id,
+    a.alert_uuid,
+    a.alert_title,
+    a.alert_severity,
+    a.delivery_status,
+    a.acknowledged,
+    a.created_at,
+    td.threat_type,
+    td.criticality_level
+FROM alerts a
+JOIN threat_detections td ON td.detection_id = a.detection_id;
+
 -- ============================================
 -- SEGURIDAD
 -- ============================================
@@ -536,8 +563,36 @@ GRANT INSERT ON user_activity TO osint_analyst;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
 
+-- Appsmith dashboard demo login: placeholder password only.
+-- For existing ./data/postgres volumes, apply this block manually because
+-- docker-entrypoint-initdb.d scripts run only on first database initialization.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'appsmith_readonly') THEN
+        CREATE ROLE appsmith_readonly LOGIN PASSWORD '<APPSMITH_DB_PASSWORD>';
+    END IF;
+END
+$$;
+
+GRANT osint_readonly TO appsmith_readonly;
+GRANT USAGE ON SCHEMA public TO appsmith_readonly;
+GRANT SELECT ON daily_activity_summary TO appsmith_readonly;
+GRANT SELECT ON daily_mention_stats TO appsmith_readonly;
+GRANT SELECT ON top_keywords_stats TO appsmith_readonly;
+GRANT SELECT ON workflow_performance_stats TO appsmith_readonly;
+GRANT SELECT ON unresolved_threats TO appsmith_readonly;
+GRANT SELECT ON recent_mentions_dashboard TO appsmith_readonly;
+GRANT SELECT ON recent_alerts_dashboard TO appsmith_readonly;
+
 ALTER TABLE social_mentions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE threat_detections ENABLE ROW LEVEL SECURITY;
+
+-- All read roles (osint_readonly, osint_analyst, osint_admin, appsmith_readonly) need
+-- unrestricted SELECT on social_mentions — it's a monitoring feed, not user-partitioned data.
+-- INSERT/UPDATE/DELETE remain blocked for non-owner roles (RLS still enforced for writes).
+CREATE POLICY social_mentions_read_policy ON social_mentions
+    FOR SELECT
+    USING (true);
 
 CREATE POLICY user_isolation_policy ON threat_detections
     FOR ALL TO osint_analyst
@@ -572,6 +627,46 @@ GRANT ALL PRIVILEGES ON SEQUENCE system_users_user_id_seq TO osint_admin;
 GRANT SELECT ON TABLE system_users TO osint_analyst;
 GRANT SELECT ON TABLE system_users TO osint_readonly;
 
+-- ============================================
+-- TABLAS: permissions / role_permissions
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS permissions (
+    permission_id BIGSERIAL PRIMARY KEY,
+    resource VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT unique_permission_resource_action UNIQUE (resource, action)
+);
+
+CREATE INDEX idx_permissions_resource ON permissions(resource);
+CREATE INDEX idx_permissions_action ON permissions(action);
+
+CREATE TRIGGER update_permissions_updated_at
+    BEFORE UPDATE ON permissions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role VARCHAR(20) NOT NULL CONSTRAINT check_role_permissions_role CHECK (role IN ('admin', 'analyst')),
+    permission_id BIGINT NOT NULL REFERENCES permissions(permission_id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (role, permission_id)
+);
+
+CREATE INDEX idx_role_permissions_role ON role_permissions(role);
+CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
+
+GRANT ALL PRIVILEGES ON TABLE permissions TO osint_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE permissions_permission_id_seq TO osint_admin;
+GRANT ALL PRIVILEGES ON TABLE role_permissions TO osint_admin;
+GRANT SELECT ON TABLE permissions TO osint_analyst;
+GRANT SELECT ON TABLE role_permissions TO osint_analyst;
+GRANT SELECT ON TABLE permissions TO osint_readonly;
+GRANT SELECT ON TABLE role_permissions TO osint_readonly;
+
 -- Existing Postgres volumes are not migrated by this init script automatically.
 -- Operators must apply equivalent DDL manually before relying on DB-backed users.
 
@@ -593,6 +688,68 @@ VALUES
     ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)')
 ON CONFLICT (keyword_text) DO NOTHING;
 
+INSERT INTO permissions (resource, action, description)
+VALUES
+    ('dashboard', 'read', 'Ver resumen operacional, métricas agregadas y panel principal'),
+    ('metrics', 'read', 'Consultar métricas agregadas del sistema'),
+    ('mentions', 'read', 'Listar y consultar menciones OSINT recolectadas'),
+    ('threats', 'read', 'Listar y consultar amenazas detectadas'),
+    ('threats', 'write', 'Revisar amenazas, cambiar estado, notas o resolución'),
+    ('alerts', 'read', 'Listar y consultar alertas generadas'),
+    ('alerts', 'write', 'Confirmar o actualizar estado operativo de alertas'),
+    ('keywords', 'read', 'Consultar keywords monitoreadas'),
+    ('keywords', 'write', 'Crear o modificar keywords monitoreadas'),
+    ('keywords', 'delete', 'Eliminar keywords monitoreadas'),
+    ('workflows', 'read', 'Ver estado y configuración operacional de automatizaciones'),
+    ('workflows', 'execute', 'Ejecutar manualmente workflows OSINT'),
+    ('logs', 'read', 'Consultar logs de ejecución y auditoría'),
+    ('users', 'read', 'Listar usuarios del sistema'),
+    ('users', 'write', 'Crear o actualizar usuarios, roles y estado activo'),
+    ('users', 'delete', 'Eliminar usuarios del sistema'),
+    ('permissions', 'read', 'Consultar matriz y asignaciones de permisos'),
+    ('permissions', 'write', 'Asignar permisos a roles')
+ON CONFLICT (resource, action) DO UPDATE
+SET description = EXCLUDED.description;
+
+INSERT INTO role_permissions (role, permission_id)
+SELECT role_permission.role, permissions.permission_id
+FROM (
+    VALUES
+        ('admin', 'dashboard', 'read'),
+        ('admin', 'metrics', 'read'),
+        ('admin', 'mentions', 'read'),
+        ('admin', 'threats', 'read'),
+        ('admin', 'threats', 'write'),
+        ('admin', 'alerts', 'read'),
+        ('admin', 'alerts', 'write'),
+        ('admin', 'keywords', 'read'),
+        ('admin', 'keywords', 'write'),
+        ('admin', 'keywords', 'delete'),
+        ('admin', 'workflows', 'read'),
+        ('admin', 'workflows', 'execute'),
+        ('admin', 'logs', 'read'),
+        ('admin', 'users', 'read'),
+        ('admin', 'users', 'write'),
+        ('admin', 'users', 'delete'),
+        ('admin', 'permissions', 'read'),
+        ('admin', 'permissions', 'write'),
+        ('analyst', 'dashboard', 'read'),
+        ('analyst', 'metrics', 'read'),
+        ('analyst', 'mentions', 'read'),
+        ('analyst', 'threats', 'read'),
+        ('analyst', 'threats', 'write'),
+        ('analyst', 'alerts', 'read'),
+        ('analyst', 'alerts', 'write'),
+        ('analyst', 'keywords', 'read'),
+        ('analyst', 'workflows', 'read'),
+        ('analyst', 'workflows', 'execute'),
+        ('analyst', 'logs', 'read')
+) AS role_permission(role, resource, action)
+JOIN permissions
+  ON permissions.resource = role_permission.resource
+ AND permissions.action = role_permission.action
+ON CONFLICT (role, permission_id) DO NOTHING;
+
 -- ============================================
 -- COMENTARIOS
 -- ============================================
@@ -605,3 +762,5 @@ COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
 COMMENT ON TABLE system_users IS 'Usuarios autenticables del sistema; user_activity permanece solo como auditoría';
+COMMENT ON TABLE permissions IS 'Catálogo normalizado de permisos recurso/acción para RBAC granular';
+COMMENT ON TABLE role_permissions IS 'Asignación de permisos a roles compatibles admin/analyst';

@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
+import hmac
 import logging
 import os
 
@@ -29,7 +30,7 @@ def analyze_sentiment():
                 return jsonify({'error': 'Unauthorized'}), 401
             
             token = auth_header.split(' ')[1]
-            if token != expected_token:
+            if not hmac.compare_digest(token, expected_token):
                 return jsonify({'error': 'Unauthorized'}), 401
 
         data = request.json
@@ -88,7 +89,7 @@ def analyze_sentiment():
 
     except Exception as e:
         logger.error(f'Error during sentiment analysis: {str(e)}', exc_info=True)
-        return jsonify({'error': 'Internal server error during sentiment analysis', 'details': str(e)}), 500
+        return jsonify({'error': 'Internal server error during sentiment analysis', 'details': 'Internal analysis error'}), 500
 
 if __name__ == '__main__':
     logger.info('Starting Sentiment API v1.1')

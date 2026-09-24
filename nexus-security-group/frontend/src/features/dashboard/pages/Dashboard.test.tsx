@@ -1,6 +1,11 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { ThemeProvider } from '../../../shared/contexts/ThemeContext';
+import { PollingProvider } from '../../../shared/contexts/PollingContext';
+import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { AuthProvider } from '../../auth';
 import { DASHBOARD_COPY } from '../contract';
 import { Dashboard } from './Dashboard';
@@ -12,16 +17,30 @@ vi.mock('recharts', () => ({
   XAxis: ({ dataKey }: { dataKey: string }) => <span data-testid="x-axis">{dataKey}</span>,
   YAxis: () => null,
   Tooltip: () => null,
-  Bar: ({ dataKey }: { dataKey: string }) => <span data-testid="bar-series">{dataKey}</span>,
+  Bar: ({ children, dataKey }: { children: ReactNode; dataKey: string }) => <span data-testid="bar-series">{dataKey}{children}</span>,
+  Cell: () => null,
 }));
 
+const createTestQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
 const renderDashboard = () => {
-  localStorage.setItem('token', 'fake-jwt');
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
 
   return render(
-    <AuthProvider>
-      <Dashboard />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <LanguageProvider>
+        <ThemeProvider>
+          <PollingProvider>
+            <DateFormatProvider>
+              <AuthProvider>
+                <Dashboard />
+              </AuthProvider>
+            </DateFormatProvider>
+          </PollingProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </QueryClientProvider>,
   );
 };
 

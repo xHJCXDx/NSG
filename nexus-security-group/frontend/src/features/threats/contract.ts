@@ -1,5 +1,5 @@
 export const THREATS_ENDPOINT = '/api/threats';
-export const THREATS_DEFAULT_LIMIT = 50;
+export const THREATS_DEFAULT_PAGE_SIZE = 25;
 
 export const THREATS_COPY = {
   page: {
@@ -45,5 +45,14 @@ export const THREATS_COPY = {
     relatedMentionLabel: 'Related mention',
     relatedMentionIdLabel: 'Related mention ID',
     noRelatedMention: 'No related mention provided',
+  },
+  review: {
+    unauthenticated: 'You must be logged in to review threats',
+    forbidden: 'You do not have permission to review threats',
+    notFound: 'Threat not found',
+    validation: 'Invalid review data',
+    fallback: 'Failed to save threat review',
+    serviceUnavailable: 'Service is temporarily unavailable',
+    withoutToken: 'Authentication required to review threats',
   },
 } as const;

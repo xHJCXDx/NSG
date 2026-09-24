@@ -7,7 +7,7 @@ import pytest
 
 
 SAFE_DATABASE_URL = "postgresql://test-user:test-password@localhost:5432/osint_db"
-SAFE_JWT_SECRET_KEY = "test-jwt-secret"
+SAFE_JWT_SECRET_KEY = "test-jwt-secret-that-is-at-least-32-characters-long"
 SAFE_ADMIN_USER = "test-admin"
 SAFE_ADMIN_PASSWORD = "test-admin-password"
 
@@ -117,12 +117,24 @@ def test_jwt_secret_key_required(monkeypatch):
 def test_jwt_secret_key_env_override(monkeypatch):
     """Settings() picks up JWT_SECRET_KEY from the environment."""
     monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
-    monkeypatch.setenv("JWT_SECRET_KEY", "my-prod-secret")
+    monkeypatch.setenv("JWT_SECRET_KEY", "my-prod-secret-that-is-at-least-32-chars")
     monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
     monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
     from config import Settings
     s = Settings()
-    assert s.JWT_SECRET_KEY == "my-prod-secret"
+    assert s.JWT_SECRET_KEY == "my-prod-secret-that-is-at-least-32-chars"
+
+
+def test_jwt_secret_key_rejects_short_value(monkeypatch):
+    """Settings() rejects JWT_SECRET_KEY shorter than 32 characters."""
+    monkeypatch.setenv("DATABASE_URL", SAFE_DATABASE_URL)
+    monkeypatch.setenv("JWT_SECRET_KEY", "too-short")
+    monkeypatch.setenv("ADMIN_USER", SAFE_ADMIN_USER)
+    monkeypatch.setenv("ADMIN_PASSWORD", SAFE_ADMIN_PASSWORD)
+    from pydantic import ValidationError
+    from config import Settings
+    with pytest.raises(ValidationError, match="at least 32 characters"):
+        Settings()
 
 
 def test_admin_user_password_required(monkeypatch):

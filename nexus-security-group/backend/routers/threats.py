@@ -1,14 +1,20 @@
+import logging
 from datetime import datetime, timezone
+from math import ceil
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import require_permission
+
+logger = logging.getLogger("nsg.threats")
 from database import get_db
 from models import SocialMention, ThreatDetection
 from schemas.auth import TokenData
 from schemas.threat import (
+    PaginatedThreatsResponse,
     ThreatCriticalityLevel,
     ThreatDetail,
     ThreatListResponse,
@@ -47,37 +53,72 @@ def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None
     }
 
 
-@router.get("", response_model=list[ThreatListResponse])
+@router.get("", response_model=PaginatedThreatsResponse)
 def get_threats(
-    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 25,
     criticality_level: Annotated[ThreatCriticalityLevel | None, Query()] = None,
     review_status: Annotated[ThreatReviewStatus | None, Query()] = None,
     mention_id: Annotated[int | None, Query(ge=1)] = None,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("threats", "read")),
 ):
-    query = (
-        db.query(ThreatDetection)
-        .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
-        .add_entity(SocialMention)
-    )
+    base_query = db.query(ThreatDetection)
 
     if criticality_level is not None:
-        query = query.filter(ThreatDetection.criticality_level == criticality_level)
+        base_query = base_query.filter(ThreatDetection.criticality_level == criticality_level)
     if review_status is not None:
-        query = query.filter(ThreatDetection.review_status == review_status)
+        base_query = base_query.filter(ThreatDetection.review_status == review_status)
     if mention_id is not None:
-        query = query.filter(ThreatDetection.mention_id == mention_id)
+        base_query = base_query.filter(ThreatDetection.mention_id == mention_id)
 
-    rows = query.order_by(ThreatDetection.detected_at.desc()).limit(limit).all()
-    return [_map_threat_list_item(threat, mention) for threat, mention in rows]
+    total_count = base_query.with_entities(func.count(ThreatDetection.detection_id)).scalar() or 0
+
+    rows = (
+        base_query
+        .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
+        .add_entity(SocialMention)
+        .order_by(ThreatDetection.detected_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    available_severities = [
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.criticality_level))
+        .filter(ThreatDetection.criticality_level.isnot(None))
+        .order_by(ThreatDetection.criticality_level)
+        .all()
+    ]
+    available_classifications = sorted(set(
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.threat_type))
+        .filter(ThreatDetection.threat_type.isnot(None))
+        .all()
+    ) | set(
+        row[0]
+        for row in db.query(func.distinct(ThreatDetection.threat_category))
+        .filter(ThreatDetection.threat_category.isnot(None))
+        .all()
+    ))
+
+    return {
+        "data": [_map_threat_list_item(threat, mention) for threat, mention in rows],
+        "total": total_count,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": ceil(total_count / page_size) if total_count > 0 else 1,
+        "available_severities": available_severities,
+        "available_classifications": available_classifications,
+    }
 
 
 @router.get("/{threat_id}", response_model=ThreatDetail)
 def get_threat(
     threat_id: int,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("threats", "read")),
 ):
     threat = (
         db.query(ThreatDetection)
@@ -98,7 +139,7 @@ def review_threat(
     threat_id: int,
     request: ThreatReviewRequest,
     db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_permission("threats", "write")),
 ):
     threat = (
         db.query(ThreatDetection)
@@ -113,17 +154,13 @@ def review_threat(
 
     threat.review_status = request.review_status
     threat.review_notes = request.review_notes
-    threat.reviewed_by = request.reviewed_by
+    threat.reviewed_by = current_user.username
     threat.remediation_status = request.remediation_status
 
-    if (
-        request.reviewed_by is not None
-        or request.review_status is not None
-        or request.review_notes is not None
-    ):
-        threat.reviewed_at = datetime.now(timezone.utc)
+    threat.reviewed_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(threat)
+    logger.info("Threat reviewed: id=%s status=%s by %s", threat_id, request.review_status, current_user.username)
 
     return threat

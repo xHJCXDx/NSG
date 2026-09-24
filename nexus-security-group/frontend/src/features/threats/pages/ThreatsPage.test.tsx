@@ -1,15 +1,22 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../../shared/contexts/LanguageContext';
+import { createTestQueryClient } from '../../../shared/test/createTestQueryClient';
 import { AuthProvider } from '../../auth';
 import { ThreatsPage } from './ThreatsPage';
 
 const renderThreatsPage = () => {
-  localStorage.setItem('token', 'fake-jwt');
+  localStorage.setItem('nsg:auth:token', 'fake-jwt');
   return render(
-    <AuthProvider>
-      <ThreatsPage />
-    </AuthProvider>,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <LanguageProvider>
+        <AuthProvider>
+          <ThreatsPage />
+        </AuthProvider>
+      </LanguageProvider>
+    </QueryClientProvider>,
   );
 };
 
@@ -24,7 +31,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             detection_id: 'threat-1',
             threat_type: 'credential_leak',
@@ -58,7 +65,7 @@ describe('ThreatsPage', () => {
   it('shows initial empty and load error states distinctly with retry', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ threats: [] }),
+      json: async () => ({ data: [] }),
     } as Response);
 
     renderThreatsPage();
@@ -68,7 +75,7 @@ describe('ThreatsPage', () => {
 
     fetchMock.mockResolvedValueOnce({ ok: false } as Response).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ threats: [] }),
+      json: async () => ({ data: [] }),
     } as Response);
 
     renderThreatsPage();
@@ -82,7 +89,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             id: '1',
             threat_type: 'credential_leak',
@@ -111,7 +118,7 @@ describe('ThreatsPage', () => {
     expect(screen.getByText('Lookalike domain found')).toBeInTheDocument();
 
     await userEvent.clear(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'));
-    await userEvent.type(screen.getByPlaceholderText('Severity'), 'low');
+    await userEvent.type(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'), 'no-match-xyz');
 
     await waitFor(() => expect(screen.getByText('No matching threats')).toBeInTheDocument());
   });
@@ -120,7 +127,7 @@ describe('ThreatsPage', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
-        threats: [
+        data: [
           {
             id: 'threat-without-filter-fields',
             confidence_score: 0.64,
@@ -135,7 +142,7 @@ describe('ThreatsPage', () => {
 
     expect(await screen.findByText('Unclassified signal with no filter criteria in contract')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by evidence, summary, source, or mention')).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Severity')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Classification')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /filter by severity/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /filter by classification/i })).not.toBeInTheDocument();
   });
 });

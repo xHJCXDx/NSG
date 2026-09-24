@@ -14,43 +14,20 @@ auth_stub.router = APIRouter(prefix="/api/auth", tags=["auth"])
 sys.modules.setdefault("auth", auth_stub)
 
 from main import app
+from auth import get_current_user, require_permission
+from database import get_db
+from models import UserActivity
 from routers.keywords import (
     create_keyword,
     delete_keyword,
     get_keyword,
     get_keywords,
-    get_current_user,
     router,
     update_keyword,
 )
+from schemas.auth import TokenData
 from schemas.keyword import KeywordCreate, KeywordResponse, KeywordUpdate
-
-
-class FakeQuery:
-    def __init__(self, *, all_result=None, first_result=None):
-        self.all_result = all_result or []
-        self.first_result = first_result
-        self.filter_args = []
-        self.order_by_args = None
-        self.limit_value = None
-
-    def filter(self, *args):
-        self.filter_args.append(args)
-        return self
-
-    def order_by(self, *args):
-        self.order_by_args = args
-        return self
-
-    def limit(self, value):
-        self.limit_value = value
-        return self
-
-    def all(self):
-        return self.all_result
-
-    def first(self):
-        return self.first_result
+from tests.conftest import FakeQuery
 
 
 class FakeDb:
@@ -78,6 +55,13 @@ class FakeDb:
         if self.commit_exception is not None:
             raise self.commit_exception
         self.committed = True
+
+    def flush(self):
+        if self.commit_exception is not None:
+            raise self.commit_exception
+        for obj in self.added:
+            if getattr(obj, "keyword_id", None) is None:
+                obj.keyword_id = 101
 
     def rollback(self):
         self.rolled_back = True
@@ -141,7 +125,7 @@ def test_get_keywords_lists_keywords_with_default_limit():
     query = FakeQuery(all_result=[keyword])
     fake_db = FakeDb(query)
 
-    result = get_keywords(db=fake_db, current_user=object())
+    result = get_keywords(db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == [keyword]
     assert len(fake_db.query_args) == 1
@@ -157,7 +141,7 @@ def test_get_keywords_filters_active_keywords_when_requested():
     query = FakeQuery(all_result=[])
     fake_db = FakeDb(query)
 
-    result = get_keywords(active_only=True, limit=25, db=fake_db, current_user=object())
+    result = get_keywords(active_only=True, limit=25, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result == []
     assert len(query.filter_args) == 1
@@ -182,10 +166,14 @@ def test_create_keyword_adds_commits_refreshes_and_returns_response_valid_object
         description="Critical data exposure keyword",
     )
 
-    result = create_keyword(request=request, db=fake_db, current_user=object())
+    result = create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
     response = KeywordResponse.model_validate(result)
 
-    assert fake_db.added == [result]
+    assert fake_db.added[0] == result
+    assert isinstance(fake_db.added[1], UserActivity)
+    assert fake_db.added[1].activity_type == "create_keyword"
+    assert fake_db.added[1].username == "test-user"
+    assert fake_db.added[1].activity_data == {"keyword_id": 101}
     assert fake_db.committed is True
     assert fake_db.refreshed == [result]
     assert result.keyword_text == "credential leak"
@@ -203,7 +191,7 @@ def test_create_keyword_returns_409_for_duplicate_keyword():
     request = KeywordCreate(keyword_text="credential leak")
 
     with pytest.raises(HTTPException) as exc_info:
-        create_keyword(request=request, db=fake_db, current_user=object())
+        create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 409
     assert exc_info.value.detail == "Keyword already exists"
@@ -211,12 +199,25 @@ def test_create_keyword_returns_409_for_duplicate_keyword():
     assert fake_db.refreshed == []
 
 
+def test_create_keyword_duplicate_does_not_audit_success():
+    fake_db = FakeDb(
+        FakeQuery(),
+        commit_exception=IntegrityError("insert", "params", Exception("duplicate")),
+    )
+    request = KeywordCreate(keyword_text="credential leak")
+
+    with pytest.raises(HTTPException):
+        create_keyword(request=request, db=fake_db, current_user=SimpleNamespace(username="test-user"))
+
+    assert not any(isinstance(obj, UserActivity) for obj in fake_db.added)
+
+
 def test_get_keyword_returns_detail_by_keyword_id():
     keyword = _keyword_row(keyword_id=42, keyword_text="credential leak")
     query = FakeQuery(first_result=keyword)
     fake_db = FakeDb(query)
 
-    result = get_keyword(keyword_id=42, db=fake_db, current_user=object())
+    result = get_keyword(keyword_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     detail = KeywordResponse.model_validate(result)
 
@@ -231,7 +232,7 @@ def test_get_keyword_raises_404_when_keyword_is_missing():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_keyword(keyword_id=999, db=fake_db, current_user=object())
+        get_keyword(keyword_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Keyword not found"
@@ -247,7 +248,7 @@ def test_update_keyword_changes_only_provided_fields_commits_and_refreshes():
         keyword_id=42,
         request=request,
         db=fake_db,
-        current_user=object(),
+        current_user=SimpleNamespace(username="test-user"),
     )
     response = KeywordResponse.model_validate(result)
 
@@ -260,6 +261,13 @@ def test_update_keyword_changes_only_provided_fields_commits_and_refreshes():
     assert len(query.filter_args) == 1
     assert response.keyword_id == 42
     assert response.is_active is False
+    activity = fake_db.added[0]
+    assert activity.activity_type == "update_keyword"
+    assert activity.username == "test-user"
+    assert activity.activity_data == {
+        "keyword_id": 42,
+        "changed_fields": ["description", "is_active"],
+    }
 
 
 def test_update_keyword_returns_409_for_duplicate_keyword_text():
@@ -275,7 +283,7 @@ def test_update_keyword_returns_409_for_duplicate_keyword_text():
             keyword_id=42,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 409
@@ -294,7 +302,7 @@ def test_update_keyword_raises_404_when_missing_and_does_not_commit():
             keyword_id=999,
             request=request,
             db=fake_db,
-            current_user=object(),
+            current_user=SimpleNamespace(username="test-user"),
         )
 
     assert exc_info.value.status_code == 404
@@ -308,12 +316,16 @@ def test_delete_keyword_deletes_and_commits():
     query = FakeQuery(first_result=keyword)
     fake_db = FakeDb(query)
 
-    result = delete_keyword(keyword_id=42, db=fake_db, current_user=object())
+    result = delete_keyword(keyword_id=42, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert result is None
     assert fake_db.deleted == [keyword]
     assert fake_db.committed is True
     assert len(query.filter_args) == 1
+    activity = fake_db.added[0]
+    assert activity.activity_type == "delete_keyword"
+    assert activity.username == "test-user"
+    assert activity.activity_data == {"keyword_id": 42}
 
 
 def test_delete_keyword_raises_404_when_missing_and_does_not_commit():
@@ -321,7 +333,7 @@ def test_delete_keyword_raises_404_when_missing_and_does_not_commit():
     fake_db = FakeDb(query)
 
     with pytest.raises(HTTPException) as exc_info:
-        delete_keyword(keyword_id=999, db=fake_db, current_user=object())
+        delete_keyword(keyword_id=999, db=fake_db, current_user=SimpleNamespace(username="test-user"))
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Keyword not found"
@@ -362,18 +374,153 @@ def test_keyword_routes_declare_response_models_and_auth_dependency():
     assert detail_route.response_model is KeywordResponse
     assert update_route.response_model is KeywordResponse
     assert delete_route.status_code == 204
-    assert any(dep.call is get_current_user for dep in list_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in create_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in detail_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in update_route.dependant.dependencies)
-    assert any(dep.call is get_current_user for dep in delete_route.dependant.dependencies)
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:read"
+        for dep in list_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:write"
+        for dep in create_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:read"
+        for dep in detail_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:write"
+        for dep in update_route.dependant.dependencies
+    )
+    assert any(
+        getattr(dep.call, "required_permission", None) == "keywords:delete"
+        for dep in delete_route.dependant.dependencies
+    )
 
 
 def test_get_keywords_rejects_invalid_limit():
-    app = FastAPI()
-    app.include_router(router)
-    app.dependency_overrides[get_current_user] = lambda: object()
+    test_app = FastAPI()
+    test_app.include_router(router)
+    test_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
 
-    response = TestClient(app).get("/api/keywords", params={"limit": 0})
+    response = TestClient(test_app).get("/api/keywords", params={"limit": 0})
 
     assert response.status_code == 422
+
+
+def test_keywords_read_routes_reject_missing_bearer_token():
+    client = TestClient(app)
+
+    for path in ["/api/keywords", "/api/keywords/1"]:
+        response = client.get(path)
+        assert response.status_code == 401, f"{path} should reject without token"
+        assert response.json()["detail"] == "Not authenticated"
+
+
+def test_keywords_read_routes_reject_user_without_keywords_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["dashboard:read"],
+    )
+    client = TestClient(authz_app)
+
+    for path in ["/api/keywords", "/api/keywords/1"]:
+        response = client.get(path)
+        assert response.status_code == 403, f"{path} should reject without keywords:read"
+        assert "keywords:read" in response.json()["detail"]
+
+
+def test_keywords_read_routes_allow_user_with_keywords_read_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    keyword = _keyword_row(keyword_id=1)
+    fake_query = FakeQuery(all_result=[keyword], first_result=keyword)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.get("/api/keywords").status_code == 200
+    assert client.get("/api/keywords/1").status_code == 200
+
+
+def test_keywords_write_routes_reject_user_without_keywords_write_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read"],
+    )
+    client = TestClient(authz_app)
+
+    response = client.post("/api/keywords", json={"keyword_text": "test"})
+    assert response.status_code == 403
+    assert "keywords:write" in response.json()["detail"]
+
+    response = client.patch("/api/keywords/1", json={"is_active": False})
+    assert response.status_code == 403
+    assert "keywords:write" in response.json()["detail"]
+
+
+def test_keywords_delete_rejects_user_without_keywords_delete_permission():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+    authz_app.dependency_overrides[get_db] = lambda: object()
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1",
+        role="analyst",
+        auth_source="database",
+        permissions=["keywords:read", "keywords:write"],
+    )
+
+    response = TestClient(authz_app).delete("/api/keywords/1")
+    assert response.status_code == 403
+    assert "keywords:delete" in response.json()["detail"]
+
+
+def test_keywords_write_allows_user_with_correct_permissions():
+    authz_app = FastAPI()
+    authz_app.include_router(router)
+
+    keyword = _keyword_row(keyword_id=1)
+    fake_query = FakeQuery(all_result=[keyword], first_result=keyword)
+    fake_db = FakeDb(fake_query)
+
+    authz_app.dependency_overrides[get_db] = lambda: fake_db
+    authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="admin1",
+        role="admin",
+        auth_source="database",
+        permissions=["keywords:write", "keywords:delete"],
+    )
+    client = TestClient(authz_app)
+
+    assert client.post("/api/keywords", json={
+        "keyword_text": "test",
+        "keyword_type": "threat",
+        "keyword_weight": 50,
+        "is_active": True,
+        "is_regex": False,
+        "case_sensitive": False,
+        "trigger_immediate_alert": False,
+    }).status_code == 201
+    assert client.patch("/api/keywords/1", json={"is_active": False}).status_code == 200
+    assert client.delete("/api/keywords/1").status_code == 204

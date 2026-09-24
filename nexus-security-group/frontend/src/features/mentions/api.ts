@@ -1,21 +1,18 @@
-import { createAuthHeaders } from '../../shared/api/authHeaders';
-import { MENTIONS_COPY, MENTIONS_DEFAULT_LIMIT, MENTIONS_ENDPOINT } from './contract';
-import type { Mention, MentionsQuery, RawMention, RawMentionsResponse } from './types';
+import { authFetch } from '../../shared/api/apiClient';
+import { MENTIONS_COPY, MENTIONS_DEFAULT_PAGE_SIZE, MENTIONS_ENDPOINT } from './contract';
+import type { Mention, MentionsQuery, RawMention } from './types';
+import type { PaginatedResponse } from '../../shared/types';
 
 export { MENTIONS_ENDPOINT } from './contract';
 
-const pickMentionsArray = (payload: RawMention[] | RawMentionsResponse): RawMention[] => {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-
-  return payload.mentions ?? payload.results ?? payload.data ?? [];
-};
 
 const toOptionalString = (value: string | number | null | undefined) =>
   value === null || value === undefined || value === '' ? undefined : String(value);
 
 export const mapRawMention = (raw: RawMention): Mention => {
+  if (!toOptionalString(raw.id ?? raw.mention_id)) {
+    if (import.meta.env.DEV) console.warn('Backend returned item without ID, using generated fallback');
+  }
   const id = toOptionalString(raw.id ?? raw.mention_id) ?? crypto.randomUUID();
   const text = toOptionalString(raw.text ?? raw.text_content ?? raw.content ?? raw.summary) ?? '';
   const platform = toOptionalString(raw.platform ?? raw.source) ?? 'other';
@@ -39,16 +36,31 @@ export const mapRawMention = (raw: RawMention): Mention => {
   };
 };
 
-export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<Mention[]> {
-  const params = new URLSearchParams({ limit: String(query.limit ?? MENTIONS_DEFAULT_LIMIT) });
-  const res = await fetch(`${MENTIONS_ENDPOINT}?${params.toString()}`, {
-    headers: createAuthHeaders(token),
+export interface MentionsPaginatedResponse extends PaginatedResponse<Mention> {
+  available_platforms: string[];
+}
+
+export async function fetchMentions(token: string | null, query: MentionsQuery = {}): Promise<MentionsPaginatedResponse> {
+  const params = new URLSearchParams({
+    page: String(query.page ?? 1),
+    page_size: String(query.pageSize ?? MENTIONS_DEFAULT_PAGE_SIZE),
   });
+  if (query.platform) {
+    params.set('platform', query.platform);
+  }
+  const res = await authFetch(token, `${MENTIONS_ENDPOINT}?${params.toString()}`);
 
   if (!res.ok) {
     throw new Error(MENTIONS_COPY.error.title);
   }
 
-  const payload = (await res.json()) as RawMention[] | RawMentionsResponse;
-  return pickMentionsArray(payload).map(mapRawMention);
+  const envelope = await res.json();
+  return {
+    data: (envelope.data ?? []).map(mapRawMention),
+    total: envelope.total,
+    page: envelope.page,
+    page_size: envelope.page_size,
+    total_pages: envelope.total_pages,
+    available_platforms: envelope.available_platforms ?? [],
+  };
 }

@@ -1,63 +1,64 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../../auth';
 import { fetchThreats } from '../api';
-import { THREATS_COPY } from '../contract';
-import type { Threat, ThreatFilters, ThreatLoadStatus } from '../types';
+import type { ThreatFilters, ThreatLoadStatus } from '../types';
 
-const initialFilters: ThreatFilters = { search: '', severity: '', classification: '' };
+const initialFilters: ThreatFilters = { search: '', severity: '', classification: '', reviewStatus: '' };
 
 export type ThreatEmptyReason = 'initial-empty' | 'no-results';
 
-export function useThreats(token: string | null) {
-  const [threats, setThreats] = useState<Threat[]>([]);
-  const [status, setStatus] = useState<ThreatLoadStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
+export function useThreats() {
+  const { token, claims } = useAuth();
   const [filters, setFilters] = useState<ThreatFilters>(initialFilters);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [page, setPage] = useState(1);
 
-  const reload = useCallback(() => setReloadKey((current) => current + 1), []);
+  const severityFilter = filters.severity.trim() || undefined;
+  const reviewStatusFilter = filters.reviewStatus.trim() || undefined;
 
-  useEffect(() => {
-    let active = true;
+  const setFiltersAndResetPage = (newFilters: ThreatFilters) => {
+    setFilters(newFilters);
+    if (newFilters.severity !== filters.severity || newFilters.reviewStatus !== filters.reviewStatus) {
+      setPage(1);
+    }
+  };
 
-    setStatus('loading');
-    setError(null);
+  const { data: response, isLoading, isError, refetch } = useQuery({
+    queryKey: ['threats', claims.sub, page, severityFilter, reviewStatusFilter],
+    queryFn: () => fetchThreats(token, { page, criticality_level: severityFilter, review_status: reviewStatusFilter }),
+    enabled: !!token,
+  });
 
-    fetchThreats(token)
-      .then((loadedThreats) => {
-        if (!active) {
-          return;
-        }
+  const threats = response?.data ?? [];
+  const total = response?.total ?? 0;
+  const totalPages = response?.total_pages ?? 1;
 
-        setThreats(loadedThreats);
-        setStatus(loadedThreats.length > 0 ? 'success' : 'empty');
-      })
-      .catch(() => {
-        if (!active) {
-          return;
-        }
+  const reload = () => { refetch(); };
 
-        setThreats([]);
-        setError(THREATS_COPY.error.title);
-        setStatus('error');
-      });
+  const baseStatus: ThreatLoadStatus = isLoading
+    ? 'loading'
+    : isError
+      ? 'error'
+      : threats.length > 0
+        ? 'success'
+        : 'empty';
 
-    return () => {
-      active = false;
+  const availableFilters = useMemo(() => {
+    const severityOptions = response?.available_severities ?? [];
+    const classificationOptions = response?.available_classifications ?? [];
+    return {
+      severity: severityOptions.length > 0,
+      classification: classificationOptions.length > 0,
+      severityOptions,
+      classificationOptions,
     };
-  }, [reloadKey, token]);
-
-  const availableFilters = useMemo(
-    () => ({
-      severity: threats.some((threat) => threat.severity && threat.severity !== 'unknown'),
-      classification: threats.some((threat) => threat.type && threat.type !== 'unknown'),
-    }),
-    [threats],
-  );
+  }, [response?.available_severities, response?.available_classifications]);
 
   const filteredThreats = useMemo(() => {
     const search = filters.search.trim().toLowerCase();
     const severity = filters.severity.trim().toLowerCase();
     const classification = filters.classification.trim().toLowerCase();
+    const reviewStatusLocal = filters.reviewStatus.trim().toLowerCase();
 
     return threats
       .filter((threat) => {
@@ -81,8 +82,10 @@ export function useThreats(token: string | null) {
           classification.length === 0 ||
           threat.type.toLowerCase() === classification ||
           threat.category?.toLowerCase() === classification;
+        const matchesReviewStatus =
+          reviewStatusLocal.length === 0 || threat.reviewStatus.toLowerCase() === reviewStatusLocal;
 
-        return matchesSearch && matchesSeverity && matchesClassification;
+        return matchesSearch && matchesSeverity && matchesClassification && matchesReviewStatus;
       })
       .sort((left, right) => {
         const rightDate = new Date(right.detectedAt).getTime();
@@ -97,20 +100,24 @@ export function useThreats(token: string | null) {
   }, [filters, threats]);
 
   const hasActiveFilters =
-    filters.search.trim().length > 0 || filters.severity.trim().length > 0 || filters.classification.trim().length > 0;
+    filters.search.trim().length > 0 || filters.severity.trim().length > 0 || filters.classification.trim().length > 0 || filters.reviewStatus.trim().length > 0;
   const emptyReason: ThreatEmptyReason = threats.length === 0 ? 'initial-empty' : 'no-results';
   const derivedStatus: ThreatLoadStatus =
-    status === 'success' && hasActiveFilters && filteredThreats.length === 0 ? 'empty' : status;
+    baseStatus === 'success' && hasActiveFilters && filteredThreats.length === 0 ? 'empty' : baseStatus;
 
   return {
     threats,
     filteredThreats,
     status: derivedStatus,
-    error,
+    error: isError ? 'Failed to load threats' : null,
     filters,
-    setFilters,
+    setFilters: setFiltersAndResetPage,
     availableFilters,
     emptyReason,
     reload,
+    page,
+    setPage,
+    totalPages,
+    total,
   };
 }
