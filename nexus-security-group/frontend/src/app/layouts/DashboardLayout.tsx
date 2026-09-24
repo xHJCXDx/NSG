@@ -1,0 +1,148 @@
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/auth';
+import { Activity, BellRing, KeyRound, LayoutDashboard, ListTree, LogOut, MessageSquare, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react';
+import { useTranslation } from '../../shared/i18n/translations';
+
+type NavItem = {
+  name: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  permission: [string, string];
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+export function DashboardLayout() {
+  const { hasPermission, logout } = useAuth();
+  const navigate = useNavigate();
+  const t = useTranslation();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const navGroupsConfig: NavGroup[] = [
+    {
+      label: t.nav.groups.overview,
+      items: [
+        { name: t.nav.dashboard, path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
+        { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.osint,
+      items: [
+        { name: t.nav.mentions, path: '/mentions', icon: MessageSquare, permission: ['mentions', 'read'] },
+        { name: t.nav.threats, path: '/threats', icon: ShieldAlert, permission: ['threats', 'read'] },
+        { name: t.nav.keywords, path: '/keywords', icon: KeyRound, permission: ['keywords', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.operations,
+      items: [
+        { name: t.nav.automation, path: '/automation', icon: PlayCircle, permission: ['workflows', 'read'] },
+        { name: t.nav.alerts, path: '/alerts', icon: BellRing, permission: ['alerts', 'read'] },
+        { name: t.nav.logs, path: '/logs', icon: ListTree, permission: ['logs', 'read'] },
+      ],
+    },
+    {
+      label: t.nav.groups.administration,
+      items: [
+        { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
+        { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
+      ],
+    },
+  ];
+
+  const navGroups = navGroupsConfig
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(item.permission[0], item.permission[1])),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  return (
+    <div className="min-h-screen bg-surface-primary flex text-content-primary selection:bg-brand-500 selection:text-white">
+      {/* Sidebar */}
+      <aside aria-label="Sidebar" className="w-64 flex-shrink-0 glass border-r border-edge-card flex flex-col h-screen sticky top-0">
+        <div className="p-6 flex items-center space-x-3">
+          <img
+            src="/nsg-symbol.png"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            onContextMenu={(event) => event.preventDefault()}
+            className="h-10 w-10 select-none rounded-xl object-contain drop-shadow-[0_0_14px_rgba(168,85,247,0.28)]"
+          />
+          <div>
+            <h2 className="font-bold text-content-heading tracking-tight leading-tight">NSG</h2>
+            <p className="text-xs text-brand-400 font-medium">Dashboard</p>
+          </div>
+        </div>
+
+        <nav aria-label="Main navigation" className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+          {navGroups.map((group) => (
+            <section key={group.label} aria-labelledby={`nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`}>
+              <h3
+                id={`nav-group-${group.label.toLowerCase().replace(/\s+/g, '-')}`}
+                className="px-4 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-content-muted/70"
+              >
+                {group.label}
+              </h3>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.name}
+                      to={item.path}
+                      end={item.path === '/'}
+                      className={({ isActive }) =>
+                        `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                          isActive
+                            ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20 shadow-inner'
+                            : 'text-content-muted hover:bg-surface-hover hover:text-content-secondary'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <Icon aria-hidden="true" className={`w-5 h-5 ${isActive ? 'text-brand-400' : ''}`} />
+                          <span className="font-medium">{item.name}</span>
+                        </>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-edge-card">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-content-muted hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 border border-transparent transition-all"
+          >
+            <LogOut aria-hidden="true" className="w-5 h-5" />
+            <span className="font-medium">{t.nav.signOut}</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* Background ambient glow */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div className="flex-1 overflow-y-auto p-8 relative z-10 animate-slide-up">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
