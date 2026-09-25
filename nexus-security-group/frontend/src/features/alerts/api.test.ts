@@ -25,7 +25,7 @@ describe('alerts api', () => {
     vi.restoreAllMocks();
   });
 
-  it('lists alerts with backend-supported query params and auth headers', async () => {
+  it('lists alerts with supported query params and auth headers', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => [alertResponse],
@@ -59,7 +59,7 @@ describe('alerts api', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend details and network failures to alert errors', async () => {
+  it('maps error details and network failures to alert errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
     await expect(listAlerts('fake-jwt')).rejects.toMatchObject(new ListAlertsError('Forbidden', 403));
 

@@ -15,7 +15,7 @@ describe('createUser', () => {
     vi.restoreAllMocks();
   });
 
-  it('posts the payload with JSON and auth headers and returns the backend response', async () => {
+  it('posts the payload with JSON and auth headers and returns the server response', async () => {
     const response = {
       user_id: 1,
       username: 'alice',
@@ -47,7 +47,7 @@ describe('createUser', () => {
     [403, 'Admins only'],
     [409, 'Username already exists'],
     [422, 'Password is too short'],
-  ])('maps backend detail for %i responses', async (status, detail) => {
+  ])('maps error detail for %i responses', async (status, detail) => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,
       status,
@@ -99,7 +99,7 @@ describe('listUsers', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to list errors', async () => {
+  it('maps error detail and network failures to list errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Admins only' }) } as Response);
     await expect(listUsers('fake-jwt')).rejects.toMatchObject(new ListUsersError('Admins only', 403));
 
@@ -141,7 +141,7 @@ describe('updateUser', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to update errors', async () => {
+  it('maps error detail and network failures to update errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
     await expect(updateUser('fake-jwt', 2, { is_active: false })).rejects.toMatchObject(new UpdateUserError('Forbidden', 403));
 
@@ -155,7 +155,7 @@ describe('deleteUser', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls DELETE with auth headers and returns the backend soft-deleted user', async () => {
+  it('calls DELETE with auth headers and returns the soft-deleted user', async () => {
     const response = {
       user_id: 2,
       username: 'bob',
@@ -181,7 +181,7 @@ describe('deleteUser', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to delete errors', async () => {
+  it('maps error detail and network failures to delete errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ detail: 'Cannot deactivate the last active admin user' }) } as Response);
     await expect(deleteUser('fake-jwt', 2)).rejects.toMatchObject(new DeleteUserError('Cannot deactivate the last active admin user', 409));
 
