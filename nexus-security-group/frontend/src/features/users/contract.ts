@@ -1,10 +1,7 @@
-import type { UserRole } from './types';
-
 export const USERS_ENDPOINT = '/api/users';
 export const PERMISSIONS_ENDPOINT = '/api/permissions';
 export const PERMISSIONS_ROLE_ENDPOINT = '/api/permissions/roles';
-
-export const USER_ROLE_OPTIONS: UserRole[] = ['analyst', 'admin'];
+export const ROLES_ENDPOINT = '/api/roles';
 
 export const USERS_COPY = {
   page: {
@@ -54,7 +51,7 @@ export const USERS_COPY = {
       description: 'Assign permissions to each role. Admin permissions are locked and cannot be modified.',
       saveLabel: 'Save changes',
       savingLabel: 'Saving...',
-      saveSuccess: 'Analyst permissions updated successfully.',
+      saveSuccess: 'Permissions updated successfully.',
       adminLocked: 'Admin permissions are locked.',
       noChanges: 'No changes to save.',
     },

@@ -8,6 +8,17 @@ import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { AuthProvider } from '../../auth';
 import { UsersPage } from './UsersPage';
 
+vi.mock('../hooks/useRolesQuery', () => ({
+  useRolesQuery: () => ({
+    data: [
+      { role_id: 1, name: 'admin', description: 'System administrator', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+      { role_id: 2, name: 'analyst', description: 'Security analyst', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+    ],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 const encodePayload = (payload: unknown) =>
   btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 

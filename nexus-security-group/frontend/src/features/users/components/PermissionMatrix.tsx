@@ -1,12 +1,13 @@
 import { useState, useEffect, Fragment } from 'react';
 import { Lock, Save } from 'lucide-react';
-import type { PermissionMatrixResponse, RoleName } from '../types';
+import type { PermissionMatrixResponse, Role } from '../types';
 import { useTranslation } from '../../../shared/i18n/translations';
 
 interface PermissionMatrixProps {
   data: PermissionMatrixResponse;
+  roles: Role[];
   canWrite: boolean;
-  onSave: (role: RoleName, permissions: string[]) => void;
+  onSave: (roleId: number, roleName: string, permissions: string[]) => void;
   isSaving: boolean;
 }
 
@@ -34,36 +35,56 @@ function Toggle({ checked, disabled, onChange, label }: { checked: boolean; disa
   );
 }
 
-export function PermissionMatrix({ data, canWrite, onSave, isSaving }: PermissionMatrixProps) {
+export function PermissionMatrix({ data, roles, canWrite, onSave, isSaving }: PermissionMatrixProps) {
   const t = useTranslation();
 
-  const [analystPermissions, setAnalystPermissions] = useState<Set<string>>(
-    () => new Set(data.role_permissions.analyst),
-  );
+  const editableRoles = roles.filter((r) => r.name !== 'admin');
+  const roleNames = roles.map((r) => r.name);
+
+  const [editedPermissions, setEditedPermissions] = useState<Record<string, Set<string>>>(() => {
+    const state: Record<string, Set<string>> = {};
+    for (const role of editableRoles) {
+      state[role.name] = new Set(data.role_permissions[role.name] ?? []);
+    }
+    return state;
+  });
 
   useEffect(() => {
-    setAnalystPermissions(new Set(data.role_permissions.analyst));
-  }, [data]);
+    const state: Record<string, Set<string>> = {};
+    for (const role of editableRoles) {
+      state[role.name] = new Set(data.role_permissions[role.name] ?? []);
+    }
+    setEditedPermissions(state);
+  }, [data, roles]);
 
-  const originalSet = new Set(data.role_permissions.analyst);
-  const isDirty =
-    analystPermissions.size !== originalSet.size ||
-    [...analystPermissions].some((p) => !originalSet.has(p));
+  const dirtyRoles = editableRoles.filter((role) => {
+    const original = new Set(data.role_permissions[role.name] ?? []);
+    const edited = editedPermissions[role.name];
+    if (!edited) return false;
+    return edited.size !== original.size || [...edited].some((p) => !original.has(p));
+  });
 
-  const handleToggle = (permission: string) => {
-    setAnalystPermissions((prev) => {
-      const next = new Set(prev);
-      if (next.has(permission)) {
-        next.delete(permission);
+  const isDirty = dirtyRoles.length > 0;
+
+  const handleToggle = (roleName: string, permission: string) => {
+    setEditedPermissions((prev) => {
+      const current = new Set(prev[roleName] ?? []);
+      if (current.has(permission)) {
+        current.delete(permission);
       } else {
-        next.add(permission);
+        current.add(permission);
       }
-      return next;
+      return { ...prev, [roleName]: current };
     });
   };
 
   const handleSave = () => {
-    onSave('analyst', [...analystPermissions].sort());
+    for (const role of dirtyRoles) {
+      const perms = editedPermissions[role.name];
+      if (perms) {
+        onSave(role.role_id, role.name, [...perms].sort());
+      }
+    }
   };
 
   const grouped = data.permissions.reduce<Record<string, typeof data.permissions>>((acc, entry) => {
@@ -82,56 +103,62 @@ export function PermissionMatrix({ data, canWrite, onSave, isSaving }: Permissio
           <thead>
             <tr className="bg-surface-secondary">
               <th className="py-3 px-5 text-left font-medium text-content-muted">{t.users.permissions.matrix.columnPermission}</th>
-              <th className="py-3 px-5 text-center font-medium text-content-muted">
-                <span className="inline-flex items-center gap-1.5">
-                  {t.users.permissions.matrix.columnAdmin}
-                  <Lock aria-hidden="true" className="h-3.5 w-3.5" />
-                </span>
-              </th>
-              <th className="py-3 px-5 text-center font-medium text-content-muted">{t.users.permissions.matrix.columnAnalyst}</th>
+              {roleNames.map((name) => (
+                <th key={name} className="py-3 px-5 text-center font-medium text-content-muted">
+                  <span className="inline-flex items-center gap-1.5 capitalize">
+                    {name}
+                    {name === 'admin' && <Lock aria-hidden="true" className="h-3.5 w-3.5" />}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {resources.map((resource) => (
               <Fragment key={resource}>
                 <tr>
-                  <td colSpan={3} className="pt-4 pb-2 px-5">
+                  <td colSpan={1 + roleNames.length} className="pt-4 pb-2 px-5">
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-400">
                       {resource}
                     </span>
                   </td>
                 </tr>
                 {grouped[resource].map((entry) => {
-                  const isChanged = analystPermissions.has(entry.permission) !== originalSet.has(entry.permission);
+                  const hasChanges = editableRoles.some((role) => {
+                    const original = new Set(data.role_permissions[role.name] ?? []);
+                    const edited = editedPermissions[role.name];
+                    if (!edited) return false;
+                    return edited.has(entry.permission) !== original.has(entry.permission);
+                  });
                   return (
                     <tr
                       key={entry.permission}
                       className={`border-b border-edge-card transition-colors ${
-                        isChanged ? 'bg-amber-500/5' : 'hover:bg-surface-hover'
+                        hasChanges ? 'bg-amber-500/5' : 'hover:bg-surface-hover'
                       }`}
                     >
                       <td className="py-3 px-5 pl-8 text-content-secondary">
                         <span className="capitalize">{entry.action}</span>
-                        {isChanged && (
+                        {hasChanges && (
                           <span className="ml-2 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" />
                         )}
                       </td>
-                      <td className="py-3 px-5 text-center">
-                        <Toggle
-                          checked
-                          disabled
-                          onChange={() => {}}
-                          label={`${t.users.permissions.matrix.columnAdmin} ${entry.permission}`}
-                        />
-                      </td>
-                      <td className="py-3 px-5 text-center">
-                        <Toggle
-                          checked={analystPermissions.has(entry.permission)}
-                          disabled={!canWrite || isSaving}
-                          onChange={() => handleToggle(entry.permission)}
-                          label={`${t.users.permissions.matrix.columnAnalyst} ${entry.permission}`}
-                        />
-                      </td>
+                      {roleNames.map((roleName) => {
+                        const isAdmin = roleName === 'admin';
+                        const checked = isAdmin
+                          ? (data.role_permissions.admin ?? []).includes(entry.permission)
+                          : (editedPermissions[roleName]?.has(entry.permission) ?? false);
+                        return (
+                          <td key={roleName} className="py-3 px-5 text-center">
+                            <Toggle
+                              checked={checked}
+                              disabled={isAdmin || !canWrite || isSaving}
+                              onChange={() => handleToggle(roleName, entry.permission)}
+                              label={`${roleName} ${entry.permission}`}
+                            />
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}

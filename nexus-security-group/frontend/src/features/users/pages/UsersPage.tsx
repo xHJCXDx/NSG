@@ -2,17 +2,18 @@ import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, Shield, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { CreateUserError, DeleteUserError, UpdatePermissionsError, UpdateUserError } from '../api';
-import { USER_ROLE_OPTIONS } from '../contract';
 import { useCreateUserMutation } from '../hooks/useCreateUserMutation';
 import { useDeleteUserMutation } from '../hooks/useDeleteUserMutation';
 import { usePermissionsQuery } from '../hooks/usePermissionsQuery';
+import { useRolesQuery } from '../hooks/useRolesQuery';
 import { useUpdateRoleMutation } from '../hooks/useUpdateRoleMutation';
 import { useUpdateUserMutation } from '../hooks/useUpdateUserMutation';
 import { useUsersQuery } from '../hooks/useUsersQuery';
 import { PermissionMatrix } from '../components/PermissionMatrix';
+import { RoleManager } from '../components/RoleManager';
 import { useTranslation } from '../../../shared/i18n/translations';
 import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
-import type { RoleName, UpdateUserPayload, UserResponse, UserRole } from '../types';
+import type { UpdateUserPayload, UserResponse } from '../types';
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'border-brand-400/30 bg-brand-500/10 text-brand-300',
@@ -32,6 +33,7 @@ export function UsersPage() {
   const canDeleteUsers = hasPermission('users', 'delete');
   const canWritePermissions = hasPermission('permissions', 'write');
 
+  const { data: rolesData = [] } = useRolesQuery();
   const { data: permissionsData, isLoading: isLoadingPermissions, error: permissionsError } = usePermissionsQuery();
   const updateMutation = useUpdateRoleMutation();
   const [permissionsOpen, setPermissionsOpen] = useState(false);
@@ -50,11 +52,11 @@ export function UsersPage() {
     return () => clearTimeout(timer);
   }, [permissionsErrorMessage]);
 
-  const handleSavePermissions = (role: RoleName, permissions: string[]) => {
+  const handleSavePermissions = (roleId: number, _roleName: string, permissions: string[]) => {
     setPermissionsSuccess(null);
     setPermissionsErrorMessage(null);
     updateMutation.mutate(
-      { role, payload: { permissions } },
+      { roleId, payload: { permissions } },
       {
         onSuccess: () => setPermissionsSuccess(t.users.permissions.matrix.saveSuccess),
         onError: (err) =>
@@ -67,14 +69,14 @@ export function UsersPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('analyst');
+  const [role, setRole] = useState('analyst');
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
-  const [editRole, setEditRole] = useState<UserRole>('analyst');
+  const [editRole, setEditRole] = useState('analyst');
   const [editIsActive, setEditIsActive] = useState(true);
   const [editPassword, setEditPassword] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
@@ -315,11 +317,11 @@ export function UsersPage() {
                   name="role"
                   className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
                   value={role}
-                  onChange={(event) => setRole(event.target.value as UserRole)}
+                  onChange={(event) => setRole(event.target.value)}
                 >
-                  {USER_ROLE_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="bg-surface-primary text-content-primary">
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                  {rolesData.map((r) => (
+                    <option key={r.role_id} value={r.name} className="bg-surface-primary text-content-primary">
+                      {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -514,12 +516,12 @@ export function UsersPage() {
                                     id={`edit-role-${user.user_id}`}
                                     className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500"
                                     value={editRole}
-                                    onChange={(event) => setEditRole(event.target.value as UserRole)}
+                                    onChange={(event) => setEditRole(event.target.value)}
                                     disabled={isSavingThisUser}
                                   >
-                                    {USER_ROLE_OPTIONS.map((option) => (
-                                      <option key={option} value={option} className="bg-surface-primary text-content-primary">
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                                    {rolesData.map((r) => (
+                                      <option key={r.role_id} value={r.name} className="bg-surface-primary text-content-primary">
+                                        {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
                                       </option>
                                     ))}
                                   </select>
@@ -594,6 +596,22 @@ export function UsersPage() {
         )}
       </section>
 
+      {/* ── Role Management ── */}
+      {canWritePermissions && (
+        <section className="glass-card overflow-hidden p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10">
+              <Shield aria-hidden="true" className="h-5 w-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-content-heading">{t.users.roles.sectionTitle}</h2>
+              <p className="text-sm text-content-secondary">{t.users.roles.description}</p>
+            </div>
+          </div>
+          <RoleManager roles={rolesData} canWrite={canWritePermissions} />
+        </section>
+      )}
+
       {/* ── Role Permissions ── */}
       <section className="glass-card overflow-hidden">
         <button
@@ -644,6 +662,7 @@ export function UsersPage() {
             ) : permissionsData ? (
               <PermissionMatrix
                 data={permissionsData}
+                roles={rolesData}
                 canWrite={canWritePermissions}
                 onSave={handleSavePermissions}
                 isSaving={updateMutation.isPending}
