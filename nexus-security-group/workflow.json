@@ -83,9 +83,9 @@
     },
     {
       "parameters": {
-        "content": "## 📝 Stage 5: Logging\n- Aggregate pipeline counters\n- Log execution to DB (success/failure)",
-        "height": 282,
-        "width": 500
+        "content": "## 📝 Stage 5: Logging\n- Always logs execution (even with 0 new items)\n- Aggregate pipeline counters from passthrough nodes\n- Log execution to DB (success/no_new_items/failure)",
+        "height": 300,
+        "width": 540
       },
       "id": "e79814e4-1dec-4a19-ba31-965e6d006515",
       "name": "Stage: Logging",
@@ -120,13 +120,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "osint-trigger",
-        "authentication": "headerAuth",
-        "options": {
-          "headerAuth": {
-            "name": "X-Webhook-Token",
-            "value": "={{ $env.WEBHOOK_SECRET }}"
-          }
-        }
+        "authentication": "none",
+        "options": {}
       },
       "id": "5739c5a7-e4e1-4bdb-a01f-7b681abf6377",
       "name": "Manual OSINT Trigger",
@@ -140,7 +135,7 @@
     },
     {
       "parameters": {
-        "url": "https://hn.algolia.com/api/v1/search?query=security&hitsPerPage=50",
+        "url": "https://hn.algolia.com/api/v1/search_by_date?tags=story&hitsPerPage=50&query=security",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -203,17 +198,13 @@
     },
     {
       "parameters": {
-        "url": "https://api.github.com/search/issues?q=type:issue+label:security&per_page=30&sort=updated&order=desc",
+        "url": "https://api.github.com/search/issues?q=vulnerability+OR+CVE+OR+exploit+OR+malware+OR+%22security+advisory%22+OR+%22data+breach%22+type:issue&per_page=50&sort=updated&order=desc",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "User-Agent",
               "value": "NSG-OSINT-Monitor/1.0"
-            },
-            {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.GITHUB_TOKEN }}"
             }
           ]
         },
@@ -275,6 +266,32 @@
     },
     {
       "parameters": {
+        "mode": "append"
+      },
+      "id": "f1a2b3c4-0001-0000-0000-000000000001",
+      "name": "Merge HN + ExploitDB",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        620,
+        952
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "f1a2b3c4-0002-0000-0000-000000000002",
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        1056
+      ]
+    },
+    {
+      "parameters": {
         "functionCode": "// Dedup intra-ejecución: elimina duplicados por (platform, external_id)\n// dentro del mismo batch. La dedup inter-ejecución la maneja\n// ON CONFLICT (platform, external_id) en el INSERT.\nconst items = $input.all();\nif (!items || items.length === 0) return [];\n\nconst allowedPlatforms = new Set([\n  'twitter',\n  'reddit',\n  'telegram',\n  'discord',\n  'github',\n  'exploit-db',\n  'hackernews',\n  'other'\n]);\n\nconst seen = new Set();\nconst unique = [];\n\nfor (const item of items) {\n  const rawPlatform = String(item.json?.platform || 'other').trim().toLowerCase();\n  const platform = allowedPlatforms.has(rawPlatform) ? rawPlatform : 'other';\n  const id = String(item.json?.external_id || '').trim();\n  const key = id ? platform + '::' + id : null;\n\n  if (!key || !seen.has(key)) {\n    if (key) {\n      seen.add(key);\n      item.json.platform = platform;\n      item.json.external_id = id;\n    }\n    unique.push(item);\n  }\n}\n\nreturn unique;"
       },
       "id": "04ef48b3-1247-46e6-93ec-a131fb8c6b46",
@@ -282,7 +299,7 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        752,
+        832,
         1056
       ]
     },
@@ -324,14 +341,14 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Filter Already Processed\n// Removes items whose (platform, external_id)\n// already exist in social_mentions.\n// This avoids calling Sentiment API + Threat\n// Classification for items we already have.\n// =============================================\n\nconst existingResults = $input.all();\nconst deduplicatedItems = $('Deduplicate').all();\n\n// Build Set of existing keys from DB query result\nconst existingKeys = new Set();\nfor (const row of existingResults) {\n  if (row.json.platform && row.json.external_id) {\n    existingKeys.add(row.json.platform + '::' + row.json.external_id);\n  }\n}\n\n// Filter out already-existing items\nconst newItems = [];\nlet skipped = 0;\nfor (const item of deduplicatedItems) {\n  const key = (item.json.platform || '') + '::' + (item.json.external_id || '');\n  if (existingKeys.has(key)) {\n    skipped++;\n  } else {\n    newItems.push(item);\n  }\n}\n\nif (skipped > 0) {\n  console.log('Filter Already Processed: skipped ' + skipped + ' existing items, ' + newItems.length + ' new items to process');\n}\n\nreturn newItems.length > 0 ? newItems : [];"
+        "functionCode": "// =============================================\n// Filter Already Processed\n// Removes items whose (platform, external_id)\n// already exist in social_mentions.\n// This avoids calling Sentiment API + Threat\n// Classification for items we already have.\n// =============================================\n\nconst existingResults = $input.all();\nconst deduplicatedItems = $('Deduplicate').all();\n\n// Build Set of existing keys from DB query result\nconst existingKeys = new Set();\nfor (const row of existingResults) {\n  if (row.json.platform && row.json.external_id) {\n    existingKeys.add(row.json.platform + '::' + row.json.external_id);\n  }\n}\n\n// Filter out already-existing items\nconst newItems = [];\nlet skipped = 0;\nfor (const item of deduplicatedItems) {\n  const key = (item.json.platform || '') + '::' + (item.json.external_id || '');\n  if (existingKeys.has(key)) {\n    skipped++;\n  } else {\n    newItems.push(item);\n  }\n}\n\nif (skipped > 0) {\n  console.log('Filter Already Processed: skipped ' + skipped + ' existing items, ' + newItems.length + ' new items to process');\n}\n\nif (newItems.length > 0) {\n  return newItems;\n}\n// Signal item: no new items to process, but logging path still runs\nreturn [{ json: { _noNewItems: true, _mentionsCollected: deduplicatedItems.length, _skippedExisting: skipped } }];"
       },
       "id": "d813dfd3-0661-42fe-aabb-6910e85a3be3",
       "name": "Filter Already Processed",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [
-        1392,
+        1296,
         1104
       ]
     },
@@ -366,7 +383,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1584,
+        1680,
         1104
       ],
       "retryOnFail": true,
@@ -424,7 +441,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Enrich Mention + Prep Sentiment\n// 1. Recovers original data lost by Postgres INSERT\n// 2. Merges mention_id from INSERT result\n// 3. Flattens sentiment fields for next INSERT\n// Index correlation is safe: Prep→Postgres→Enrich is 1:1.\n// =============================================\n\nconst items = $input.all();\nconst prepItems = $('Prep Mention Insert').all();\nif (items.length !== prepItems.length) {\n  console.warn('Enrich Mention: count mismatch — input=' + items.length + ' vs prep=' + prepItems.length);\n}\nconst result = [];\n\nfor (let i = 0; i < items.length; i++) {\n  // Detect INSERT error (continueOnFail returns {error:...} without mention_id)\n  if (items[i].json.error || !items[i].json.mention_id) {\n    console.warn('Enrich Mention: INSERT failed for item ' + i + ' (external_id=' + ((prepItems[i] && prepItems[i].json._original && prepItems[i].json._original.external_id) || 'unknown') + '): ' + (items[i].json.errorMessage || items[i].json.error || 'missing mention_id'));\n    continue;\n  }\n  const prepOriginal = (prepItems[i] && prepItems[i].json._original) || {};\n  // Step 1+2: Recover original data + add mention_id\n  const d = {\n    ...prepOriginal,\n    mention_id: items[i].json.mention_id\n  };\n\n  // Step 3: Flatten sentiment fields for Postgres INSERT\n  const s = d.sentiment || {};\n  const vader = s.vader || {};\n  const textblob = s.textblob || {};\n\n  const clamp = (val, min, max) => Math.max(min, Math.min(max, Number(val) || 0));\n\n  const validLabels = ['positive', 'neutral', 'negative', 'mixed'];\n  const rawLabel = (s.sentiment_label || 'neutral').toLowerCase();\n  const sentimentLabel = validLabels.includes(rawLabel) ? rawLabel : 'neutral';\n\n  result.push({\n    json: {\n      p_mention_id: d.mention_id,\n      p_vader_compound: clamp(vader.compound, -1, 1),\n      p_vader_pos: clamp(vader.pos, 0, 1),\n      p_vader_neu: clamp(vader.neu, 0, 1),\n      p_vader_neg: clamp(vader.neg, 0, 1),\n      p_textblob_polarity: clamp(textblob.polarity, -1, 1),\n      p_textblob_subjectivity: clamp(textblob.subjectivity, 0, 1),\n      p_final_sentiment_score: clamp(s.ensemble_score, -1, 1),\n      p_sentiment_label: sentimentLabel,\n      p_confidence_score: clamp(s.confidence_score || 0.5, 0, 1),\n\n      _original: d\n    }\n  });\n}\n\nreturn result;"
+        "functionCode": "// =============================================\n// Enrich Mention + Prep Sentiment (passthrough)\n// Iterates over prepItems directly — does NOT depend on\n// Postgres INSERT output, which consolidates N items into 1.\n// Passes external_id + platform so the next INSERT can look\n// up mention_id via subquery.\n// =============================================\n\nconst prepItems = $('Prep Mention Insert').all();\nconst result = [];\n\nfor (let i = 0; i < prepItems.length; i++) {\n  const prepOriginal = (prepItems[i] && prepItems[i].json._original) || {};\n  const d = { ...prepOriginal };\n\n  const s = d.sentiment || {};\n  const vader = s.vader || {};\n  const textblob = s.textblob || {};\n\n  const clamp = (val, min, max) => Math.max(min, Math.min(max, Number(val) || 0));\n\n  const validLabels = ['positive', 'neutral', 'negative', 'mixed'];\n  const rawLabel = (s.sentiment_label || 'neutral').toLowerCase();\n  const sentimentLabel = validLabels.includes(rawLabel) ? rawLabel : 'neutral';\n\n  result.push({\n    json: {\n      p_external_id: d.external_id,\n      p_platform: d.platform,\n      p_vader_compound: clamp(vader.compound, -1, 1),\n      p_vader_pos: clamp(vader.pos, 0, 1),\n      p_vader_neu: clamp(vader.neu, 0, 1),\n      p_vader_neg: clamp(vader.neg, 0, 1),\n      p_textblob_polarity: clamp(textblob.polarity, -1, 1),\n      p_textblob_subjectivity: clamp(textblob.subjectivity, 0, 1),\n      p_final_sentiment_score: clamp(s.ensemble_score, -1, 1),\n      p_sentiment_label: sentimentLabel,\n      p_confidence_score: clamp(s.confidence_score || 0.5, 0, 1),\n\n      _original: d\n    }\n  });\n}\n\nreturn result;"
       },
       "id": "35ec3ec6-846b-41dc-8afd-ad29cbf92ecd",
       "name": "Enrich Mention + Prep Sentiment",
@@ -438,9 +455,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO sentiment_analysis (\n  mention_id, vader_compound, vader_pos, vader_neu, vader_neg,\n  textblob_polarity, textblob_subjectivity,\n  final_sentiment_score, sentiment_label, confidence_score,\n  analysis_method\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  $10,\n  'ensemble'\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  vader_compound = EXCLUDED.vader_compound,\n  vader_pos = EXCLUDED.vader_pos,\n  vader_neu = EXCLUDED.vader_neu,\n  vader_neg = EXCLUDED.vader_neg,\n  final_sentiment_score = EXCLUDED.final_sentiment_score,\n  sentiment_label = EXCLUDED.sentiment_label,\n  confidence_score = EXCLUDED.confidence_score\nRETURNING sentiment_id;",
+        "query": "INSERT INTO sentiment_analysis (\n  mention_id, vader_compound, vader_pos, vader_neu, vader_neg,\n  textblob_polarity, textblob_subjectivity,\n  final_sentiment_score, sentiment_label, confidence_score,\n  analysis_method\n) VALUES (\n  (SELECT mention_id FROM social_mentions WHERE external_id = $1 AND platform = $2),\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  $8,\n  $9,\n  $10,\n  $11,\n  'ensemble'\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  vader_compound = EXCLUDED.vader_compound,\n  vader_pos = EXCLUDED.vader_pos,\n  vader_neu = EXCLUDED.vader_neu,\n  vader_neg = EXCLUDED.vader_neg,\n  final_sentiment_score = EXCLUDED.final_sentiment_score,\n  sentiment_label = EXCLUDED.sentiment_label,\n  confidence_score = EXCLUDED.confidence_score\nRETURNING sentiment_id;",
         "options": {
-          "queryReplacement": "{{ $json.p_mention_id }}, {{ $json.p_vader_compound }}, {{ $json.p_vader_pos }}, {{ $json.p_vader_neu }}, {{ $json.p_vader_neg }}, {{ $json.p_textblob_polarity }}, {{ $json.p_textblob_subjectivity }}, {{ $json.p_final_sentiment_score }}, {{ $json.p_sentiment_label }}, {{ $json.p_confidence_score }}"
+          "queryReplacement": "{{ $json.p_external_id }}, {{ $json.p_platform }}, {{ $json.p_vader_compound }}, {{ $json.p_vader_pos }}, {{ $json.p_vader_neu }}, {{ $json.p_vader_neg }}, {{ $json.p_textblob_polarity }}, {{ $json.p_textblob_subjectivity }}, {{ $json.p_final_sentiment_score }}, {{ $json.p_sentiment_label }}, {{ $json.p_confidence_score }}"
         }
       },
       "id": "00423186-0899-40c8-88db-d57d3ecba2d5",
@@ -461,7 +478,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Enrich Sentiment + Prep Threat\n// 1. Recovers original data lost by Postgres INSERT\n// 2. Merges sentiment_id from INSERT result\n// 3. Flattens threat fields for next INSERT\n// Index correlation is safe: Prep→Postgres→Enrich is 1:1.\n// =============================================\n\nconst items = $input.all();\nconst prepItems = $('Enrich Mention + Prep Sentiment').all();\nif (items.length !== prepItems.length) {\n  console.warn('Enrich Sentiment: count mismatch — input=' + items.length + ' vs prep=' + prepItems.length);\n}\nconst result = [];\n\nfor (let i = 0; i < items.length; i++) {\n  // Detect INSERT error (continueOnFail returns {error:...} without sentiment_id)\n  if (items[i].json.error || !items[i].json.sentiment_id) {\n    console.warn('Enrich Sentiment: INSERT failed for item ' + i + ' (mention_id=' + ((prepItems[i] && prepItems[i].json._original && prepItems[i].json._original.mention_id) || 'unknown') + '): ' + (items[i].json.errorMessage || items[i].json.error || 'missing sentiment_id'));\n    continue;\n  }\n  const prepOriginal = (prepItems[i] && prepItems[i].json._original) || {};\n  // Step 1+2: Recover original data + add sentiment_id\n  const d = {\n    ...prepOriginal,\n    sentiment_id: items[i].json.sentiment_id\n  };\n\n  // Step 3: Flatten threat fields for Postgres INSERT\n  const t = d.threat || {};\n\n  const esc = (val) => val == null ? '' : String(val).replace(/\\0/g, '').replace(/'/g, \"''\");\n  const clamp = (val, min, max) => Math.max(min, Math.min(max, Number(val) || 0));\n\n  const validLevels = ['low', 'medium', 'high', 'critical'];\n  const critLevel = validLevels.includes(t.criticality_level) ? t.criticality_level : 'low';\n\n  const keywords = t.matched_keywords || [];\n  const keywordsLiteral = keywords.length > 0\n    ? 'ARRAY[' + keywords.map(k => \"'\" + esc(k) + \"'\").join(',') + ']'\n    : 'NULL';\n\n  const riskScore = Math.min(100, Math.max(0, Math.round(t.raw_score || 0)));\n\n  result.push({\n    json: {\n      p_mention_id: d.mention_id,\n      p_sentiment_id: d.sentiment_id,\n      p_threat_type: esc(t.threat_type || 'general'),\n      p_threat_category: esc(t.threat_category || 'other'),\n      p_criticality_level: critLevel,\n      p_confidence_score: clamp(t.confidence_score || 0, 0, 1),\n      p_matched_keywords_literal: keywordsLiteral,\n      p_matched_keywords: keywords.length > 0 ? keywords.map(k => esc(k)) : null,\n      p_risk_score: riskScore,\n\n      _original: d\n    }\n  });\n}\n\nreturn result;"
+        "functionCode": "// =============================================\n// Enrich Sentiment + Prep Threat (passthrough)\n// Iterates over previous Enrich output — does NOT depend on\n// Postgres INSERT output. Passes external_id + platform so\n// the next INSERT can look up mention_id and sentiment_id\n// via subqueries.\n// =============================================\n\nconst prepItems = $('Enrich Mention + Prep Sentiment').all();\nconst result = [];\n\nfor (let i = 0; i < prepItems.length; i++) {\n  const prepOriginal = (prepItems[i] && prepItems[i].json._original) || {};\n  const d = { ...prepOriginal };\n\n  const t = d.threat || {};\n\n  const esc = (val) => val == null ? '' : String(val).replace(/\\0/g, '').replace(/'/g, \"''\");\n  const clamp = (val, min, max) => Math.max(min, Math.min(max, Number(val) || 0));\n\n  const validLevels = ['low', 'medium', 'high', 'critical'];\n  const critLevel = validLevels.includes(t.criticality_level) ? t.criticality_level : 'low';\n\n  const keywords = t.matched_keywords || [];\n  const keywordsLiteral = keywords.length > 0\n    ? 'ARRAY[' + keywords.map(k => \"'\" + esc(k) + \"'\").join(',') + ']'\n    : 'NULL';\n\n  const riskScore = Math.min(100, Math.max(0, Math.round(t.raw_score || 0)));\n\n  result.push({\n    json: {\n      p_external_id: d.external_id,\n      p_platform: d.platform,\n      p_threat_type: esc(t.threat_type || 'general'),\n      p_threat_category: esc(t.threat_category || 'other'),\n      p_criticality_level: critLevel,\n      p_confidence_score: clamp(t.confidence_score || 0, 0, 1),\n      p_matched_keywords_literal: keywordsLiteral,\n      p_matched_keywords: keywords.length > 0 ? keywords.map(k => esc(k)) : null,\n      p_risk_score: riskScore,\n\n      _original: d\n    }\n  });\n}\n\nreturn result;"
       },
       "id": "b70ceb91-7eee-4761-9c34-75b85fb32f1b",
       "name": "Enrich Sentiment + Prep Threat",
@@ -475,9 +492,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO threat_detections (\n  mention_id, sentiment_id, threat_type, threat_category,\n  criticality_level, confidence_score, matched_keywords,\n  detection_method, risk_score\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7::text[],\n  'heuristic',\n  $8\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  threat_type = EXCLUDED.threat_type,\n  threat_category = EXCLUDED.threat_category,\n  criticality_level = EXCLUDED.criticality_level,\n  confidence_score = EXCLUDED.confidence_score,\n  matched_keywords = EXCLUDED.matched_keywords,\n  risk_score = EXCLUDED.risk_score,\n  sentiment_id = EXCLUDED.sentiment_id,\n  last_updated = NOW()\nRETURNING detection_id;",
+        "query": "INSERT INTO threat_detections (\n  mention_id, sentiment_id, threat_type, threat_category,\n  criticality_level, confidence_score, matched_keywords,\n  detection_method, risk_score\n) VALUES (\n  (SELECT mention_id FROM social_mentions WHERE external_id = $1 AND platform = $2),\n  (SELECT sa.sentiment_id FROM sentiment_analysis sa JOIN social_mentions sm ON sa.mention_id = sm.mention_id WHERE sm.external_id = $1 AND sm.platform = $2),\n  $3,\n  $4,\n  $5,\n  $6,\n  $7::text[],\n  'heuristic',\n  $8\n)\nON CONFLICT (mention_id) DO UPDATE SET\n  threat_type = EXCLUDED.threat_type,\n  threat_category = EXCLUDED.threat_category,\n  criticality_level = EXCLUDED.criticality_level,\n  confidence_score = EXCLUDED.confidence_score,\n  matched_keywords = EXCLUDED.matched_keywords,\n  risk_score = EXCLUDED.risk_score,\n  sentiment_id = EXCLUDED.sentiment_id,\n  last_updated = NOW()\nRETURNING detection_id;",
         "options": {
-          "queryReplacement": "{{ $json.p_mention_id }}, {{ $json.p_sentiment_id }}, {{ $json.p_threat_type }}, {{ $json.p_threat_category }}, {{ $json.p_criticality_level }}, {{ $json.p_confidence_score }}, {{ $json.p_matched_keywords }}, {{ $json.p_risk_score }}"
+          "queryReplacement": "{{ $json.p_external_id }}, {{ $json.p_platform }}, {{ $json.p_threat_type }}, {{ $json.p_threat_category }}, {{ $json.p_criticality_level }}, {{ $json.p_confidence_score }}, {{ $json.p_matched_keywords }}, {{ $json.p_risk_score }}"
         }
       },
       "id": "a92bb683-d07f-44ac-bc3e-fc1e68030b2c",
@@ -498,7 +515,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Enrich After Threat\n// Merges detection_id back with full data.\n// Reads _original from the previous Prep node\n// via index (1:1 Prep→Postgres→Enrich by design).\n// Flattens criticality_level for the IF node.\n// =============================================\n\nconst items = $input.all();\nconst prepItems = $('Enrich Sentiment + Prep Threat').all();\nif (items.length !== prepItems.length) {\n  console.warn('Enrich After Threat: count mismatch — input=' + items.length + ' vs prep=' + prepItems.length);\n}\n\nconst result = [];\nfor (let i = 0; i < items.length; i++) {\n  // Detect INSERT error (continueOnFail returns {error:...} without detection_id)\n  if (items[i].json.error || !items[i].json.detection_id) {\n    console.warn('Enrich After Threat: INSERT failed for item ' + i + ' (mention_id=' + ((prepItems[i] && prepItems[i].json._original && prepItems[i].json._original.mention_id) || 'unknown') + '): ' + (items[i].json.errorMessage || items[i].json.error || 'missing detection_id'));\n    continue;\n  }\n  const original = (prepItems[i] && prepItems[i].json._original) || {};\n  result.push({\n    json: {\n      ...original,\n      detection_id: items[i].json.detection_id,\n      criticality_level: (original.threat || {}).criticality_level || 'low'\n    }\n  });\n}\nreturn result;"
+        "functionCode": "// =============================================\n// Enrich After Threat (passthrough)\n// Iterates over previous Enrich output — does NOT depend\n// on Postgres INSERT output. Passes external_id + platform\n// so downstream nodes can look up detection_id via subquery.\n// Flattens criticality_level for the IF node.\n// =============================================\n\nconst prepItems = $('Enrich Sentiment + Prep Threat').all();\nconst result = [];\n\nfor (let i = 0; i < prepItems.length; i++) {\n  const original = (prepItems[i] && prepItems[i].json._original) || {};\n  result.push({\n    json: {\n      ...original,\n      criticality_level: (original.threat || {}).criticality_level || 'low'\n    }\n  });\n}\nreturn result;"
       },
       "id": "cfe1823c-5529-4891-a16f-142c8c45f0fc",
       "name": "Enrich After Threat",
@@ -593,7 +610,8 @@
       "position": [
         4064,
         720
-      ]
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
@@ -617,11 +635,12 @@
           "id": "7dVjUBletR18hjpk",
           "name": "SMTP account"
         }
-      }
+      },
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Alert Insert\n// Builds deterministic SQL for alerts insert.\n// Avoid queryReplacement with external alert text.\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst sqlString = (val) => String(val ?? '')\n  .replace(/\u0000/g, '')\n  .replace(/'/g, \"''\");\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Validate required FK before building SQL.\n  const detectionId = Number(d.detection_id);\n  if (!Number.isInteger(detectionId) || detectionId <= 0) {\n    console.warn('Prep Alert Insert: skipping alert with invalid detection_id=' + d.detection_id);\n    continue;\n  }\n\n  // Map detection criticality to alert severity.\n  // The IF node sends Enrich After Threat items directly to this node,\n  // so d.alert_severity is usually absent. Falling back to 'info'\n  // incorrectly logs high/critical detections as informational alerts.\n  const validSeverities = ['info', 'warning', 'high', 'critical'];\n  const detectedLevel = d.alert_severity || d.criticality_level || (d.threat || {}).criticality_level;\n  const severity = validSeverities.includes(detectedLevel) ? detectedLevel : 'warning';\n  const title = 'Amenaza ' + severity + ' detectada';\n  const threatType = (d.threat_type || 'general').replace(/_/g, ' ');\n  const platform = d.platform || 'unknown';\n  const author = d.author || d.author_username || 'unknown';\n  const message = 'Amenaza ' + severity + ': ' + threatType + ' en ' + platform + ' por ' + author;\n\n  const query = [\n    'INSERT INTO alerts (',\n    '  detection_id, alert_title, alert_message, alert_severity,',\n    '  channels_sent, slack_channel, sent_at, delivery_status',\n    ') VALUES (',\n    '  ' + detectionId + ',',\n    \"  '\" + sqlString(title) + \"',\",\n    \"  '\" + sqlString(message) + \"',\",\n    \"  '\" + severity + \"',\",\n    \"  ARRAY['slack', 'email'],\",\n    \"  '#security-alerts',\",\n    '  NOW(),',\n    \"  'sent'\",\n    ')',\n    'ON CONFLICT (detection_id) DO NOTHING',\n    'RETURNING alert_id;'\n  ].join(String.fromCharCode(10));\n\n  result.push({\n    json: {\n      p_detection_id: detectionId,\n      p_alert_title: title,\n      p_alert_message: message,\n      p_alert_severity: severity,\n      query,\n\n      // Carry forward for Log Execution\n      _original: d\n    }\n  });\n}\n\nreturn result;"
+        "functionCode": "// =============================================\n// Prep Alert Insert\n// Builds deterministic SQL for alerts insert.\n// Uses CTE to look up detection_id safely — if the\n// detection doesn't exist, no INSERT happens (no\n// constraint violation, no silent failure).\n// =============================================\n\nconst items = $input.all();\nconst result = [];\n\nconst sqlString = (val) => String(val ?? '')\n  .replace(/\\0/g, '')\n  .replace(/'/g, \"''\");\n\nfor (const item of items) {\n  const d = item.json;\n\n  // Need external_id + platform to look up detection_id via CTE\n  const externalId = sqlString(d.external_id);\n  const platformVal = sqlString(d.platform);\n  if (!externalId || !platformVal) {\n    console.warn('Prep Alert Insert: skipping alert with missing external_id/platform');\n    continue;\n  }\n\n  // Map detection criticality to alert severity\n  const validSeverities = ['info', 'warning', 'high', 'critical'];\n  const detectedLevel = d.alert_severity || d.criticality_level || (d.threat || {}).criticality_level;\n  const severity = validSeverities.includes(detectedLevel) ? detectedLevel : 'warning';\n  const title = 'Amenaza ' + severity + ' detectada';\n  const threatType = (d.threat_type || 'general').replace(/_/g, ' ');\n  const platform = d.platform || 'unknown';\n  const author = d.author || d.author_username || 'unknown';\n  const message = 'Amenaza ' + severity + ': ' + threatType + ' en ' + platform + ' por ' + author;\n\n  // CTE pattern: look up detection_id first, only INSERT if it exists\n  const lines = [];\n  lines.push('WITH det AS (');\n  lines.push('  SELECT td.detection_id FROM threat_detections td');\n  lines.push('  JOIN social_mentions sm ON td.mention_id = sm.mention_id');\n  lines.push(\"  WHERE sm.external_id = '\" + externalId + \"' AND sm.platform = '\" + platformVal + \"'\");\n  lines.push(')');\n  lines.push('INSERT INTO alerts (');\n  lines.push('  detection_id, alert_title, alert_message, alert_severity,');\n  lines.push('  channels_sent, slack_channel, sent_at, delivery_status');\n  lines.push(')');\n  lines.push('SELECT');\n  lines.push('  detection_id,');\n  lines.push(\"  '\" + sqlString(title) + \"',\");\n  lines.push(\"  '\" + sqlString(message) + \"',\");\n  lines.push(\"  '\" + severity + \"',\");\n  lines.push(\"  ARRAY['slack', 'email'],\");\n  lines.push(\"  '#security-alerts',\");\n  lines.push('  NOW(),');\n  lines.push(\"  'sent'\");\n  lines.push('FROM det');\n  lines.push('WHERE det.detection_id IS NOT NULL');\n  lines.push('ON CONFLICT (detection_id) DO NOTHING');\n  lines.push('RETURNING alert_id;');\n  const query = lines.join('\\n');\n\n  result.push({\n    json: {\n      p_alert_title: title,\n      p_alert_message: message,\n      p_alert_severity: severity,\n      query,\n      _original: d\n    }\n  });\n}\n\nreturn result;"
       },
       "id": "d19f115b-dc6b-4b2b-8e09-21cce1824765",
       "name": "Prep Alert Insert",
@@ -656,7 +675,7 @@
     },
     {
       "parameters": {
-        "functionCode": "// =============================================\n// Prep Log Execution\n// Aggregates pipeline counters from canonical upstream nodes.\n// Robustness rule: execution logging must NOT depend on items\n// surviving Filter Already Processed.\n//\n// Triggering rules:\n// - Enrich After Threat triggers the normal log path when there are new items.\n// - Check Existing IDs triggers the all-existing path when every deduped item\n//   was skipped before analysis/storage.\n// - Mixed/new executions are deferred from the Check Existing IDs trigger to\n//   avoid duplicate execution_logs rows and to wait for downstream counters.\n// =============================================\n\nconst getNodeItems = (nodeName) => {\n  try {\n    return $(nodeName).all() || [];\n  } catch (e) {\n    console.warn('Prep Log Execution: node unavailable: ' + nodeName + ' — ' + e.message);\n    return [];\n  }\n};\n\nconst safeJson = (item) => (item && item.json) ? item.json : {};\nconst hasError = (item) => {\n  const j = safeJson(item);\n  return !!(j.error || j.errorMessage);\n};\nconst countSuccessful = (items, idField) =>\n  items.filter(item => !hasError(item) && safeJson(item)[idField]).length;\nconst identityKey = (item) => {\n  const j = safeJson(item);\n  const platform = String(j.platform || '').trim().toLowerCase();\n  const externalId = String(j.external_id || '').trim();\n  return platform && externalId ? platform + '::' + externalId : null;\n};\n\nconst currentInput = $input.all();\nconst deduplicatedItems = getNodeItems('Deduplicate');\nconst existingResults = getNodeItems('Check Existing IDs');\nconst mentionResults = getNodeItems('Insert Social Mention');\nconst sentimentResults = getNodeItems('Insert Sentiment Analysis');\nconst threatResults = getNodeItems('Insert Threat Detection');\nconst enrichedThreatItems = getNodeItems('Enrich After Threat');\nconst alertResults = getNodeItems('Log Alert in DB');\n\nconst mentionsCollected = deduplicatedItems.length;\n\nconst existingKeys = new Set();\nfor (const row of existingResults) {\n  if (!hasError(row)) {\n    const key = identityKey(row);\n    if (key) existingKeys.add(key);\n  }\n}\n\nlet skippedExisting = 0;\nfor (const item of deduplicatedItems) {\n  const key = identityKey(item);\n  if (key && existingKeys.has(key)) skippedExisting++;\n}\n\nconst newItemsToProcess = Math.max(0, mentionsCollected - skippedExisting);\nconst inputLooksLikeProcessedThreat = currentInput.some(item => !!safeJson(item).detection_id);\nconst invokedFromExistingCheckPath = !inputLooksLikeProcessedThreat;\n\n// The Check Existing IDs branch exists only to cover the all-existing case.\n// If there are new items, the Enrich After Threat branch will log later with\n// complete downstream counters. Returning [] here prevents duplicate rows.\nif (invokedFromExistingCheckPath && newItemsToProcess > 0) {\n  console.log('Prep Log Execution: deferring log until new item processing completes (' + newItemsToProcess + ' new, ' + skippedExisting + ' existing skipped)');\n  return [];\n}\n\nconst existingCheckErrors = existingResults.filter(i => hasError(i)).length;\nconst mentionErrors = mentionResults.filter(i => hasError(i) || !safeJson(i).mention_id).length;\nconst sentimentErrors = sentimentResults.filter(i => hasError(i) || !safeJson(i).sentiment_id).length;\nconst threatErrors = threatResults.filter(i => hasError(i) || !safeJson(i).detection_id).length;\nconst totalErrors = existingCheckErrors + mentionErrors + sentimentErrors + threatErrors;\n\nconst mentionsProcessed = countSuccessful(mentionResults, 'mention_id');\nconst sentimentInserted = countSuccessful(sentimentResults, 'sentiment_id');\nconst detectionsGenerated = countSuccessful(threatResults, 'detection_id');\n\nconst levels = { low: 0, medium: 0, high: 0, critical: 0, unknown: 0 };\nfor (const item of enrichedThreatItems) {\n  const j = safeJson(item);\n  const rawLevel = String(j.criticality_level || (j.threat || {}).criticality_level || 'unknown').toLowerCase();\n  const level = Object.prototype.hasOwnProperty.call(levels, rawLevel) ? rawLevel : 'unknown';\n  levels[level]++;\n}\n\nconst skippedBelowAlertTotal = levels.low + levels.medium + levels.unknown;\nconst skippedTotal = skippedExisting + skippedBelowAlertTotal;\nconst alertCandidates = levels.high + levels.critical;\nconst skippedParts = [];\nif (skippedExisting > 0) skippedParts.push(skippedExisting + ' existing');\nfor (const [level, count] of Object.entries({ low: levels.low, medium: levels.medium, unknown: levels.unknown })) {\n  if (count > 0) skippedParts.push(count + ' ' + level);\n}\nconst skippedSummary = skippedParts.join(', ');\n\n// If alert logging already ran in this execution, prefer actual successful DB inserts.\n// Otherwise fall back to deterministic high/critical candidates so the execution log\n// remains independent from IF branch timing and n8n branch execution quirks.\nconst successfulAlertInserts = alertResults.filter(item => !hasError(item) && safeJson(item).alert_id).length;\nconst alertsGenerated = successfulAlertInserts > 0 ? successfulAlertInserts : alertCandidates;\n\nconst status = totalErrors > 0 ? (mentionsProcessed === 0 && skippedExisting === 0 ? 'error' : 'partial_success') : 'success';\n\nconsole.log(\n  'Execution summary — collected: ' + mentionsCollected +\n  ', existing_skipped: ' + skippedExisting +\n  ', mentions: ' + mentionsProcessed +\n  ', sentiments: ' + sentimentInserted +\n  ', detections: ' + detectionsGenerated +\n  ', alert_candidates: ' + alertCandidates +\n  ', skipped_total: ' + skippedTotal + (skippedSummary ? ' (' + skippedSummary + ')' : '')\n);\n\nif (totalErrors > 0) {\n  console.warn('Execution errors — existing_check: ' + existingCheckErrors + ', mention_insert: ' + mentionErrors + ', sentiment_insert: ' + sentimentErrors + ', threat_insert: ' + threatErrors);\n}\n\nreturn [{\n  json: {\n    p_workflow_name: 'OSINT Monitor Multi-Platform',\n    p_execution_id: $execution.id,\n    p_started_at: $execution.startedAt || new Date().toISOString(),\n    p_status: status,\n    p_mentions_collected: mentionsCollected,\n    p_mentions_processed: mentionsProcessed,\n    p_detections_generated: detectionsGenerated,\n    p_alerts_generated: alertsGenerated,\n    skipped_total: skippedTotal,\n    skipped_existing: skippedExisting,\n    skipped_below_alert_total: skippedBelowAlertTotal,\n    skipped_by_level: levels,\n    skipped_summary: skippedSummary || 'none',\n    new_items_to_process: newItemsToProcess,\n    sentiment_inserted: sentimentInserted\n  }\n}];"
+        "functionCode": "// Prep Log Execution — counts from passthrough Enrich nodes\n// (not from Postgres INSERT output, which consolidates N→1)\n\nconst getNodeItems = (nodeName) => {\n  try {\n    return $(nodeName).all() || [];\n  } catch (e) {\n    return [];\n  }\n};\n\nconst safeJson = (item) => (item && item.json) ? item.json : {};\nconst hasError = (item) => {\n  const j = safeJson(item);\n  return !!(j.error || j.errorMessage);\n};\nconst identityKey = (item) => {\n  const j = safeJson(item);\n  const platform = String(j.platform || '').trim().toLowerCase();\n  const externalId = String(j.external_id || '').trim();\n  return platform && externalId ? platform + '::' + externalId : null;\n};\n\nconst deduplicatedItems = getNodeItems('Deduplicate');\nconst existingResults = getNodeItems('Check Existing IDs');\n// Use passthrough Enrich nodes for counts (Postgres output is consolidated)\nconst enrichMentionItems = getNodeItems('Enrich Mention + Prep Sentiment');\nconst enrichSentimentItems = getNodeItems('Enrich Sentiment + Prep Threat');\nconst enrichedThreatItems = getNodeItems('Enrich After Threat');\n// Note: Log Alert in DB runs in parallel, so we can't read its output reliably.\n// Use alertCandidates (count of high+critical items) instead.\nconst alertResults = [];\n\nconst mentionsCollected = deduplicatedItems.length;\n\nconst existingKeys = new Set();\nfor (const row of existingResults) {\n  if (!hasError(row)) {\n    const key = identityKey(row);\n    if (key) existingKeys.add(key);\n  }\n}\n\nlet skippedExisting = 0;\nfor (const item of deduplicatedItems) {\n  const key = identityKey(item);\n  if (key && existingKeys.has(key)) skippedExisting++;\n}\n\n// Counts from passthrough nodes (all items pass through ON CONFLICT)\nconst mentionsProcessed = enrichMentionItems.length;\nconst sentimentInserted = enrichSentimentItems.length;\nconst detectionsGenerated = enrichedThreatItems.length;\n\nconst levels = { low: 0, medium: 0, high: 0, critical: 0, unknown: 0 };\nfor (const item of enrichedThreatItems) {\n  const j = safeJson(item);\n  const rawLevel = String(j.criticality_level || (j.threat || {}).criticality_level || 'unknown').toLowerCase();\n  const level = Object.prototype.hasOwnProperty.call(levels, rawLevel) ? rawLevel : 'unknown';\n  levels[level]++;\n}\n\nconst alertCandidates = levels.high + levels.critical;\n\nconst successfulAlertInserts = alertResults.filter(item => !hasError(item) && safeJson(item).alert_id).length;\nconst alertsGenerated = successfulAlertInserts > 0 ? successfulAlertInserts : alertCandidates;\n\nconst status = mentionsProcessed === 0 ? 'error' : 'success';\n\nconsole.log(\n  'Execution summary — collected: ' + mentionsCollected +\n  ', existing_skipped: ' + skippedExisting +\n  ', mentions: ' + mentionsProcessed +\n  ', sentiments: ' + sentimentInserted +\n  ', detections: ' + detectionsGenerated +\n  ', alert_candidates: ' + alertCandidates +\n  ', alerts_generated: ' + alertsGenerated\n);\n\nreturn [{\n  json: {\n    p_workflow_name: 'OSINT Monitor Multi-Platform',\n    p_execution_id: $execution.id,\n    p_started_at: $execution.startedAt || new Date().toISOString(),\n    p_status: status,\n    p_mentions_collected: mentionsCollected,\n    p_mentions_processed: mentionsProcessed,\n    p_detections_generated: detectionsGenerated,\n    p_alerts_generated: alertsGenerated\n  }\n}];"
       },
       "id": "b1321237-1478-4ea3-8b04-442f0acb2972",
       "name": "Prep Log Execution",
@@ -689,7 +708,79 @@
           "id": "qCq5GZJ5S9loxdr2",
           "name": "Postgres account"
         }
-      }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.platform }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              },
+              "id": "check-new-items-001"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-0000-0000-000000000001",
+      "name": "Has New Items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        1104
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log execution when no new items were found (all already in DB)\nconst items = $input.all();\nconst d = items[0] ? items[0].json : {};\nconst mentionsCollected = d._mentionsCollected || 0;\nconst skipped = d._skippedExisting || 0;\n\nreturn [{\n  json: {\n    p_workflow_name: 'OSINT Monitor Multi-Platform',\n    p_execution_id: $execution.id,\n    p_started_at: $execution.startedAt || new Date().toISOString(),\n    p_status: 'success',\n    p_mentions_collected: mentionsCollected,\n    p_mentions_processed: 0,\n    p_detections_generated: 0,\n    p_alerts_generated: 0\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0003-0000-0000-000000000002",
+      "name": "Prep Log No Items",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO execution_logs (\n  workflow_name, execution_id, status,\n  mentions_collected, mentions_processed,\n  detections_generated, alerts_generated,\n  started_at, completed_at\n) VALUES (\n  $1,\n  $2,\n  $3,\n  $4,\n  $5,\n  $6,\n  $7,\n  $8::timestamptz,\n  NOW()\n);",
+        "options": {
+          "queryReplacement": "{{ $json.p_workflow_name }}, {{ $json.p_execution_id }}, {{ $json.p_status }}, {{ $json.p_mentions_collected }}, {{ $json.p_mentions_processed }}, {{ $json.p_detections_generated }}, {{ $json.p_alerts_generated }}, {{ $json.p_started_at }}"
+        }
+      },
+      "id": "a1b2c3d4-0003-0000-0000-000000000003",
+      "name": "Log Execution (No Items)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1904,
+        1300
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "qCq5GZJ5S9loxdr2",
+          "name": "Postgres account"
+        }
+      },
+      "continueOnFail": true
     }
   ],
   "pinData": {},
@@ -773,7 +864,7 @@
       "main": [
         [
           {
-            "node": "Deduplicate",
+            "node": "Merge HN + ExploitDB",
             "type": "main",
             "index": 0
           }
@@ -784,7 +875,18 @@
       "main": [
         [
           {
-            "node": "Deduplicate",
+            "node": "Merge HN + ExploitDB",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge HN + ExploitDB": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
             "type": "main",
             "index": 0
           }
@@ -792,6 +894,17 @@
       ]
     },
     "Parse GitHub Issues": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge All Sources": {
       "main": [
         [
           {
@@ -831,11 +944,6 @@
             "node": "Filter Already Processed",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Prep Log Execution",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -844,7 +952,7 @@
       "main": [
         [
           {
-            "node": "Sentiment Analysis",
+            "node": "Has New Items?",
             "type": "main",
             "index": 0
           }
@@ -1015,6 +1123,35 @@
         [
           {
             "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Items?": {
+      "main": [
+        [
+          {
+            "node": "Sentiment Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Log No Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Log No Items": {
+      "main": [
+        [
+          {
+            "node": "Log Execution (No Items)",
             "type": "main",
             "index": 0
           }
