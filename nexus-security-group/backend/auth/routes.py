@@ -113,6 +113,7 @@ async def login_for_access_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         role = db_user.role
+        role_id = db_user.role_id
         auth_source = "database"
         user_id = db_user.user_id
         permissions = _permissions_from_user(db_user)
@@ -134,10 +135,13 @@ async def login_for_access_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
         role = "admin"
+        role_id = None
         auth_source = "bootstrap"
         permissions = ADMIN_PERMISSION_CLAIMS
 
     token_data = {"sub": form_data.username, "role": role, "auth_source": auth_source, "permissions": permissions}
+    if role_id is not None:
+        token_data["role_id"] = role_id
     if user_id is not None:
         token_data["user_id"] = user_id
 

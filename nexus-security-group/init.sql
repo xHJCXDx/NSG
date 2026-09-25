@@ -599,6 +599,31 @@ CREATE POLICY user_isolation_policy ON threat_detections
     USING (reviewed_by = current_user OR reviewed_by IS NULL);
 
 -- ============================================
+-- TABLA: roles
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS roles (
+    role_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_roles_name ON roles(name);
+
+CREATE TRIGGER update_roles_updated_at
+    BEFORE UPDATE ON roles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+GRANT ALL PRIVILEGES ON TABLE roles TO osint_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE roles_role_id_seq TO osint_admin;
+GRANT SELECT ON TABLE roles TO osint_analyst;
+GRANT SELECT ON TABLE roles TO osint_readonly;
+
+-- ============================================
 -- TABLA: system_users
 -- ============================================
 
@@ -606,7 +631,7 @@ CREATE TABLE IF NOT EXISTS system_users (
     user_id BIGSERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'analyst' CONSTRAINT check_system_users_role CHECK (role IN ('admin', 'analyst')),
+    role_id BIGINT NOT NULL REFERENCES roles(role_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -614,7 +639,7 @@ CREATE TABLE IF NOT EXISTS system_users (
 );
 
 CREATE INDEX idx_system_users_username ON system_users(username);
-CREATE INDEX idx_system_users_role ON system_users(role);
+CREATE INDEX idx_system_users_role_id ON system_users(role_id);
 CREATE INDEX idx_system_users_is_active ON system_users(is_active);
 
 CREATE TRIGGER update_system_users_updated_at
@@ -650,13 +675,13 @@ CREATE TRIGGER update_permissions_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE IF NOT EXISTS role_permissions (
-    role VARCHAR(20) NOT NULL CONSTRAINT check_role_permissions_role CHECK (role IN ('admin', 'analyst')),
+    role_id BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE,
     permission_id BIGINT NOT NULL REFERENCES permissions(permission_id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (role, permission_id)
+    PRIMARY KEY (role_id, permission_id)
 );
 
-CREATE INDEX idx_role_permissions_role ON role_permissions(role);
+CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
 CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
 
 GRANT ALL PRIVILEGES ON TABLE permissions TO osint_admin;
@@ -688,6 +713,11 @@ VALUES
     ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)')
 ON CONFLICT (keyword_text) DO NOTHING;
 
+INSERT INTO roles (name, description, is_system) VALUES
+    ('admin', 'Full system access', TRUE),
+    ('analyst', 'Standard analyst access', TRUE)
+ON CONFLICT (name) DO NOTHING;
+
 INSERT INTO permissions (resource, action, description)
 VALUES
     ('dashboard', 'read', 'Ver resumen operacional, métricas agregadas y panel principal'),
@@ -711,8 +741,8 @@ VALUES
 ON CONFLICT (resource, action) DO UPDATE
 SET description = EXCLUDED.description;
 
-INSERT INTO role_permissions (role, permission_id)
-SELECT role_permission.role, permissions.permission_id
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT roles.role_id, permissions.permission_id
 FROM (
     VALUES
         ('admin', 'dashboard', 'read'),
@@ -744,11 +774,12 @@ FROM (
         ('analyst', 'workflows', 'read'),
         ('analyst', 'workflows', 'execute'),
         ('analyst', 'logs', 'read')
-) AS role_permission(role, resource, action)
+) AS role_permission(role_name, resource, action)
+JOIN roles ON roles.name = role_permission.role_name
 JOIN permissions
   ON permissions.resource = role_permission.resource
  AND permissions.action = role_permission.action
-ON CONFLICT (role, permission_id) DO NOTHING;
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- ============================================
 -- COMENTARIOS
@@ -761,6 +792,7 @@ COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas';
 COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
+COMMENT ON TABLE roles IS 'Roles RBAC del sistema; is_system=TRUE protege roles nativos de edición/eliminación';
 COMMENT ON TABLE system_users IS 'Usuarios autenticables del sistema; user_activity permanece solo como auditoría';
 COMMENT ON TABLE permissions IS 'Catálogo normalizado de permisos recurso/acción para RBAC granular';
 COMMENT ON TABLE role_permissions IS 'Asignación de permisos a roles compatibles admin/analyst';

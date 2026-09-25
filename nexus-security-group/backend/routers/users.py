@@ -8,13 +8,24 @@ from auth import get_current_user, hash_password, require_permission, verify_pas
 
 logger = logging.getLogger("nsg.users")
 from database import get_db
-from models import SystemUser
+from models import Role, SystemUser
 from schemas.auth import TokenData
 from schemas.user import ChangePasswordRequest, UserCreate, UserResponse, UserUpdate
 from services.activity_audit import record_user_activity
 
 
 router = APIRouter(prefix="/api/users", tags=["users"])
+
+
+def _resolve_role(db: Session, role_name: str) -> Role:
+    """Look up a role by name; raise 400 if not found."""
+    role = db.query(Role).filter(Role.name == role_name).first()
+    if role is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown role: {role_name}",
+        )
+    return role
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -24,10 +35,11 @@ def create_user(
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("users", "write")),
 ):
+    role = _resolve_role(db, request.role)
     user = SystemUser(
         username=request.username,
         password_hash=hash_password(request.password),
-        role=request.role,
+        role_id=role.role_id,
         is_active=request.is_active,
         created_by=current_user.username,
     )
@@ -110,7 +122,8 @@ def update_user(
     if "password" in update_data:
         user.password_hash = hash_password(update_data.pop("password"))
     if "role" in update_data:
-        user.role = update_data["role"]
+        role = _resolve_role(db, update_data["role"])
+        user.role_id = role.role_id
     if "is_active" in update_data:
         user.is_active = update_data["is_active"]
     record_user_activity(
@@ -153,7 +166,8 @@ def delete_user(
     if user.role == "admin":
         active_admin_count = (
             db.query(SystemUser)
-            .filter(SystemUser.role == "admin", SystemUser.is_active.is_(True))
+            .join(Role, SystemUser.role_id == Role.role_id)
+            .filter(Role.name == "admin", SystemUser.is_active.is_(True))
             .count()
         )
         if active_admin_count <= 1:
