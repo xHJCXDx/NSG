@@ -139,7 +139,7 @@ export const translations = {
       empty: {
         initial: {
           title: 'No threats detected yet',
-          description: 'Detected OSINT threats will appear here when the backend exposes them.',
+          description: 'Detected OSINT threats will appear here once available.',
         },
         noResults: {
           title: 'No matching threats',
@@ -188,15 +188,15 @@ export const translations = {
       eyebrow: 'OSINT monitoring',
       title: 'Keywords',
       description:
-        'Manage monitored keywords through the protected backend endpoints. Frontend controls reflect JWT permissions; the backend remains authoritative.',
+        'Manage monitored keywords. Controls reflect your current permissions.',
       loading: 'Loading keywords...',
       authNotice: {
         readOnly: 'You have read-only keyword access. Create, edit, toggle, and delete controls require keywords:write or keywords:delete.',
       },
       list: {
         title: 'Monitored keywords',
-        description: 'Keywords returned by /api/keywords with match counters maintained by the backend.',
-        empty: 'No monitored keywords returned by the backend yet.',
+        description: 'Monitored keywords with match counters.',
+        empty: 'No monitored keywords yet.',
         active: 'Active',
         inactive: 'Inactive',
         columns: {
@@ -346,10 +346,10 @@ export const translations = {
       eyebrow: 'Operations',
       title: 'Alerts Center',
       description:
-        'Review backend-generated alerts, delivery metadata, and acknowledgement status without inventing frontend-only states.',
+        'Review alerts, delivery metadata, and acknowledgement status.',
       loading: 'Loading alerts...',
       authNotice: {
-        readOnly: 'You have read-only alert access. Acknowledgement requires alerts:write; the backend remains authoritative.',
+        readOnly: 'You have read-only alert access. Acknowledgement requires write permissions.',
       },
       filters: {
         deliveryStatus: 'Delivery status',
@@ -380,7 +380,7 @@ export const translations = {
       },
       list: {
         title: 'Alert stream',
-        description: 'Alerts returned by /api/alerts with backend-supported filters only.',
+        description: 'Security alerts with delivery and acknowledgement tracking.',
         ariaLabel: 'Security alerts',
         detectionId: 'Detection ID',
         columns: {
@@ -417,7 +417,7 @@ export const translations = {
     logs: {
       eyebrow: 'Operations audit',
       title: 'Logs & Activity',
-      description: 'Read-only operational traceability from backend execution logs and user activity endpoints.',
+      description: 'Read-only operational traceability from execution logs and user activity.',
       tabs: {
         ariaLabel: 'Logs views',
         executions: 'Executions',
@@ -425,7 +425,7 @@ export const translations = {
       },
       executions: {
         title: 'Execution logs',
-        description: 'Pipeline execution records returned by /api/logs with backend-supported filters only.',
+        description: 'Pipeline execution records with filtering support.',
         loading: 'Loading execution logs...',
         filters: {
           status: 'Status',
@@ -476,7 +476,7 @@ export const translations = {
       },
       activity: {
         title: 'User activity',
-        description: 'Recent user activity returned by /api/activity. Sensitive fields are intentionally hidden by default.',
+        description: 'Recent user activity. Sensitive fields are hidden by default.',
         loading: 'Loading user activity...',
         refreshing: 'Refreshing',
         filters: {
@@ -505,7 +505,7 @@ export const translations = {
           title: 'No user activity returned',
           description: 'Try adjusting username or activity type filters.',
         },
-        resultCount: (count: number) => `${count} activity rows returned. Pagination is not shown because the backend does not support offset for this endpoint.`,
+        resultCount: (count: number) => `${count} activity rows returned.`,
         errors: {
           fallback: 'User activity could not be loaded.',
         },
@@ -515,10 +515,10 @@ export const translations = {
       eyebrow: 'Admin operations',
       title: 'Users',
       description:
-        'Create and review backend users through the protected user endpoint. The backend remains authoritative for permissions and persisted user state.',
+        'Create and manage system users. Permissions and user state are centrally enforced.',
       authNotice: {
         nonAdmin:
-          'User creation requires users:write in the JWT. This is presentation-only; the backend remains the authority and may reject this request with 401 or 403.',
+          'User creation requires write permissions. The server validates all requests.',
       },
       form: {
         usernameLabel: 'Username',
@@ -539,13 +539,13 @@ export const translations = {
       confirmation: {
         eyebrow: 'Session-local confirmation',
         title: 'User created',
-        detail: (username: string, role: string) => `Backend confirmed ${username} as ${role}.`,
+        detail: (username: string, role: string) => `User ${username} created with role ${role}.`,
       },
       directory: {
         title: 'User directory',
-        description: 'Admin-only users returned by the backend.',
+        description: 'Registered system users (admin only).',
         loading: 'Loading users...',
-        empty: 'No users returned by the backend yet.',
+        empty: 'No users registered yet.',
         columns: {
           username: 'Username',
           role: 'Role',
@@ -701,7 +701,7 @@ export const translations = {
       },
       compliance: {
         title: 'Regulatory Compliance',
-        description: 'Standards and regulations this system adheres to, as documented in the thesis (Chapter 7.7).',
+        description: 'Standards and regulations this system adheres to.',
         implemented: {
           title: 'Implemented Compliance',
           description: 'Standards with concrete implementation in the system.',
@@ -717,7 +717,7 @@ export const translations = {
         standards: {
           ley25326: {
             name: 'Ley 25.326 (Personal Data Protection)',
-            description: 'Data purpose, proportionality, minimization, access controls via RBAC and PostgreSQL RLS.',
+            description: 'Data purpose, proportionality, minimization, and role-based access controls.',
           },
           convention108: {
             name: 'Convention 108/108+ (Council of Europe)',
@@ -776,14 +776,14 @@ export const translations = {
       eyebrow: 'Operations',
       title: 'Automations',
       pageDescription:
-        'Monitor the OSINT workflow and trigger an authorized manual run through the protected backend proxy.',
+        'Monitor the OSINT workflow and trigger an authorized manual run.',
       description:
         'The OSINT workflow runs on a 15-minute schedule. You can also trigger a full scan manually from this panel.',
       scheduleLabel: 'Scheduled every 15 minutes',
       manualTriggerLabel: 'Run OSINT scan',
       runningScan: 'Running scan...',
       permissionNote:
-        'Manual execution is hidden behind the workflows:execute permission. The backend remains authoritative.',
+        'Manual execution requires workflows:execute permission.',
       running: 'Running scan...',
       success: 'OSINT scan completed successfully.',
       error: {
@@ -930,7 +930,7 @@ export const translations = {
       empty: {
         initial: {
           title: 'Aún no se detectaron amenazas',
-          description: 'Las amenazas OSINT detectadas aparecerán acá cuando el backend las exponga.',
+          description: 'Las amenazas OSINT detectadas aparecerán acá cuando estén disponibles.',
         },
         noResults: {
           title: 'Sin amenazas coincidentes',
@@ -979,15 +979,15 @@ export const translations = {
       eyebrow: 'Monitoreo OSINT',
       title: 'Palabras clave',
       description:
-        'Gestioná palabras clave monitoreadas a través de los endpoints protegidos del backend. Los controles del frontend reflejan permisos del JWT; el backend sigue siendo la autoridad.',
+        'Gestioná palabras clave monitoreadas. Los controles reflejan tus permisos actuales.',
       loading: 'Cargando palabras clave...',
       authNotice: {
         readOnly: 'Tenés acceso de solo lectura a palabras clave. Crear, editar, activar/desactivar y borrar requiere keywords:write o keywords:delete.',
       },
       list: {
         title: 'Palabras clave monitoreadas',
-        description: 'Palabras retornadas por /api/keywords con contadores de coincidencias mantenidos por el backend.',
-        empty: 'El backend aún no retornó palabras clave monitoreadas.',
+        description: 'Palabras clave monitoreadas con contadores de coincidencias.',
+        empty: 'Aún no hay palabras clave monitoreadas.',
         active: 'Activa',
         inactive: 'Inactiva',
         columns: {
@@ -1137,10 +1137,10 @@ export const translations = {
       eyebrow: 'Operaciones',
       title: 'Centro de alertas',
       description:
-        'Revisá alertas generadas por backend, metadata de entrega y estado de reconocimiento sin inventar estados solo de frontend.',
+        'Revisá alertas, metadata de entrega y estado de reconocimiento.',
       loading: 'Cargando alertas...',
       authNotice: {
-        readOnly: 'Tenés acceso de solo lectura a alertas. Reconocer alertas requiere alerts:write; el backend sigue siendo la autoridad.',
+        readOnly: 'Tenés acceso de solo lectura a alertas. Reconocer alertas requiere permisos de escritura.',
       },
       filters: {
         deliveryStatus: 'Estado de entrega',
@@ -1171,7 +1171,7 @@ export const translations = {
       },
       list: {
         title: 'Flujo de alertas',
-        description: 'Alertas retornadas por /api/alerts con filtros soportados por backend solamente.',
+        description: 'Alertas de seguridad con seguimiento de entrega y reconocimiento.',
         ariaLabel: 'Alertas de seguridad',
         detectionId: 'ID de detección',
         columns: {
@@ -1208,7 +1208,7 @@ export const translations = {
     logs: {
       eyebrow: 'Auditoría operacional',
       title: 'Logs y actividad',
-      description: 'Trazabilidad operacional de solo lectura desde los endpoints backend de ejecuciones y actividad de usuario.',
+      description: 'Trazabilidad operacional de solo lectura desde ejecuciones y actividad de usuario.',
       tabs: {
         ariaLabel: 'Vistas de logs',
         executions: 'Ejecuciones',
@@ -1216,7 +1216,7 @@ export const translations = {
       },
       executions: {
         title: 'Logs de ejecución',
-        description: 'Registros de ejecución del pipeline retornados por /api/logs con filtros soportados por backend solamente.',
+        description: 'Registros de ejecución del pipeline con soporte de filtros.',
         loading: 'Cargando logs de ejecución...',
         filters: {
           status: 'Estado',
@@ -1267,7 +1267,7 @@ export const translations = {
       },
       activity: {
         title: 'Actividad de usuario',
-        description: 'Actividad reciente de usuarios retornada por /api/activity. Los campos sensibles se ocultan intencionalmente por defecto.',
+        description: 'Actividad reciente de usuarios. Los campos sensibles se ocultan por defecto.',
         loading: 'Cargando actividad de usuario...',
         refreshing: 'Actualizando',
         filters: {
@@ -1296,7 +1296,7 @@ export const translations = {
           title: 'No se retornó actividad de usuario',
           description: 'Probá ajustando los filtros de usuario o tipo de actividad.',
         },
-        resultCount: (count: number) => `${count} filas de actividad retornadas. No se muestra paginación porque el backend no soporta offset en este endpoint.`,
+        resultCount: (count: number) => `${count} filas de actividad retornadas.`,
         errors: {
           fallback: 'No se pudo cargar la actividad de usuario.',
         },
@@ -1306,10 +1306,10 @@ export const translations = {
       eyebrow: 'Operaciones de administración',
       title: 'Usuarios',
       description:
-        'Creá y revisá usuarios del backend a través del endpoint protegido. El backend es la fuente de verdad para permisos y estado persistido.',
+        'Creá y gestioná usuarios del sistema. Los permisos y el estado se gestionan centralmente.',
       authNotice: {
         nonAdmin:
-          'La creación de usuarios requiere users:write en el JWT. Esto es solo presentación; el backend es la autoridad y puede rechazar la solicitud con 401 o 403.',
+          'La creación de usuarios requiere permisos de escritura. El servidor valida todas las solicitudes.',
       },
       form: {
         usernameLabel: 'Usuario',
@@ -1330,13 +1330,13 @@ export const translations = {
       confirmation: {
         eyebrow: 'Confirmación local de sesión',
         title: 'Usuario creado',
-        detail: (username: string, role: string) => `El backend confirmó a ${username} con el rol ${role}.`,
+        detail: (username: string, role: string) => `Usuario ${username} creado con el rol ${role}.`,
       },
       directory: {
         title: 'Directorio de usuarios',
-        description: 'Usuarios retornados por el backend (solo admins).',
+        description: 'Usuarios registrados del sistema (solo admins).',
         loading: 'Cargando usuarios...',
-        empty: 'El backend aún no retornó usuarios.',
+        empty: 'Aún no hay usuarios registrados.',
         columns: {
           username: 'Usuario',
           role: 'Rol',
@@ -1492,7 +1492,7 @@ export const translations = {
       },
       compliance: {
         title: 'Cumplimiento Normativo',
-        description: 'Normas y regulaciones que el sistema respeta, documentadas en la tesis (Capítulo 7.7).',
+        description: 'Normas y regulaciones que el sistema respeta.',
         implemented: {
           title: 'Cumplimiento Implementado',
           description: 'Normas con implementación concreta en el sistema.',
@@ -1567,14 +1567,14 @@ export const translations = {
       eyebrow: 'Operaciones',
       title: 'Automatizaciones',
       pageDescription:
-        'Monitoreá el flujo OSINT y ejecutá una corrida manual autorizada a través del proxy protegido del backend.',
+        'Monitoreá el flujo OSINT y ejecutá una corrida manual autorizada.',
       description:
         'El flujo OSINT corre cada 15 minutos. También podés disparar un escaneo completo manualmente desde este panel.',
       scheduleLabel: 'Programado cada 15 minutos',
       manualTriggerLabel: 'Ejecutar escaneo OSINT',
       runningScan: 'Ejecutando escaneo...',
       permissionNote:
-        'La ejecución manual está protegida por el permiso workflows:execute. El backend es la autoridad.',
+        'La ejecución manual requiere el permiso workflows:execute.',
       running: 'Ejecutando escaneo...',
       success: 'Escaneo OSINT completado con éxito.',
       error: {

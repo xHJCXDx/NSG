@@ -22,7 +22,7 @@ export function ProtectedRoute({ children, requiredPermission }: ProtectedRouteP
         <div className="glass-card p-6 text-content-secondary" role="alert">
           <h1 className="text-xl font-bold text-content-heading">Access restricted</h1>
           <p className="mt-2 text-sm text-content-muted">
-            Your current session does not include the {requiredPermission} permission. Frontend checks are UX-only; the backend remains authoritative.
+            Your current session does not include the {requiredPermission} permission.
           </p>
         </div>
       );

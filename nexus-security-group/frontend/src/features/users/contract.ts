@@ -11,11 +11,11 @@ export const USERS_COPY = {
     eyebrow: 'Admin operations',
     title: 'Users',
     description:
-      'Create and review backend users through the protected user endpoint. The backend remains authoritative for permissions and persisted user state.',
+      'Create and manage system users. Permissions and user state are centrally enforced.',
   },
   authNotice: {
     nonAdmin:
-      'User creation requires users:write in the JWT. This is presentation-only; the backend remains the authority and may reject this request with 401 or 403.',
+      'User creation requires write permissions. The server validates all requests.',
   },
   form: {
     usernameLabel: 'Username',
@@ -29,13 +29,13 @@ export const USERS_COPY = {
     eyebrow: 'Session-local confirmation',
     title: 'User created',
     detail: (username: string, role: string) =>
-      `Backend confirmed ${username} as ${role}.`,
+      `User ${username} created with role ${role}.`,
   },
   directory: {
     title: 'User directory',
-    description: 'Admin-only users returned by the backend.',
+    description: 'Registered system users (admin only).',
     loading: 'Loading users...',
-    empty: 'No users returned by the backend yet.',
+    empty: 'No users registered yet.',
     columns: {
       username: 'Username',
       role: 'Role',
