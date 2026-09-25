@@ -136,8 +136,12 @@ def test_get_alert_raises_404_when_alert_is_missing():
 
 def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response():
     alert = _alert_row(alert_id=42)
-    query = FakeQuery(first_result=alert)
-    fake_db = FakeDb(query)
+    threat = SimpleNamespace(
+        detection_id=20, review_status="pending", reviewed_by=None, reviewed_at=None,
+    )
+    alert_query = FakeQuery(first_result=alert)
+    threat_query = FakeQuery(first_result=threat)
+    fake_db = FakeDb([alert_query, threat_query])
 
     result = acknowledge_alert(
         alert_id=42,
@@ -151,9 +155,12 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     assert alert.acknowledged is True
     assert alert.acknowledged_by == "test-user"
     assert alert.acknowledged_at is not None
+    assert threat.review_status == "reviewing"
+    assert threat.reviewed_by == "test-user"
+    assert threat.reviewed_at is not None
     assert fake_db.committed is True
     assert fake_db.refreshed == [alert]
-    assert query.filter_args
+    assert alert_query.filter_args
     assert response.alert_id == 42
     assert response.acknowledged is True
     assert response.acknowledged_by == "test-user"
@@ -163,6 +170,22 @@ def test_acknowledge_alert_updates_fields_commits_refreshes_and_returns_response
     assert activity.username == "test-user"
     assert activity.related_alert_id == 42
     assert activity.activity_data == {"alert_id": 42}
+
+
+def test_acknowledge_alert_skips_threat_update_when_already_reviewed():
+    alert = _alert_row(alert_id=42)
+    alert_query = FakeQuery(first_result=alert)
+    threat_query = FakeQuery(first_result=None)
+    fake_db = FakeDb([alert_query, threat_query])
+
+    acknowledge_alert(
+        alert_id=42,
+        db=fake_db,
+        current_user=SimpleNamespace(username="test-user"),
+    )
+
+    assert alert.acknowledged is True
+    assert fake_db.committed is True
 
 
 def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit():
@@ -185,8 +208,9 @@ def test_acknowledge_alert_raises_404_when_alert_is_missing_and_does_not_commit(
 
 def test_acknowledge_alert_sets_timezone_aware_acknowledged_at():
     alert = _alert_row(acknowledged_at=None)
-    query = FakeQuery(first_result=alert)
-    fake_db = FakeDb(query)
+    alert_query = FakeQuery(first_result=alert)
+    threat_query = FakeQuery(first_result=None)
+    fake_db = FakeDb([alert_query, threat_query])
 
     acknowledge_alert(
         alert_id=10,
@@ -313,8 +337,9 @@ def test_acknowledge_alert_allows_user_with_alerts_write_permission():
     authz_app.include_router(router)
 
     alert = _alert_row(alert_id=1)
-    fake_query = FakeQuery(first_result=alert)
-    fake_db = FakeDb(fake_query)
+    alert_query = FakeQuery(first_result=alert)
+    threat_query = FakeQuery(first_result=None)
+    fake_db = FakeDb([alert_query, threat_query])
 
     authz_app.dependency_overrides[get_db] = lambda: fake_db
     authz_app.dependency_overrides[get_current_user] = lambda: TokenData(
