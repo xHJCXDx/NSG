@@ -63,6 +63,9 @@ services:
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - SENTIMENT_API_TOKEN=${SENTIMENT_API_TOKEN}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM:-NSG Demo <noreply@example.local>}
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-security-team@example.local}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
       - N8N_HOST=localhost
       - N8N_PORT=5678
@@ -107,6 +110,9 @@ services:
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - SENTIMENT_API_TOKEN=${SENTIMENT_API_TOKEN}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM:-NSG Demo <noreply@example.local>}
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-security-team@example.local}
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres-n8n
       - DB_POSTGRESDB_PORT=5432
@@ -169,7 +175,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - N8N_INTERNAL_URL=${N8N_INTERNAL_URL}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard-api.rule=Host(`localhost`) && PathPrefix(`/api`)"

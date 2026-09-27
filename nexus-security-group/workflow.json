@@ -331,12 +331,6 @@
         1104
       ],
       "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -431,12 +425,6 @@
         2160,
         1088
       ],
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -468,12 +456,6 @@
         2560,
         1088
       ],
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -505,12 +487,6 @@
         2960,
         1088
       ],
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -615,8 +591,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "NSG Demo <22.cruzhiro@gmail.com>",
-        "toEmail": "22.cruzhiro@gmail.com",
+        "fromEmail": "={{ $env.ALERT_EMAIL_FROM || 'NSG Demo <noreply@example.local>' }}",
+        "toEmail": "={{ $env.ALERT_EMAIL_TO || 'security-team@example.local' }}",
         "subject": "={{ $json.email_subject }}",
         "html": "={{ $json.email_html }}",
         "options": {}
@@ -630,12 +606,6 @@
         928
       ],
       "webhookId": "79e2e096-a580-4f4a-8333-9b6ba905154d",
-      "credentials": {
-        "smtp": {
-          "id": "7dVjUBletR18hjpk",
-          "name": "SMTP account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -665,12 +635,6 @@
         4128,
         1184
       ],
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -703,12 +667,6 @@
         1664
       ],
       "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     },
     {
@@ -774,12 +732,6 @@
         1300
       ],
       "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "qCq5GZJ5S9loxdr2",
-          "name": "Postgres account"
-        }
-      },
       "continueOnFail": true
     }
   ],
