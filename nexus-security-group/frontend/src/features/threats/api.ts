@@ -50,6 +50,19 @@ const toOptionalNumber = (value: number | string | null | undefined) => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+const mapAlertSummary = (raw: RawThreat['alert']): Threat['alert'] => {
+  if (!raw) return null;
+  const alertId = toOptionalNumber(raw.alert_id);
+  if (alertId === null) return null;
+  return {
+    alertId,
+    acknowledged: raw.acknowledged === true,
+    acknowledgedBy: toOptionalString(raw.acknowledged_by) ?? null,
+    acknowledgedAt: toOptionalString(raw.acknowledged_at) ?? null,
+    deliveryStatus: toOptionalString(raw.delivery_status) ?? null,
+  };
+};
+
 const toEvidence = (raw: RawThreat): string[] | undefined => {
   const values = [raw.evidence, raw.matched_keywords, raw.detection_rules_triggered]
     .flatMap((value) => (Array.isArray(value) ? value : value ? [value] : []))
@@ -101,6 +114,7 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
   const reviewedAt = toOptionalString(raw.reviewed_at) ?? null;
   const reviewNotes = toOptionalString(raw.review_notes) ?? null;
   const remediationStatus = toOptionalString(raw.remediation_status) as Threat['remediationStatus'] ?? null;
+  const alert = mapAlertSummary(raw.alert);
 
   return {
     id,
@@ -120,6 +134,7 @@ export const mapRawThreat = (raw: RawThreat): Threat => {
     reviewedAt,
     reviewNotes,
     remediationStatus,
+    alert,
   };
 };
 

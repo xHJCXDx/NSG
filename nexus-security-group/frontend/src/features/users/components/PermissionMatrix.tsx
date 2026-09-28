@@ -101,7 +101,7 @@ export function PermissionMatrix({ data, roles, canWrite, onSave, isSaving }: Pe
     });
   };
 
-  const toggleAllForResource = (roleName: string, resource: string, entries: typeof data.permissions) => {
+  const toggleAllForResource = (roleName: string, entries: typeof data.permissions) => {
     setEditedPermissions((prev) => {
       const current = new Set(prev[roleName] ?? []);
       const allChecked = entries.every((e) => current.has(e.permission));
@@ -205,7 +205,7 @@ export function PermissionMatrix({ data, roles, canWrite, onSave, isSaving }: Pe
                         <div key={roleName} className="w-24 text-center">
                           <button
                             type="button"
-                            onClick={() => toggleAllForResource(roleName, resource, entries)}
+                            onClick={() => toggleAllForResource(roleName, entries)}
                             disabled={isSaving}
                             className={`text-xs font-medium px-2 py-0.5 rounded-md transition ${
                               allChecked
