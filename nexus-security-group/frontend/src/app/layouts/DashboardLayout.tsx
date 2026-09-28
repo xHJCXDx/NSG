@@ -1,13 +1,13 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../features/auth';
-import { Activity, BellRing, KeyRound, LayoutDashboard, ListTree, LogOut, MessageSquare, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react';
+import { Activity, BellRing, Home, KeyRound, LayoutDashboard, ListTree, LogOut, MessageSquare, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react';
 import { useTranslation } from '../../shared/i18n/translations';
 
 type NavItem = {
   name: string;
   path: string;
   icon: typeof LayoutDashboard;
-  permission: [string, string];
+  permission?: [string, string];
 };
 
 type NavGroup = {
@@ -29,7 +29,8 @@ export function DashboardLayout() {
     {
       label: t.nav.groups.overview,
       items: [
-        { name: t.nav.dashboard, path: '/', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
+        { name: t.nav.home, path: '/home', icon: Home },
+        { name: t.nav.dashboard, path: '/dashboard', icon: LayoutDashboard, permission: ['dashboard', 'read'] },
         { name: t.nav.analytics, path: '/analytics', icon: Activity, permission: ['metrics', 'read'] },
       ],
     },
@@ -53,7 +54,7 @@ export function DashboardLayout() {
       label: t.nav.groups.administration,
       items: [
         { name: t.nav.users, path: '/users', icon: Users, permission: ['users', 'read'] },
-        { name: t.nav.settings, path: '/settings', icon: Settings, permission: ['permissions', 'read'] },
+        { name: t.nav.settings, path: '/settings', icon: Settings },
       ],
     },
   ];
@@ -61,7 +62,7 @@ export function DashboardLayout() {
   const navGroups = navGroupsConfig
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => hasPermission(item.permission[0], item.permission[1])),
+      items: group.items.filter((item) => !item.permission || hasPermission(item.permission[0], item.permission[1])),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -100,7 +101,7 @@ export function DashboardLayout() {
                     <NavLink
                       key={item.name}
                       to={item.path}
-                      end={item.path === '/'}
+                      end={item.path === '/home'}
                       className={({ isActive }) =>
                         `w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
                           isActive

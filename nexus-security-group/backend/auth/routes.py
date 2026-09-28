@@ -5,6 +5,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from rate_limit import limiter
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -75,12 +76,13 @@ async def login_for_access_token(
 ):
     user_id = None
     permissions = []
+    normalized_username = form_data.username.strip().lower()
 
     try:
         has_db_users = db.query(SystemUser.user_id).first() is not None
         db_user = None
         if has_db_users:
-            db_user = db.query(SystemUser).filter(SystemUser.username == form_data.username).first()
+            db_user = db.query(SystemUser).filter(func.lower(SystemUser.username) == normalized_username).first()
     except SQLAlchemyError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -118,7 +120,7 @@ async def login_for_access_token(
         user_id = db_user.user_id
         permissions = _permissions_from_user(db_user)
     else:
-        if not hmac.compare_digest(form_data.username, ADMIN_USER) or not hmac.compare_digest(form_data.password, ADMIN_PASSWORD):
+        if not hmac.compare_digest(normalized_username, ADMIN_USER.lower()) or not hmac.compare_digest(form_data.password, ADMIN_PASSWORD):
             logger.warning("Login failed: user=%s (bootstrap)", form_data.username)
             _record_auth_activity(
                 db,
@@ -139,7 +141,7 @@ async def login_for_access_token(
         auth_source = "bootstrap"
         permissions = ADMIN_PERMISSION_CLAIMS
 
-    token_data = {"sub": form_data.username, "role": role, "auth_source": auth_source, "permissions": permissions}
+    token_data = {"sub": normalized_username, "role": role, "auth_source": auth_source, "permissions": permissions}
     if role_id is not None:
         token_data["role_id"] = role_id
     if user_id is not None:
