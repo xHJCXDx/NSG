@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "# 🔍 NSG — OSINT Security Monitor\n\n**Frecuencia:** cada 15 minutos\n**Fuentes:** Hacker News (Algolia API), Exploit-DB (RSS), GitHub Security Issues\n**Stack:** n8n + PostgreSQL (RLS) + Sentiment API (VADER + TextBlob)\n\n**Pipeline:** Ingestion → Analysis → Storage → Alerting → Logging\n\n**Flujo:** Las 3 fuentes se consultan en paralelo, se normalizan a un schema comun,\nse analizan (sentimiento + amenaza), se persisten en 3 tablas (mentions, sentiment, threats),\ny si la criticidad es high/critical se despachan alertas por Slack y Email.",
+        "content": "# 🔍 NSG — Monitor de Seguridad OSINT\n\n**Frecuencia:** cada 15 minutos (Schedule Trigger) + trigger manual vía webhook\n**Fuentes:** Hacker News (Algolia API), Exploit-DB (RSS), GitHub Security Issues\n**Stack:** n8n + PostgreSQL + API de Sentimiento (VADER + TextBlob)\n\n**Pipeline completo en 5 etapas:**\n1. **Ingestion** — Consulta paralela a 3 fuentes, parseo y normalización a esquema común, deduplicación y filtrado de ya procesados\n2. **Analysis** — Análisis de sentimiento vía API ensemble + clasificación de amenazas por heurística de keywords\n3. **Storage** — Persistencia en 3 tablas: social_mentions (UPSERT), sentiment_analysis, threat_detections. Pipeline de enriquecimiento encadenado\n4. **Alerting** — Si criticidad es high/critical: genera contenido de alerta, despacha por Slack y Email en paralelo, registra alerta en DB\n5. **Logging** — Registra cada ejecución (éxito, sin items nuevos, o error) con contadores agregados del pipeline",
         "height": 280,
         "width": 900,
         "color": 7
@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "content": "## 📥 Stage 1: Ingestion\n- Fetch from 3 OSINT sources (parallel)\n- Parse & normalize to common schema\n- Deduplicate within execution batch",
+        "content": "## 📥 Etapa 1: Ingesta de Datos\n\n**Objetivo:** Recolectar menciones de 3 fuentes OSINT en paralelo y normalizarlas.\n\n**Nodos:**\n- **Schedule Every 15 Minutes** — Trigger automático cada 15 min\n- **Manual OSINT Trigger** — Webhook para ejecución manual desde el frontend\n- **Hacker News API Search** — Consulta Algolia API con keywords de seguridad\n- **Fetch Exploit-DB RSS** — Parseo de feed RSS de Exploit-DB\n- **Fetch GitHub Security Issues** — Issues de seguridad de repositorios GitHub\n- **Parse Items / Parse RSS Items / Parse GitHub Issues** — Normalización al esquema común (source, title, content, url, published_at)\n- **Merge HN + ExploitDB → Merge All Sources** — Unificación de las 3 fuentes\n- **Deduplicate** — Elimina duplicados dentro del batch por URL\n- **Prep Existing Check → Check Existing IDs → Filter Already Processed** — Consulta IDs existentes en DB y filtra los ya procesados",
         "height": 650,
         "width": 1100,
         "color": 4
@@ -35,7 +35,7 @@
     },
     {
       "parameters": {
-        "content": "## 🧠 Stage 2: Analysis\n- Sentiment via ensemble API (VADER + TextBlob)\n- Threat classification by keyword heuristics",
+        "content": "## 🧠 Etapa 2: Análisis\n\n**Objetivo:** Evaluar sentimiento y clasificar amenazas de cada mención recolectada.\n\n**Nodos:**\n- **Sentiment Analysis** — Envía el texto a la API de sentimiento (VADER + TextBlob ensemble). Retorna scores de polaridad, subjetividad y etiqueta (positive/negative/neutral)\n- **Classify Threat** — Heurística de clasificación por keywords: detecta tipo de amenaza (malware, phishing, data_breach, vulnerability, etc.), asigna categoría y nivel de criticidad (low/medium/high/critical)\n\n**Nota:** El análisis se ejecuta secuencialmente por cada item. Si la API de sentimiento falla, el item continúa con valores por defecto (neutral, score 0).",
         "height": 458,
         "width": 1124,
         "color": 5
@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "content": "## 🗄️ Stage 3: Storage\n- INSERT social_mentions (ON CONFLICT upsert)\n- INSERT sentiment_analysis\n- INSERT threat_detections\n- Enrich pipeline: Prep → Insert → Enrich (carry _original)",
+        "content": "## 🗄️ Etapa 3: Almacenamiento\n\n**Objetivo:** Persistir datos en PostgreSQL con pipeline de enriquecimiento encadenado.\n\n**Nodos (secuencia por cada item):**\n1. **Prep Mention Insert** — Prepara payload para INSERT en social_mentions\n2. **Insert Social Mention** — INSERT con ON CONFLICT (upsert por external_id)\n3. **Enrich Mention + Prep Sentiment** — Toma el mention_id retornado y prepara payload de sentimiento\n4. **Insert Sentiment Analysis** — INSERT en sentiment_analysis vinculado al mention_id\n5. **Enrich Sentiment + Prep Threat** — Combina IDs anteriores y prepara payload de amenaza\n6. **Insert Threat Detection** — INSERT en threat_detections vinculado al mention_id\n7. **Enrich After Threat** — Propaga todos los IDs (mention_id, sentiment_id, detection_id) al siguiente stage\n\n**Patrón:** Cada nodo Enrich lleva el campo _original con los datos completos para el siguiente INSERT.",
         "height": 458,
         "width": 1194,
         "color": 3
@@ -67,7 +67,7 @@
     },
     {
       "parameters": {
-        "content": "## 🚨 Stage 4: Alerting\n- IF critical/high → build alert content\n- Dispatch: Slack + Email (parallel)\n- Log alert in DB with severity mapping",
+        "content": "## 🚨 Etapa 4: Alertas\n\n**Objetivo:** Generar y despachar alertas para amenazas de alta criticidad.\n\n**Nodos:**\n- **IF Critical or High** — Filtra solo detecciones con criticidad high o critical\n- **Aggregate Alerts** — Agrupa las alertas del batch para procesamiento\n- **Build Alert Content** — Construye el contenido de la alerta con detalles de la amenaza, fuente, clasificación y enlace\n- **Send Slack Alert** — Envía notificación al canal de Slack configurado\n- **Send Gmail Alert** — Envía email de alerta a los destinatarios configurados\n- **Prep Alert Insert** — Prepara payload para registro en la tabla alerts\n- **Log Alert in DB** — INSERT en la tabla alerts con severity mapping y referencia al detection_id\n\n**Nota:** Slack y Email se despachan en paralelo. Si alguno falla, el otro continúa. La alerta siempre se registra en DB independientemente del resultado del envío.",
         "height": 650,
         "width": 900,
         "color": 2
@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "content": "## 📝 Stage 5: Logging\n- Always logs execution (even with 0 new items)\n- Aggregate pipeline counters from passthrough nodes\n- Log execution to DB (success/no_new_items/failure)",
+        "content": "## 📝 Etapa 5: Registro de Ejecución\n\n**Objetivo:** Registrar cada ejecución del pipeline en execution_logs para auditoría y monitoreo.\n\n**Nodos:**\n- **Has New Items?** — Bifurca el flujo: si hay items nuevos → log con contadores, si no → log sin items\n- **Prep Log Execution** — Prepara payload con contadores agregados (mentions_collected, mentions_processed, detections_generated, alerts_generated), timestamps y estado\n- **Log Execution** — INSERT en execution_logs con status='success'\n- **Prep Log No Items** — Prepara payload con contadores en 0\n- **Log Execution (No Items)** — INSERT en execution_logs con status='success' y contadores en 0\n\n**Nota:** Siempre se registra la ejecución, incluso cuando no hay items nuevos. El campo duration_seconds se calcula automáticamente por un trigger de PostgreSQL.",
         "height": 300,
         "width": 540
       },
