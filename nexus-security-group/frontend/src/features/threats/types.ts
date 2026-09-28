@@ -16,6 +16,9 @@ export interface ThreatReviewRequest {
   review_status: ThreatReviewStatus;
   review_notes?: string;
   remediation_status?: ThreatRemediationStatus;
+  threat_type?: string;
+  threat_category?: string;
+  criticality_level?: ThreatSeverity;
 }
 
 export interface RelatedMention {

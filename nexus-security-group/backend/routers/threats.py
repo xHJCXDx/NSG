@@ -156,6 +156,12 @@ def review_threat(
     threat.review_notes = request.review_notes
     threat.reviewed_by = current_user.username
     threat.remediation_status = request.remediation_status
+    if request.threat_type is not None:
+        threat.threat_type = request.threat_type
+    if request.threat_category is not None:
+        threat.threat_category = request.threat_category
+    if request.criticality_level is not None:
+        threat.criticality_level = request.criticality_level
 
     threat.reviewed_at = datetime.now(timezone.utc)
 

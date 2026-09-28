@@ -107,13 +107,13 @@ export function ThreatCard({ threat }: ThreatCardProps) {
     <article className={`glass-card p-5 space-y-4 border-l-4 ${border}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-wide text-brand-400 font-semibold">{threat.type}</p>
-          <h2 className="mt-1 text-xl font-bold text-content-heading">{threat.category ?? t.threats.card.fallbackCategory}</h2>
+          <p className="text-sm uppercase tracking-wide text-brand-400 font-semibold">{t.threats.classifications[threat.type] ?? threat.type.replace(/_/g, ' ')}</p>
+          <h2 className="mt-1 text-xl font-bold text-content-heading">{(threat.category && t.threats.categories[threat.category]) ?? threat.category ?? t.threats.card.fallbackCategory}</h2>
           <p className="text-xs text-content-muted">{t.threats.card.detectedLabel}: {timeAgo(threat.detectedAt, t.threats.card.unknownDate)}</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badge}`}>
-            {threat.severity}
+            {t.threats.severityLabels[threat.severity] ?? threat.severity}
           </span>
           <span className="rounded-full border border-edge px-3 py-1 text-xs text-content-secondary">
             {t.threats.card.confidenceLabel} {formatPercent(threat.confidence)}
@@ -204,10 +204,17 @@ export function ThreatCard({ threat }: ThreatCardProps) {
 
       {/* Review info + expandable panel */}
       {threat.reviewedBy && !reviewExpanded && (
-        <p className="text-xs text-content-muted">
-          {t.threats.review.reviewedBy} {threat.reviewedBy}
-          {threat.reviewedAt && <> · {new Date(threat.reviewedAt).toLocaleString()}</>}
-        </p>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-400" />
+            {t.threats.review.reviewedBy} {threat.reviewedBy}
+          </span>
+          {threat.reviewedAt && (
+            <span className="text-xs text-content-muted">
+              {new Date(threat.reviewedAt).toLocaleString()}
+            </span>
+          )}
+        </div>
       )}
 
       {canWrite && (

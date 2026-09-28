@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useReviewThreatMutation } from '../hooks/useReviewThreatMutation';
 import { useTranslation } from '../../../shared/i18n/translations';
-import type { Threat, ThreatReviewStatus, ThreatRemediationStatus } from '../types';
+import type { Threat, ThreatReviewStatus, ThreatRemediationStatus, ThreatSeverity } from '../types';
 
 interface ThreatReviewPanelProps {
   threat: Threat;
@@ -23,6 +23,43 @@ const REMEDIATION_STATUS_OPTIONS: ThreatRemediationStatus[] = [
   'not_required',
 ];
 
+const SEVERITY_OPTIONS: ThreatSeverity[] = [
+  'low',
+  'medium',
+  'high',
+  'critical',
+];
+
+const THREAT_TYPE_OPTIONS = [
+  'critical_security_incident',
+  'security_threat',
+  'potential_phishing',
+  'ransomware',
+  'malware',
+  'data_breach',
+  'phishing',
+  'exploit',
+  'zero-day',
+  'apt',
+  'ddos',
+  'supply_chain',
+  'vulnerability',
+  'general',
+];
+
+const THREAT_CATEGORY_OPTIONS = [
+  'malware',
+  'data_breach',
+  'phishing',
+  'vulnerability',
+  'advanced_threat',
+  'ddos',
+  'supply_chain',
+  'critical_incident',
+  'security_threat',
+  'other',
+];
+
 const REVIEW_STATUS_STYLES: Record<ThreatReviewStatus, string> = {
   pending: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-200',
   reviewing: 'border-blue-400/30 bg-blue-500/10 text-blue-200',
@@ -35,12 +72,18 @@ const REVIEW_STATUS_STYLES: Record<ThreatReviewStatus, string> = {
 export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
   const t = useTranslation();
   const mutation = useReviewThreatMutation();
+  const classificationLabels = t.threats.classifications;
+  const categoryLabels = t.threats.categories;
+  const severityLabels = t.threats.severityLabels;
 
   const [reviewStatus, setReviewStatus] = useState<ThreatReviewStatus>(threat.reviewStatus);
   const [reviewNotes, setReviewNotes] = useState(threat.reviewNotes ?? '');
   const [remediationStatus, setRemediationStatus] = useState<ThreatRemediationStatus>(
     (threat.remediationStatus as ThreatRemediationStatus) ?? 'none',
   );
+  const [threatType, setThreatType] = useState(threat.type);
+  const [threatCategory, setThreatCategory] = useState(threat.category ?? '');
+  const [severity, setSeverity] = useState<ThreatSeverity>(threat.severity);
 
   const handleSubmit = () => {
     mutation.mutate({
@@ -49,6 +92,9 @@ export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
         review_status: reviewStatus,
         review_notes: reviewNotes.trim() || undefined,
         remediation_status: remediationStatus,
+        ...(threatType !== threat.type ? { threat_type: threatType } : {}),
+        ...(threatCategory !== (threat.category ?? '') ? { threat_category: threatCategory } : {}),
+        ...(severity !== threat.severity ? { criticality_level: severity } : {}),
       },
     });
   };
@@ -56,12 +102,81 @@ export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
   const hasChanges =
     reviewStatus !== threat.reviewStatus ||
     (reviewNotes.trim() || '') !== (threat.reviewNotes ?? '') ||
-    remediationStatus !== ((threat.remediationStatus as ThreatRemediationStatus) ?? 'none');
+    remediationStatus !== ((threat.remediationStatus as ThreatRemediationStatus) ?? 'none') ||
+    threatType !== threat.type ||
+    threatCategory !== (threat.category ?? '') ||
+    severity !== threat.severity;
+
+  const getLabel = (value: string, labels: Record<string, string>) =>
+    labels[value] ?? value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const selectClass =
+    'w-full rounded-lg border border-edge-input bg-surface-input px-3 py-2 text-sm text-content-primary focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 disabled:opacity-50';
 
   return (
     <div className="space-y-4 border-t border-edge pt-4 mt-4">
+      {/* Classification row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-1.5">
+          <label htmlFor={`threat-type-${threat.id}`} className="block text-xs font-semibold text-content-secondary">
+            {t.threats.review.typeLabel}
+          </label>
+          <select
+            id={`threat-type-${threat.id}`}
+            value={threatType}
+            onChange={(e) => setThreatType(e.target.value)}
+            disabled={mutation.isPending}
+            className={selectClass}
+          >
+            {THREAT_TYPE_OPTIONS.map((type) => (
+              <option key={type} value={type}>
+                {getLabel(type, classificationLabels)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor={`threat-category-${threat.id}`} className="block text-xs font-semibold text-content-secondary">
+            {t.threats.review.categoryLabel}
+          </label>
+          <select
+            id={`threat-category-${threat.id}`}
+            value={threatCategory}
+            onChange={(e) => setThreatCategory(e.target.value)}
+            disabled={mutation.isPending}
+            className={selectClass}
+          >
+            {THREAT_CATEGORY_OPTIONS.map((cat) => (
+              <option key={cat} value={cat}>
+                {getLabel(cat, categoryLabels)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor={`severity-${threat.id}`} className="block text-xs font-semibold text-content-secondary">
+            {t.threats.review.severityLabel}
+          </label>
+          <select
+            id={`severity-${threat.id}`}
+            value={severity}
+            onChange={(e) => setSeverity(e.target.value as ThreatSeverity)}
+            disabled={mutation.isPending}
+            className={selectClass}
+          >
+            {SEVERITY_OPTIONS.map((sev) => (
+              <option key={sev} value={sev}>
+                {getLabel(sev, severityLabels)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Review status row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Review Status */}
         <div className="space-y-1.5">
           <label htmlFor={`review-status-${threat.id}`} className="block text-xs font-semibold text-content-secondary">
             {t.threats.review.statusLabel}
@@ -71,7 +186,7 @@ export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
             value={reviewStatus}
             onChange={(e) => setReviewStatus(e.target.value as ThreatReviewStatus)}
             disabled={mutation.isPending}
-            className="w-full rounded-lg border border-edge-input bg-surface-input px-3 py-2 text-sm text-content-primary focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 disabled:opacity-50"
+            className={selectClass}
           >
             {REVIEW_STATUS_OPTIONS.map((status) => (
               <option key={status} value={status}>
@@ -81,7 +196,6 @@ export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
           </select>
         </div>
 
-        {/* Remediation Status */}
         <div className="space-y-1.5">
           <label htmlFor={`remediation-${threat.id}`} className="block text-xs font-semibold text-content-secondary">
             {t.threats.review.remediationLabel}
@@ -91,7 +205,7 @@ export function ThreatReviewPanel({ threat }: ThreatReviewPanelProps) {
             value={remediationStatus}
             onChange={(e) => setRemediationStatus(e.target.value as ThreatRemediationStatus)}
             disabled={mutation.isPending}
-            className="w-full rounded-lg border border-edge-input bg-surface-input px-3 py-2 text-sm text-content-primary focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 disabled:opacity-50"
+            className={selectClass}
           >
             {REMEDIATION_STATUS_OPTIONS.map((status) => (
               <option key={status} value={status}>

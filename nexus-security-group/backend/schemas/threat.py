@@ -104,6 +104,9 @@ class ThreatReviewRequest(BaseModel):
     review_status: ThreatReviewStatus
     review_notes: Optional[str] = None
     remediation_status: Optional[ThreatRemediationStatus] = None
+    threat_type: Optional[str] = None
+    threat_category: Optional[str] = None
+    criticality_level: Optional[ThreatCriticalityLevel] = None
 
 
 class PaginatedThreatsResponse(BaseModel):
