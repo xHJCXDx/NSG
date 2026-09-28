@@ -284,11 +284,82 @@ export async function createRole(token: string | null, payload: CreateRolePayloa
   }
 }
 
-export async function deleteRole(token: string | null, roleId: number): Promise<void> {
+export async function deleteRole(token: string | null, roleId: number): Promise<Role> {
   if (!token) throw new RolesError(USERS_COPY.errors.deleteUserWithoutToken);
 
   try {
     const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+    return (await response.json()) as Role;
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function reactivateUser(token: string | null, userId: number): Promise<UserResponse> {
+  if (!token) throw new UpdateUserError(USERS_COPY.errors.updateUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}/reactivate`, {
+      method: 'PATCH',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new UpdateUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.updateUserFallback), response.status);
+    }
+    return (await response.json()) as UserResponse;
+  } catch (error) {
+    if (error instanceof UpdateUserError) throw error;
+    throw new UpdateUserError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function permanentlyDeleteUser(token: string | null, userId: number): Promise<void> {
+  if (!token) throw new DeleteUserError(USERS_COPY.errors.deleteUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}/permanent`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new DeleteUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+  } catch (error) {
+    if (error instanceof DeleteUserError) throw error;
+    throw new DeleteUserError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function reactivateRole(token: string | null, roleId: number): Promise<Role> {
+  if (!token) throw new RolesError(USERS_COPY.errors.updateWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}/reactivate`, {
+      method: 'PATCH',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.updateFallback), response.status);
+    }
+    return (await response.json()) as Role;
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function permanentlyDeleteRole(token: string | null, roleId: number): Promise<void> {
+  if (!token) throw new RolesError(USERS_COPY.errors.deleteUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}/permanent`, {
       method: 'DELETE',
     });
     if (!response.ok) {

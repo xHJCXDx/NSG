@@ -56,5 +56,6 @@ class RoleResponse(BaseModel):
     name: str
     description: Optional[str] = None
     is_system: bool
+    is_active: bool = True
     created_at: datetime
     permissions: list[str] = Field(default_factory=list)

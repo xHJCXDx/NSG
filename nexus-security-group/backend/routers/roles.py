@@ -25,6 +25,7 @@ def _role_to_response(role: Role) -> dict:
         "name": role.name,
         "description": role.description,
         "is_system": role.is_system,
+        "is_active": role.is_active,
         "created_at": role.created_at,
         "permissions": sorted(
             _permission_key(rp.permission)
@@ -100,8 +101,54 @@ def update_role(
     return _role_to_response(role)
 
 
-@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{role_id}", response_model=RoleResponse)
 def delete_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_permission("permissions", "write")),
+):
+    role = db.query(Role).filter(Role.role_id == role_id).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
+
+    if role.is_system:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="System roles cannot be deactivated",
+        )
+
+    if not role.is_active:
+        return _role_to_response(role)
+
+    role.is_active = False
+    db.commit()
+    db.refresh(role)
+    logger.info("Role deactivated: %s by %s", role.name, current_user.username)
+    return _role_to_response(role)
+
+
+@router.patch("/{role_id}/reactivate", response_model=RoleResponse)
+def reactivate_role(
+    role_id: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_permission("permissions", "write")),
+):
+    role = db.query(Role).filter(Role.role_id == role_id).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
+
+    if role.is_active:
+        return _role_to_response(role)
+
+    role.is_active = True
+    db.commit()
+    db.refresh(role)
+    logger.info("Role reactivated: %s by %s", role.name, current_user.username)
+    return _role_to_response(role)
+
+
+@router.delete("/{role_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+def permanently_delete_role(
     role_id: int,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("permissions", "write")),
@@ -116,6 +163,12 @@ def delete_role(
             detail="System roles cannot be deleted",
         )
 
+    if role.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role must be deactivated before permanent deletion",
+        )
+
     assigned_users = db.query(SystemUser).filter(SystemUser.role_id == role_id).count()
     if assigned_users > 0:
         raise HTTPException(
@@ -125,4 +178,4 @@ def delete_role(
 
     db.delete(role)
     db.commit()
-    logger.info("Role deleted: %s by %s", role.name, current_user.username)
+    logger.info("Role permanently deleted: %s by %s", role.name, current_user.username)

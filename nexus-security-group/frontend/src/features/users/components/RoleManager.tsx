@@ -1,7 +1,9 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, RotateCcw } from 'lucide-react';
 import { useCreateRoleMutation } from '../hooks/useCreateRoleMutation';
 import { useDeleteRoleMutation } from '../hooks/useDeleteRoleMutation';
+import { useReactivateRoleMutation } from '../hooks/useReactivateRoleMutation';
+import { usePermanentlyDeleteRoleMutation } from '../hooks/usePermanentlyDeleteRoleMutation';
 import { RolesError } from '../api';
 import { useTranslation } from '../../../shared/i18n/translations';
 import type { Role } from '../types';
@@ -11,16 +13,20 @@ interface RoleManagerProps {
   canWrite: boolean;
 }
 
+type ConfirmAction = { roleId: number; type: 'deactivate' | 'reactivate' | 'permanent' };
+
 export function RoleManager({ roles, canWrite }: RoleManagerProps) {
   const t = useTranslation();
   const createMutation = useCreateRoleMutation();
-  const deleteMutation = useDeleteRoleMutation();
+  const deactivateMutation = useDeleteRoleMutation();
+  const reactivateMutation = useReactivateRoleMutation();
+  const permanentDeleteMutation = usePermanentlyDeleteRoleMutation();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<ConfirmAction | null>(null);
 
   useEffect(() => {
     if (!successMessage) return;
@@ -34,12 +40,16 @@ export function RoleManager({ roles, canWrite }: RoleManagerProps) {
     return () => clearTimeout(timer);
   }, [errorMessage]);
 
+  const clearMessages = () => {
+    setSuccessMessage(null);
+    setErrorMessage(null);
+  };
+
   const handleCreate = (event: FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return;
 
-    setSuccessMessage(null);
-    setErrorMessage(null);
+    clearMessages();
     createMutation.mutate(
       { name: name.trim(), description: description.trim() || undefined },
       {
@@ -55,23 +65,106 @@ export function RoleManager({ roles, canWrite }: RoleManagerProps) {
     );
   };
 
-  const handleDelete = (role: Role) => {
-    setSuccessMessage(null);
-    setErrorMessage(null);
-    deleteMutation.mutate(role.role_id, {
+  const handleDeactivate = (role: Role) => {
+    clearMessages();
+    deactivateMutation.mutate(role.role_id, {
       onSuccess: () => {
-        setSuccessMessage(t.users.roles.deleteSuccess(role.name));
-        setConfirmingDeleteId(null);
+        setSuccessMessage(t.users.roles.deactivateSuccess(role.name));
+        setConfirming(null);
       },
       onError: (err) => {
-        setErrorMessage(err instanceof RolesError ? err.message : t.users.roles.deleteError);
-        setConfirmingDeleteId(null);
+        setErrorMessage(err instanceof RolesError ? err.message : t.users.roles.deactivateError);
+        setConfirming(null);
       },
     });
   };
 
-  const customRoles = roles.filter((r) => !r.is_system);
+  const handleReactivate = (role: Role) => {
+    clearMessages();
+    reactivateMutation.mutate(role.role_id, {
+      onSuccess: () => {
+        setSuccessMessage(t.users.roles.reactivateSuccess(role.name));
+        setConfirming(null);
+      },
+      onError: (err) => {
+        setErrorMessage(err instanceof RolesError ? err.message : t.users.roles.reactivateError);
+        setConfirming(null);
+      },
+    });
+  };
+
+  const handlePermanentDelete = (role: Role) => {
+    clearMessages();
+    permanentDeleteMutation.mutate(role.role_id, {
+      onSuccess: () => {
+        setSuccessMessage(t.users.roles.permanentDeleteSuccess(role.name));
+        setConfirming(null);
+      },
+      onError: (err) => {
+        setErrorMessage(err instanceof RolesError ? err.message : t.users.roles.permanentDeleteError);
+        setConfirming(null);
+      },
+    });
+  };
+
+  const isMutating = deactivateMutation.isPending || reactivateMutation.isPending || permanentDeleteMutation.isPending;
+
   const systemRoles = roles.filter((r) => r.is_system);
+  const activeCustomRoles = roles.filter((r) => !r.is_system && r.is_active);
+  const inactiveCustomRoles = roles.filter((r) => !r.is_system && !r.is_active);
+
+  const renderConfirmBar = (role: Role, action: ConfirmAction['type']) => {
+    if (!confirming || confirming.roleId !== role.role_id || confirming.type !== action) return null;
+
+    const config = {
+      deactivate: {
+        message: t.users.roles.deactivateConfirm(role.name),
+        confirmLabel: t.users.roles.deactivateButton,
+        loadingLabel: t.users.roles.deactivating,
+        isPending: deactivateMutation.isPending,
+        onConfirm: () => handleDeactivate(role),
+        btnClass: 'bg-red-500 hover:bg-red-600',
+      },
+      reactivate: {
+        message: t.users.roles.reactivateConfirm(role.name),
+        confirmLabel: t.users.roles.reactivateButton,
+        loadingLabel: t.users.roles.reactivating,
+        isPending: reactivateMutation.isPending,
+        onConfirm: () => handleReactivate(role),
+        btnClass: 'bg-emerald-500 hover:bg-emerald-600',
+      },
+      permanent: {
+        message: t.users.roles.permanentDeleteConfirm(role.name),
+        confirmLabel: t.users.roles.permanentDeleteButton,
+        loadingLabel: t.users.roles.permanentDeleting,
+        isPending: permanentDeleteMutation.isPending,
+        onConfirm: () => handlePermanentDelete(role),
+        btnClass: 'bg-red-600 hover:bg-red-700',
+      },
+    }[action];
+
+    return (
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-content-muted">{config.message}</span>
+        <button
+          type="button"
+          onClick={() => setConfirming(null)}
+          disabled={config.isPending}
+          className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:bg-surface-hover disabled:opacity-50"
+        >
+          {t.users.roles.cancel}
+        </button>
+        <button
+          type="button"
+          onClick={config.onConfirm}
+          disabled={config.isPending}
+          className={`rounded-lg px-3 py-1.5 text-xs font-medium text-white transition disabled:opacity-50 ${config.btnClass}`}
+        >
+          {config.isPending ? config.loadingLabel : config.confirmLabel}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -104,59 +197,82 @@ export function RoleManager({ roles, canWrite }: RoleManagerProps) {
         ))}
       </div>
 
-      {/* Custom roles */}
-      {customRoles.length === 0 ? (
+      {/* Active custom roles */}
+      {activeCustomRoles.length === 0 && inactiveCustomRoles.length === 0 ? (
         <p className="text-sm text-content-muted">{t.users.roles.noCustomRoles}</p>
       ) : (
         <div className="space-y-2">
-          {customRoles.map((role) => (
-            <div key={role.role_id} className="flex items-center justify-between rounded-xl border border-edge-card p-4 transition hover:bg-surface-hover">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium capitalize text-content-heading">{role.name}</span>
-                  <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-0.5 text-xs font-semibold text-cyan-300">
-                    {t.users.roles.customBadge}
-                  </span>
+          {activeCustomRoles.map((role) => (
+            <div key={role.role_id} className="rounded-xl border border-edge-card p-4 transition hover:bg-surface-hover">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium capitalize text-content-heading">{role.name}</span>
+                    <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-0.5 text-xs font-semibold text-cyan-300">
+                      {t.users.roles.customBadge}
+                    </span>
+                  </div>
+                  {role.description && (
+                    <p className="mt-0.5 text-sm text-content-muted">{role.description}</p>
+                  )}
                 </div>
-                {role.description && (
-                  <p className="mt-0.5 text-sm text-content-muted">{role.description}</p>
+                {canWrite && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirming({ roleId: role.role_id, type: 'deactivate' })}
+                    disabled={isMutating}
+                    className="rounded-lg border border-red-500/30 p-2 text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
+                  </button>
                 )}
               </div>
-              {canWrite && (
-                <div className="flex items-center gap-2">
-                  {confirmingDeleteId === role.role_id ? (
-                    <>
-                      <span className="text-xs text-content-muted">
-                        {t.users.roles.deleteConfirm(role.name)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingDeleteId(null)}
-                        disabled={deleteMutation.isPending}
-                        className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-secondary transition hover:bg-surface-hover disabled:opacity-50"
-                      >
-                        {t.users.roles.cancel}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(role)}
-                        disabled={deleteMutation.isPending}
-                        className="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-red-600 disabled:opacity-50"
-                      >
-                        {deleteMutation.isPending ? t.users.roles.deleting : t.users.roles.deleteButton}
-                      </button>
-                    </>
-                  ) : (
+              {renderConfirmBar(role, 'deactivate')}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Inactive custom roles */}
+      {inactiveCustomRoles.length > 0 && (
+        <div className="space-y-2">
+          {inactiveCustomRoles.map((role) => (
+            <div key={role.role_id} className="rounded-xl border border-edge-card bg-surface-secondary/50 p-4 opacity-75">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium capitalize text-content-heading line-through">{role.name}</span>
+                    <span className="rounded-full border border-zinc-400/30 bg-zinc-500/10 px-3 py-0.5 text-xs font-semibold text-zinc-400">
+                      {t.users.roles.inactiveBadge}
+                    </span>
+                  </div>
+                  {role.description && (
+                    <p className="mt-0.5 text-sm text-content-muted">{role.description}</p>
+                  )}
+                </div>
+                {canWrite && (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setConfirmingDeleteId(role.role_id)}
-                      className="rounded-lg border border-red-500/30 p-2 text-red-300 transition hover:bg-red-500/10"
+                      onClick={() => setConfirming({ roleId: role.role_id, type: 'reactivate' })}
+                      disabled={isMutating}
+                      className="rounded-lg border border-emerald-500/30 p-2 text-emerald-300 transition hover:bg-emerald-500/10 disabled:opacity-50"
+                    >
+                      <RotateCcw aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirming({ roleId: role.role_id, type: 'permanent' })}
+                      disabled={isMutating}
+                      className="rounded-lg border border-red-500/30 p-2 text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
                     >
                       <Trash2 aria-hidden="true" className="h-4 w-4" />
                     </button>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
+              {renderConfirmBar(role, 'reactivate')}
+              {renderConfirmBar(role, 'permanent')}
             </div>
           ))}
         </div>

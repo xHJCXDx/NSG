@@ -13,6 +13,7 @@ class Role(Base):
     name = Column(String(50), unique=True, nullable=False)
     description = Column(Text)
     is_system = Column(Boolean, nullable=False, server_default="false")
+    is_active = Column(Boolean, nullable=False, server_default="true")
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 

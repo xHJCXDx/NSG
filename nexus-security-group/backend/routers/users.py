@@ -36,8 +36,9 @@ def create_user(
     current_user: TokenData = Depends(require_permission("users", "write")),
 ):
     role = _resolve_role(db, request.role)
+    normalized_username = request.username.strip().lower()
     user = SystemUser(
-        username=request.username,
+        username=normalized_username,
         password_hash=hash_password(request.password),
         role_id=role.role_id,
         is_active=request.is_active,
@@ -194,3 +195,89 @@ def delete_user(
     db.refresh(user)
     logger.info("User deactivated: id=%s by %s", user_id, current_user.username)
     return user
+
+
+@router.patch("/{user_id}/reactivate", response_model=UserResponse)
+def reactivate_user(
+    user_id: int,
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_permission("users", "write")),
+):
+    user = db.query(SystemUser).filter(SystemUser.user_id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if user.is_active:
+        return user
+
+    user.is_active = True
+    record_user_activity(
+        db,
+        username=current_user.username or "unknown",
+        user_role=getattr(current_user, "role", None),
+        activity_type="reactivate_user",
+        activity_description=f"Reactivated user {user.username}",
+        request=request,
+        activity_data={
+            "target_user_id": user_id,
+            "target_username": user.username,
+            "target_role": user.role,
+        },
+    )
+    db.commit()
+    db.refresh(user)
+    logger.info("User reactivated: id=%s by %s", user_id, current_user.username)
+    return user
+
+
+@router.delete("/{user_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+def permanently_delete_user(
+    user_id: int,
+    request: Request = None,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(require_permission("users", "delete")),
+):
+    user = db.query(SystemUser).filter(SystemUser.user_id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if current_user.user_id is not None and current_user.user_id == user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own user")
+
+    if user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be deactivated before permanent deletion",
+        )
+
+    if user.role == "admin":
+        admin_count = (
+            db.query(SystemUser)
+            .join(Role, SystemUser.role_id == Role.role_id)
+            .filter(Role.name == "admin")
+            .count()
+        )
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot delete the last admin user",
+            )
+
+    username = user.username
+    record_user_activity(
+        db,
+        username=current_user.username or "unknown",
+        user_role=getattr(current_user, "role", None),
+        activity_type="delete_user_permanent",
+        activity_description=f"Permanently deleted user {username}",
+        request=request,
+        activity_data={
+            "target_user_id": user_id,
+            "target_username": username,
+            "target_role": user.role,
+        },
+    )
+    db.delete(user)
+    db.commit()
+    logger.info("User permanently deleted: id=%s by %s", user_id, current_user.username)
