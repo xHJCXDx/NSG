@@ -14,7 +14,7 @@ from auth import router as auth_router
 from config import settings
 from database import get_db
 from rate_limit import limiter
-from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, roles, system, threats, users
+from routers import activity, alerts, dashboard, keyword_categories, keywords, logs, metrics, n8n, permissions, roles, system, threats, users
 
 logging.basicConfig(
     level=logging.INFO,
@@ -82,6 +82,7 @@ app.include_router(threats.router)
 app.include_router(alerts.router)
 app.include_router(dashboard.router)
 app.include_router(keywords.router)
+app.include_router(keyword_categories.router)
 app.include_router(logs.router)
 app.include_router(activity.router)
 app.include_router(permissions.router)

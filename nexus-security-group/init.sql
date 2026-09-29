@@ -193,6 +193,19 @@ CREATE INDEX idx_alerts_delivery_status ON alerts(delivery_status);
 CREATE INDEX idx_alerts_status_severity ON alerts(delivery_status, alert_severity);
 
 -- ============================================
+-- TABLA: keyword_categories
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS keyword_categories (
+    category_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_keyword_categories_name ON keyword_categories(name);
+
+-- ============================================
 -- TABLA: keywords_monitor
 -- ============================================
 
@@ -700,6 +713,14 @@ GRANT SELECT ON TABLE role_permissions TO osint_readonly;
 -- DATOS INICIALES
 -- ============================================
 
+INSERT INTO keyword_categories (name, description)
+VALUES
+    ('critical', 'Amenazas de máxima severidad que requieren atención inmediata'),
+    ('high', 'Amenazas de alta prioridad que requieren seguimiento'),
+    ('medium', 'Amenazas de prioridad media para monitoreo continuo'),
+    ('low', 'Indicadores de baja prioridad para registro y contexto')
+ON CONFLICT (name) DO NOTHING;
+
 INSERT INTO keywords_monitor (keyword_text, keyword_type, keyword_category, keyword_weight, trigger_immediate_alert, description)
 VALUES
     ('ransomware', 'threat_term', 'critical', 30, TRUE, 'Menciones de ransomware'),
@@ -790,6 +811,7 @@ COMMENT ON TABLE social_mentions IS 'Menciones recopiladas de redes sociales y f
 COMMENT ON TABLE sentiment_analysis IS 'Resultados de análisis de sentimiento (VADER + TextBlob)';
 COMMENT ON TABLE threat_detections IS 'Detecciones de amenazas potenciales';
 COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas';
+COMMENT ON TABLE keyword_categories IS 'Categorías de keywords gestionadas por administradores';
 COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';

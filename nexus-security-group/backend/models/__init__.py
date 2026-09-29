@@ -29,6 +29,7 @@ call db.refresh(obj) to retrieve the server-side values.
 
 from models.social_mention import SocialMention
 from models.keyword_monitor import KeywordMonitor
+from models.keyword_category import KeywordCategoryModel
 from models.execution_log import ExecutionLog
 from models.role import Role
 from models.permission import Permission, RolePermission
@@ -41,6 +42,7 @@ from models.user_activity import UserActivity
 __all__ = [
     "SocialMention",
     "KeywordMonitor",
+    "KeywordCategoryModel",
     "ExecutionLog",
     "Role",
     "Permission",
