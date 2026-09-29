@@ -433,7 +433,10 @@ CREATE UNIQUE INDEX ON workflow_performance_stats (workflow_name, date);
 CREATE OR REPLACE FUNCTION refresh_all_materialized_views()
 RETURNS void AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY daily_mention_stats;
+    -- daily_mention_stats has a unique index on expressions (COALESCE), which
+    -- triggers "index on expressions" errors with CONCURRENTLY on PG 16.
+    -- Using non-concurrent refresh; acceptable for scheduled maintenance windows.
+    REFRESH MATERIALIZED VIEW daily_mention_stats;
     REFRESH MATERIALIZED VIEW CONCURRENTLY top_keywords_stats;
     REFRESH MATERIALIZED VIEW CONCURRENTLY workflow_performance_stats;
 END;
@@ -470,8 +473,10 @@ BEGIN
     RAISE NOTICE 'Purge completed: % mentions, % logs deleted (cutoff: %)',
                   deleted_mentions, deleted_logs, cutoff_date;
 
-    VACUUM ANALYZE social_mentions;
-    VACUUM ANALYZE execution_logs;
+    -- NOTE: VACUUM cannot run inside a transaction/procedure.
+    -- Run manually after calling this procedure:
+    --   VACUUM ANALYZE social_mentions;
+    --   VACUUM ANALYZE execution_logs;
 END;
 $$;
 
@@ -485,8 +490,12 @@ BEGIN
     ANALYZE keywords_monitor;
     ANALYZE execution_logs;
 
-    REINDEX TABLE CONCURRENTLY social_mentions;
-    REINDEX TABLE CONCURRENTLY threat_detections;
+    -- NOTE: REINDEX CONCURRENTLY cannot run inside a procedure (transaction block).
+    -- For zero-downtime reindexing, run manually outside the procedure:
+    --   REINDEX TABLE CONCURRENTLY social_mentions;
+    --   REINDEX TABLE CONCURRENTLY threat_detections;
+    REINDEX TABLE social_mentions;
+    REINDEX TABLE threat_detections;
 
     PERFORM refresh_all_materialized_views();
 
