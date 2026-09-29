@@ -34,6 +34,18 @@ export interface KeywordCreatePayload {
 
 export type KeywordUpdatePayload = Partial<KeywordCreatePayload>;
 
+export interface KeywordCategoryResponse {
+  category_id: number;
+  name: string;
+  description?: string | null;
+  created_at?: string | null;
+}
+
+export interface KeywordCategoryCreatePayload {
+  name: string;
+  description?: string;
+}
+
 export interface ApiErrorResponse {
   detail?: string;
 }
