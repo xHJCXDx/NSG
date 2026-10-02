@@ -1,6 +1,6 @@
 import { authFetch } from '../../shared/api/apiClient';
-import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
-import type { ApiErrorResponse, CreateUserPayload, PermissionMatrixResponse, RoleName, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload, UserResponse } from './types';
+import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, ROLES_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
+import type { ApiErrorResponse, CreateRolePayload, CreateUserPayload, PermissionMatrixResponse, Role, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload, UserResponse } from './types';
 
 export { USERS_ENDPOINT } from './contract';
 
@@ -216,13 +216,13 @@ export async function fetchPermissions(token: string | null): Promise<Permission
 
 export async function updateRolePermissions(
   token: string | null,
-  role: RoleName,
+  roleId: number,
   payload: RolePermissionsUpdate,
 ): Promise<RolePermissionsResponse> {
   if (!token) throw new UpdatePermissionsError(USERS_COPY.errors.updateWithoutToken);
 
   try {
-    const response = await authFetch(token, `${PERMISSIONS_ROLE_ENDPOINT}/${role}`, {
+    const response = await authFetch(token, `${PERMISSIONS_ROLE_ENDPOINT}/${roleId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -235,5 +235,139 @@ export async function updateRolePermissions(
   } catch (error) {
     if (error instanceof UpdatePermissionsError) throw error;
     throw new UpdatePermissionsError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export class RolesError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'RolesError';
+  }
+}
+
+export async function fetchRoles(token: string | null): Promise<Role[]> {
+  if (!token) throw new RolesError(USERS_COPY.errors.fetchWithoutToken);
+
+  try {
+    const response = await authFetch(token, ROLES_ENDPOINT);
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? permissionsFallbackByStatus(response.status), response.status);
+    }
+    return (await response.json()) as Role[];
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function createRole(token: string | null, payload: CreateRolePayload): Promise<Role> {
+  if (!token) throw new RolesError(USERS_COPY.errors.updateWithoutToken);
+
+  try {
+    const response = await authFetch(token, ROLES_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.createFallback), response.status);
+    }
+    return (await response.json()) as Role;
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function deleteRole(token: string | null, roleId: number): Promise<Role> {
+  if (!token) throw new RolesError(USERS_COPY.errors.deleteUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+    return (await response.json()) as Role;
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function reactivateUser(token: string | null, userId: number): Promise<UserResponse> {
+  if (!token) throw new UpdateUserError(USERS_COPY.errors.updateUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}/reactivate`, {
+      method: 'PATCH',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new UpdateUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.updateUserFallback), response.status);
+    }
+    return (await response.json()) as UserResponse;
+  } catch (error) {
+    if (error instanceof UpdateUserError) throw error;
+    throw new UpdateUserError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function permanentlyDeleteUser(token: string | null, userId: number): Promise<void> {
+  if (!token) throw new DeleteUserError(USERS_COPY.errors.deleteUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${USERS_ENDPOINT}/${userId}/permanent`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new DeleteUserError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+  } catch (error) {
+    if (error instanceof DeleteUserError) throw error;
+    throw new DeleteUserError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function reactivateRole(token: string | null, roleId: number): Promise<Role> {
+  if (!token) throw new RolesError(USERS_COPY.errors.updateWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}/reactivate`, {
+      method: 'PATCH',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.updateFallback), response.status);
+    }
+    return (await response.json()) as Role;
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function permanentlyDeleteRole(token: string | null, roleId: number): Promise<void> {
+  if (!token) throw new RolesError(USERS_COPY.errors.deleteUserWithoutToken);
+
+  try {
+    const response = await authFetch(token, `${ROLES_ENDPOINT}/${roleId}/permanent`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new RolesError(detail ?? fallbackMessageByStatus(response.status, USERS_COPY.errors.deleteUserFallback), response.status);
+    }
+  } catch (error) {
+    if (error instanceof RolesError) throw error;
+    throw new RolesError(USERS_COPY.errors.serviceUnavailable);
   }
 }

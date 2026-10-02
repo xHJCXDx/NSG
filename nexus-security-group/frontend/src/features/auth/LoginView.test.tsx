@@ -145,7 +145,7 @@ describe('LoginView', () => {
     expect(getToken()).toBeNull();
   });
 
-  it('displays a service-unavailable message when auth backend fails', async () => {
+  it('displays a service-unavailable message when auth service fails', async () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,

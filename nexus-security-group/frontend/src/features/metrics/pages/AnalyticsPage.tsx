@@ -104,11 +104,13 @@ export function AnalyticsPage() {
           data={analytics.topKeywords}
           isLoading={analytics.topKeywordsLoading}
           error={analytics.topKeywordsError}
+          onRetry={() => void analytics.topKeywordsRetry()}
         />
         <WorkflowHealthChart
           data={analytics.workflowHealth}
           isLoading={analytics.workflowHealthLoading}
           error={analytics.workflowHealthError}
+          onRetry={() => void analytics.workflowHealthRetry()}
         />
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

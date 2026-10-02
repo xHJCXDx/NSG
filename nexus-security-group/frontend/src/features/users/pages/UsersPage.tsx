@@ -2,17 +2,20 @@ import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { ChevronDown, ChevronRight, Shield, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { CreateUserError, DeleteUserError, UpdatePermissionsError, UpdateUserError } from '../api';
-import { USER_ROLE_OPTIONS } from '../contract';
 import { useCreateUserMutation } from '../hooks/useCreateUserMutation';
 import { useDeleteUserMutation } from '../hooks/useDeleteUserMutation';
+import { useReactivateUserMutation } from '../hooks/useReactivateUserMutation';
+import { usePermanentlyDeleteUserMutation } from '../hooks/usePermanentlyDeleteUserMutation';
 import { usePermissionsQuery } from '../hooks/usePermissionsQuery';
+import { useRolesQuery } from '../hooks/useRolesQuery';
 import { useUpdateRoleMutation } from '../hooks/useUpdateRoleMutation';
 import { useUpdateUserMutation } from '../hooks/useUpdateUserMutation';
 import { useUsersQuery } from '../hooks/useUsersQuery';
 import { PermissionMatrix } from '../components/PermissionMatrix';
+import { RoleManager } from '../components/RoleManager';
 import { useTranslation } from '../../../shared/i18n/translations';
 import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
-import type { RoleName, UpdateUserPayload, UserResponse, UserRole } from '../types';
+import type { UpdateUserPayload, UserResponse } from '../types';
 
 const ROLE_BADGE: Record<string, string> = {
   admin: 'border-brand-400/30 bg-brand-500/10 text-brand-300',
@@ -27,11 +30,14 @@ export function UsersPage() {
   const createUserMutation = useCreateUserMutation();
   const updateUserMutation = useUpdateUserMutation();
   const deleteUserMutation = useDeleteUserMutation();
+  const reactivateUserMutation = useReactivateUserMutation();
+  const permanentlyDeleteUserMutation = usePermanentlyDeleteUserMutation();
   const canCreateUsers = hasPermission('users', 'write');
   const canEditUsers = canCreateUsers;
   const canDeleteUsers = hasPermission('users', 'delete');
   const canWritePermissions = hasPermission('permissions', 'write');
 
+  const { data: rolesData = [] } = useRolesQuery();
   const { data: permissionsData, isLoading: isLoadingPermissions, error: permissionsError } = usePermissionsQuery();
   const updateMutation = useUpdateRoleMutation();
   const [permissionsOpen, setPermissionsOpen] = useState(false);
@@ -50,11 +56,11 @@ export function UsersPage() {
     return () => clearTimeout(timer);
   }, [permissionsErrorMessage]);
 
-  const handleSavePermissions = (role: RoleName, permissions: string[]) => {
+  const handleSavePermissions = (roleId: number, _roleName: string, permissions: string[]) => {
     setPermissionsSuccess(null);
     setPermissionsErrorMessage(null);
     updateMutation.mutate(
-      { role, payload: { permissions } },
+      { roleId, payload: { permissions } },
       {
         onSuccess: () => setPermissionsSuccess(t.users.permissions.matrix.saveSuccess),
         onError: (err) =>
@@ -67,20 +73,22 @@ export function UsersPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('analyst');
+  const [role, setRole] = useState('analyst');
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [createdUser, setCreatedUser] = useState<UserResponse | null>(null);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
-  const [editRole, setEditRole] = useState<UserRole>('analyst');
+  const [editRole, setEditRole] = useState('analyst');
   const [editIsActive, setEditIsActive] = useState(true);
   const [editPassword, setEditPassword] = useState('');
   const [editError, setEditError] = useState<string | null>(null);
   const [editPasswordError, setEditPasswordError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<{ userId: number; message: string } | null>(null);
   const [confirmingDeleteUserId, setConfirmingDeleteUserId] = useState<number | null>(null);
+  const [confirmingReactivateUserId, setConfirmingReactivateUserId] = useState<number | null>(null);
+  const [confirmingPermanentDeleteUserId, setConfirmingPermanentDeleteUserId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<{ userId: number; message: string } | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState<{ userId: number; message: string } | null>(null);
 
@@ -149,6 +157,38 @@ export function UsersPage() {
       const updatedUser = await deleteUserMutation.mutateAsync(user.user_id);
       setConfirmingDeleteUserId(null);
       setDeleteSuccess({ userId: user.user_id, message: t.users.directory.delete.success(updatedUser.username) });
+    } catch (caughtError) {
+      setDeleteError({
+        userId: user.user_id,
+        message: caughtError instanceof DeleteUserError ? caughtError.message : t.users.errors.deleteUserFallback,
+      });
+    }
+  };
+
+  const handleReactivateUser = async (user: UserResponse) => {
+    setDeleteError(null);
+    setDeleteSuccess(null);
+
+    try {
+      const updatedUser = await reactivateUserMutation.mutateAsync(user.user_id);
+      setConfirmingReactivateUserId(null);
+      setDeleteSuccess({ userId: user.user_id, message: t.users.directory.reactivate.success(updatedUser.username) });
+    } catch (caughtError) {
+      setDeleteError({
+        userId: user.user_id,
+        message: caughtError instanceof Error ? caughtError.message : t.users.errors.updateUserFallback,
+      });
+    }
+  };
+
+  const handlePermanentlyDeleteUser = async (user: UserResponse) => {
+    setDeleteError(null);
+    setDeleteSuccess(null);
+
+    try {
+      await permanentlyDeleteUserMutation.mutateAsync(user.user_id);
+      setConfirmingPermanentDeleteUserId(null);
+      setDeleteSuccess({ userId: user.user_id, message: t.users.directory.permanentDelete.success(user.username) });
     } catch (caughtError) {
       setDeleteError({
         userId: user.user_id,
@@ -315,11 +355,11 @@ export function UsersPage() {
                   name="role"
                   className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
                   value={role}
-                  onChange={(event) => setRole(event.target.value as UserRole)}
+                  onChange={(event) => setRole(event.target.value)}
                 >
-                  {USER_ROLE_OPTIONS.map((option) => (
-                    <option key={option} value={option} className="bg-surface-primary text-content-primary">
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                  {rolesData.map((r) => (
+                    <option key={r.role_id} value={r.name} className="bg-surface-primary text-content-primary">
+                      {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -385,7 +425,11 @@ export function UsersPage() {
                   const hasEditChanges = Object.keys(editPayload).length > 0;
                   const isSavingThisUser = updateUserMutation.isPending && isEditing;
                   const isConfirmingDelete = confirmingDeleteUserId === user.user_id;
+                  const isConfirmingReactivate = confirmingReactivateUserId === user.user_id;
+                  const isConfirmingPermanentDelete = confirmingPermanentDeleteUserId === user.user_id;
                   const isDeletingThisUser = deleteUserMutation.isPending && isConfirmingDelete;
+                  const isReactivatingThisUser = reactivateUserMutation.isPending && isConfirmingReactivate;
+                  const isPermanentlyDeletingThisUser = permanentlyDeleteUserMutation.isPending && isConfirmingPermanentDelete;
                   const isCurrentUser = claims.user_id !== undefined && claims.user_id === user.user_id;
                   return (
                     <Fragment key={user.user_id}>
@@ -421,13 +465,26 @@ export function UsersPage() {
                                 </button>
                               )}
                               {canDeleteUsers && !user.is_active && (
-                                <button
-                                  type="button"
-                                  disabled
-                                  className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-content-muted opacity-60"
-                                >
-                                  {t.users.directory.delete.inactive}
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => { cancelEditing(); setDeleteError(null); setDeleteSuccess(null); setConfirmingReactivateUserId(user.user_id); setConfirmingPermanentDeleteUserId(null); setConfirmingDeleteUserId(null); }}
+                                    disabled={reactivateUserMutation.isPending || permanentlyDeleteUserMutation.isPending}
+                                    className="rounded-lg border border-emerald-500/30 px-3 py-1.5 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {t.users.directory.reactivate.button}
+                                  </button>
+                                  {!isCurrentUser && (
+                                    <button
+                                      type="button"
+                                      onClick={() => { cancelEditing(); setDeleteError(null); setDeleteSuccess(null); setConfirmingPermanentDeleteUserId(user.user_id); setConfirmingReactivateUserId(null); setConfirmingDeleteUserId(null); }}
+                                      disabled={reactivateUserMutation.isPending || permanentlyDeleteUserMutation.isPending}
+                                      className="rounded-lg border border-red-500/30 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {t.users.directory.permanentDelete.button}
+                                    </button>
+                                  )}
+                                </>
                               )}
                               {canDeleteUsers && user.is_active && isCurrentUser && (
                                 <button
@@ -452,7 +509,7 @@ export function UsersPage() {
                           </td>
                         )}
                       </tr>
-                      {(canEditUsers || canDeleteUsers) && deleteSuccess?.userId === user.user_id && !isConfirmingDelete && (
+                      {(canEditUsers || canDeleteUsers) && deleteSuccess?.userId === user.user_id && !isConfirmingDelete && !isConfirmingReactivate && !isConfirmingPermanentDelete && (
                         <tr>
                           <td colSpan={5} className="px-4 pb-3 text-sm text-emerald-400" role="status">
                             {deleteSuccess.message}
@@ -500,6 +557,74 @@ export function UsersPage() {
                           </td>
                         </tr>
                       )}
+                      {canDeleteUsers && isConfirmingReactivate && (
+                        <tr className="bg-surface-secondary/60">
+                          <td colSpan={5} className="p-4">
+                            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                              <p className="text-sm font-semibold text-content-heading">
+                                {t.users.directory.reactivate.confirming(user.username)}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { setConfirmingReactivateUserId(null); setDeleteError(null); }}
+                                  disabled={isReactivatingThisUser}
+                                  className="rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t.users.directory.reactivate.cancel}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleReactivateUser(user)}
+                                  disabled={isReactivatingThisUser}
+                                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {isReactivatingThisUser ? t.users.directory.reactivate.reactivating : t.users.directory.reactivate.confirm}
+                                </button>
+                              </div>
+                              {deleteError?.userId === user.user_id && (
+                                <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
+                                  {deleteError.message}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {canDeleteUsers && isConfirmingPermanentDelete && (
+                        <tr className="bg-surface-secondary/60">
+                          <td colSpan={5} className="p-4">
+                            <div className="rounded-xl border border-red-600/30 bg-red-500/10 p-4">
+                              <p className="text-sm font-semibold text-red-200">
+                                {t.users.directory.permanentDelete.confirming(user.username)}
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => { setConfirmingPermanentDeleteUserId(null); setDeleteError(null); }}
+                                  disabled={isPermanentlyDeletingThisUser}
+                                  className="rounded-xl border border-edge px-4 py-2 text-sm font-medium text-content-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t.users.directory.permanentDelete.cancel}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handlePermanentlyDeleteUser(user)}
+                                  disabled={isPermanentlyDeletingThisUser}
+                                  className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {isPermanentlyDeletingThisUser ? t.users.directory.permanentDelete.deleting : t.users.directory.permanentDelete.confirm}
+                                </button>
+                              </div>
+                              {deleteError?.userId === user.user_id && (
+                                <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
+                                  {deleteError.message}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                       {canEditUsers && isEditing && (
                         <tr className="bg-surface-secondary/60">
                           <td colSpan={5} className="p-4">
@@ -514,12 +639,12 @@ export function UsersPage() {
                                     id={`edit-role-${user.user_id}`}
                                     className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500"
                                     value={editRole}
-                                    onChange={(event) => setEditRole(event.target.value as UserRole)}
+                                    onChange={(event) => setEditRole(event.target.value)}
                                     disabled={isSavingThisUser}
                                   >
-                                    {USER_ROLE_OPTIONS.map((option) => (
-                                      <option key={option} value={option} className="bg-surface-primary text-content-primary">
-                                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                                    {rolesData.map((r) => (
+                                      <option key={r.role_id} value={r.name} className="bg-surface-primary text-content-primary">
+                                        {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
                                       </option>
                                     ))}
                                   </select>
@@ -594,6 +719,22 @@ export function UsersPage() {
         )}
       </section>
 
+      {/* ── Role Management ── */}
+      {canWritePermissions && (
+        <section className="glass-card overflow-hidden p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10">
+              <Shield aria-hidden="true" className="h-5 w-5 text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-content-heading">{t.users.roles.sectionTitle}</h2>
+              <p className="text-sm text-content-secondary">{t.users.roles.description}</p>
+            </div>
+          </div>
+          <RoleManager roles={rolesData} canWrite={canWritePermissions} />
+        </section>
+      )}
+
       {/* ── Role Permissions ── */}
       <section className="glass-card overflow-hidden">
         <button
@@ -644,6 +785,7 @@ export function UsersPage() {
             ) : permissionsData ? (
               <PermissionMatrix
                 data={permissionsData}
+                roles={rolesData}
                 canWrite={canWritePermissions}
                 onSave={handleSavePermissions}
                 isSaving={updateMutation.isPending}

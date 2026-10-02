@@ -11,7 +11,7 @@ from auth import require_permission
 
 logger = logging.getLogger("nsg.threats")
 from database import get_db
-from models import SocialMention, ThreatDetection
+from models import Alert, SocialMention, ThreatDetection
 from schemas.auth import TokenData
 from schemas.threat import (
     PaginatedThreatsResponse,
@@ -26,13 +26,23 @@ from schemas.threat import (
 router = APIRouter(prefix="/api/threats", tags=["threats"])
 
 
-def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None):
+def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None, alert: Alert | None = None):
     related_mention = None
     if mention is not None:
         related_mention = {
             "mention_id": mention.mention_id,
             "text_content": mention.text_content,
             "platform": mention.platform,
+        }
+
+    alert_summary = None
+    if alert is not None:
+        alert_summary = {
+            "alert_id": alert.alert_id,
+            "acknowledged": alert.acknowledged,
+            "acknowledged_by": alert.acknowledged_by,
+            "acknowledged_at": alert.acknowledged_at,
+            "delivery_status": alert.delivery_status,
         }
 
     return {
@@ -48,8 +58,11 @@ def _map_threat_list_item(threat: ThreatDetection, mention: SocialMention | None
         "contextual_notes": threat.contextual_notes,
         "detected_at": threat.detected_at,
         "review_status": threat.review_status,
+        "reviewed_by": threat.reviewed_by,
+        "reviewed_at": threat.reviewed_at,
         "last_updated": threat.last_updated,
         "related_mention": related_mention,
+        "alert": alert_summary,
     }
 
 
@@ -77,7 +90,9 @@ def get_threats(
     rows = (
         base_query
         .outerjoin(SocialMention, SocialMention.mention_id == ThreatDetection.mention_id)
+        .outerjoin(Alert, Alert.detection_id == ThreatDetection.detection_id)
         .add_entity(SocialMention)
+        .add_entity(Alert)
         .order_by(ThreatDetection.detected_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
@@ -104,7 +119,7 @@ def get_threats(
     ))
 
     return {
-        "data": [_map_threat_list_item(threat, mention) for threat, mention in rows],
+        "data": [_map_threat_list_item(threat, mention, alert) for threat, mention, alert in rows],
         "total": total_count,
         "page": page,
         "page_size": page_size,
@@ -156,6 +171,12 @@ def review_threat(
     threat.review_notes = request.review_notes
     threat.reviewed_by = current_user.username
     threat.remediation_status = request.remediation_status
+    if request.threat_type is not None:
+        threat.threat_type = request.threat_type
+    if request.threat_category is not None:
+        threat.threat_category = request.threat_category
+    if request.criticality_level is not None:
+        threat.criticality_level = request.criticality_level
 
     threat.reviewed_at = datetime.now(timezone.utc)
 

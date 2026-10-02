@@ -20,7 +20,7 @@ describe('fetchThreats', () => {
     });
   });
 
-  it('maps supported raw backend aliases and optional related mentions', async () => {
+  it('maps supported raw API aliases and optional related mentions', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
