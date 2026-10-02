@@ -2,6 +2,14 @@ services:
   postgres:
     image: postgres:17
     container_name: osint-postgres
+    command:
+      - postgres
+      - -c
+      - log_statement=none
+      - -c
+      - log_min_error_statement=fatal
+      - -c
+      - log_error_verbosity=terse
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
