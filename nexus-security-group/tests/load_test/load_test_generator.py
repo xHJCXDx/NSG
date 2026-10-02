@@ -4,7 +4,9 @@ NSG Load Test Generator — §9.3
 ==============================
 
 Generates synthetic OSINT mentions and injects them into the ``social_mentions``
-table to measure pipeline ingestion throughput and latency.
+table to estimate database ingestion/persistence throughput. This script does not
+exercise the full operational pipeline end-to-end (external APIs, NLP,
+classification, alerting, and per-stage workflow logs).
 
 Default configuration (§9.3):
   - 2 500 synthetic records
