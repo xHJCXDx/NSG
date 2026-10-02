@@ -1,8 +1,9 @@
-# Registro de Horas de Desarrollo y Mantenimiento — NSG
+# Estimación Retrospectiva de Horas de Desarrollo y Mantenimiento — NSG
 
 > **Período**: Noviembre 2025 – Septiembre 2026
 > **Total estimado**: ~180 horas
-> **Método de estimación**: Desglose por área funcional a partir de los 264 commits del repositorio (único contribuyente: Hiro Cruz). Las horas por commit varían según complejidad: features complejos (~1,5–2h), fixes y docs (~0,5–1h), chore/refactor (~0,3–0,5h). Los totales por área se ajustaron para sumar ~180h declaradas.
+> **Método de estimación**: Desglose retrospectivo por área funcional a partir de los 264 commits del repositorio (único contribuyente: Hiro Cruz). Las horas por commit varían según complejidad: features complejos (~1,5–2h), fixes y docs (~0,5–1h), chore/refactor (~0,3–0,5h). Los totales por área se ajustaron para sumar ~180h declaradas.
+> **Alcance**: Este documento no constituye time tracking primario medido durante el desarrollo. Es una estimación retrospectiva trazable para costeo académico, apoyada en historial de commits y agrupación funcional.
 > **Repositorio**: https://github.com/xHJCXDx/NSG.git
 
 ---
@@ -39,7 +40,7 @@
 
 ## Notas
 
-1. La concentración de commits en septiembre 2026 (~82% del total) refleja el sprint final de desarrollo, validación operacional y preparación de la entrega. Los meses intermedios (enero, mayo, junio, agosto) no registran commits, correspondiendo a períodos de cursado académico y planificación sin código.
+1. La concentración de commits en septiembre 2026 (~82% del total) refleja el sprint final de desarrollo, validación operacional y preparación de la entrega. Los meses intermedios (enero, mayo, junio, agosto) no registran commits, correspondiendo a períodos de cursado académico y planificación sin código. La ausencia de commits en esos meses no permite medir horas de planificación no codificadas.
 
 2. Las horas de **escritura de la tesis** (capítulos teóricos, marco legal, análisis de resultados) no se contabilizan en este registro, que cubre exclusivamente el desarrollo técnico del sistema. La redacción se realizó en paralelo en archivos markdown fuera del repositorio.
 

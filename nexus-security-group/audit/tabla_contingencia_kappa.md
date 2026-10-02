@@ -28,7 +28,7 @@
   - **p_e = 0,9125**
 - **κ = (p_o − p_e) / (1 − p_e) = (0,9600 − 0,9125) / (1 − 0,9125) = 0,0475 / 0,0875 = 0,5429**
 
-**Interpretación:** κ = 0,54 corresponde a acuerdo moderado (Landis y Koch, 1977). La alta concentración en la categoría "correcto" (190/200) comprime el rango teórico de κ: con estas distribuciones marginales, el κ máximo alcanzable es ~0,78. El valor observado de 0,54 refleja que las discrepancias se concentran en los 10 registros no clasificados como "correcto" por ambos evaluadores.
+**Interpretación:** κ = 0,54 corresponde a acuerdo moderado (Landis y Koch, 1977). La alta concentración en la categoría "correcto" (190/200) comprime el rango teórico de κ: con estas distribuciones marginales, el acuerdo máximo compatible con las etiquetas homónimas es 193/200 (p_o máximo = 0,965), por lo que el κ máximo alcanzable es aproximadamente **0,600**. El valor observado de 0,54 refleja que las discrepancias se concentran en los 10 registros no clasificados como "correcto" por ambos evaluadores.
 
 ---
 
