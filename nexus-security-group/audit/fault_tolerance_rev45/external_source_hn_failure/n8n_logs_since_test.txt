@@ -1,0 +1,8 @@
+Filter Already Processed: skipped 73 existing items, 27 new items to process
+Execution summary — collected: 100, existing_skipped: 73, mentions: 27, sentiments: 27, detections: 27, alert_candidates: 3, alerts_generated: 3
+Filter Already Processed: skipped 67 existing items, 33 new items to process
+Execution summary — collected: 100, existing_skipped: 67, mentions: 33, sentiments: 33, detections: 33, alert_candidates: 1, alerts_generated: 1
+Filter Already Processed: skipped 73 existing items, 27 new items to process
+Execution summary — collected: 100, existing_skipped: 73, mentions: 27, sentiments: 27, detections: 27, alert_candidates: 1, alerts_generated: 1
+Filter Already Processed: skipped 72 existing items, 28 new items to process
+Execution summary — collected: 100, existing_skipped: 72, mentions: 28, sentiments: 28, detections: 28, alert_candidates: 0, alerts_generated: 0
