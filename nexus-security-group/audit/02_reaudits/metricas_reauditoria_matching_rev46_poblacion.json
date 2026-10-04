@@ -1,0 +1,38 @@
+{
+  "population": 2102,
+  "missing_population_rows": 0,
+  "criticality_changed": 1488,
+  "criticality_changed_pct": 70.8,
+  "original_alert_band": 1429,
+  "corrected_alert_band": 539,
+  "dropped_from_alert_band": 890,
+  "added_to_alert_band": 0,
+  "rce_original": 1510,
+  "rce_corrected_word_boundary": 30,
+  "original_distribution": {
+    "low": 182,
+    "critical": 732,
+    "high": 697,
+    "medium": 491
+  },
+  "corrected_distribution": {
+    "low": 570,
+    "high": 408,
+    "medium": 993,
+    "critical": 131
+  },
+  "original_alerts_by_platform": {
+    "hackernews": 12,
+    "exploit-db": 13,
+    "github": 1404
+  },
+  "corrected_alerts_by_platform": {
+    "hackernews": 5,
+    "exploit-db": 12,
+    "github": 522
+  },
+  "sha256": {
+    "Matriz_Reauditoria_Matching_REV46_Poblacion.csv": "04220db42ad6fa71a5d83ece897bfd6bd412747b7c2d05303b3e1495c1f19271"
+  },
+  "method": "Isolated keyword-matching recalculation: preserve original non-keyword risk-score contribution and recalculate keyword points over frozen REV46 text_content using word-boundary matching."
+}
