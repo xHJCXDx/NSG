@@ -114,7 +114,7 @@ describe('useThreats', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('filters by text and classification client-side, exposes backend filter options', async () => {
+  it('filters by text and classification client-side, exposes available filter options', async () => {
     vi.spyOn(threatsApi, 'fetchThreats').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useThreats(), { wrapper: createWrapper() });

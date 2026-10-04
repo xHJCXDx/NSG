@@ -18,11 +18,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Documentation policy: root README.md, docs/, and project documentation belong in the repo
+# Documentation policy: keep only the root README and in-project public docs.
+# Local thesis notes / detailed internal docs stay out of git.
 *.md
 !/README.md
-!/docs/
-!/docs/*.md
 !/nexus-security-group/**/*.md
 *.mdx
 *.markdown
@@ -31,6 +30,7 @@ __pycache__/
 *.pptx
 Informes/
 nsg-docs-exploration/
+docs/
 # SDD artifacts live in engram (persistent memory), not in git
 **/openspec/
 .atl/
@@ -47,6 +47,9 @@ secrets/
 *.crt
 *.p12
 *.pfx
+backup_*.sql
+*_backup*.sql
+*.dump
 
 # OS/editor noise
 .obsidian/

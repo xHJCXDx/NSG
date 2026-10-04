@@ -1,0 +1,10 @@
+ platform | count 
+----------+-------
+ github   |    28
+(1 row)
+
+ mentions_in_window 
+--------------------
+                 28
+(1 row)
+

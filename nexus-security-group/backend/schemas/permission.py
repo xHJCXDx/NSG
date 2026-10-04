@@ -1,12 +1,11 @@
 """Permission management schemas for the RBAC permission matrix."""
 from datetime import datetime
-from typing import Annotated, Literal
+from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
 PermissionKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=101)]
-RoleName = Literal["admin", "analyst"]
 
 
 class PermissionResponse(BaseModel):
@@ -22,10 +21,10 @@ class PermissionResponse(BaseModel):
 
 
 class PermissionMatrixResponse(BaseModel):
-    """Permission catalog plus current role assignments."""
+    """Permission catalog plus current role assignments (dynamic roles)."""
 
     permissions: list[PermissionResponse]
-    role_permissions: dict[RoleName, list[str]]
+    role_permissions: dict[str, list[str]]
 
 
 class RolePermissionsUpdate(BaseModel):
@@ -53,5 +52,5 @@ class RolePermissionsResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    role: RoleName
+    role: str
     permissions: list[str]

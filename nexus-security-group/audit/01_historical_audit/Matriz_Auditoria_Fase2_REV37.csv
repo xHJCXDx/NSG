@@ -1,0 +1,781 @@
+detection_id,mention_id,source,source_url,text_excerpt,criticality_level,threat_type,threat_category,confidence_score,risk_score,matched_keywords,sentiment_label,vader_compound,textblob_polarity,final_sentiment_score,created_at,evaluador_a_clasificacion,evaluador_a_criticidad,evaluador_a_observacion,evaluador_b_clasificacion,evaluador_b_criticidad,evaluador_b_observacion,consenso_final,consenso_criticidad,discrepancia_nota
+101,101,github,https://github.com/Iris-IV/ProofOfHeart-stellar/issues/988,"[Audit/Security] Audit of Personal Donation Cap Enforcement in `test_contribute_caps.rs`
+
+## Context & Motivation
+Soroban smart contracts require rigorous security auditing to guarantee asset safety, ",critical,critical_security_incident,critical_incident,650,65,rce|exploit|attack|security,positive,0.9062,0.1205,0.5134,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+169,169,github,https://github.com/KKloudTarus/synapse-ce/issues/1327,"EPIC: External integrations for alerting, ticketing and documentation publishing
+
+<!-- synapse-epic:external-integrations:v1 -->
+
+## Why this EPIC
+
+Synapse finds, verifies and reports security issues,",critical,critical_security_incident,critical_incident,850,85,apt|rce|security|incident,negative,-0.8868,0.1035,-0.3916,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+287,287,github,https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/50,"[Question Review] #14 Batch 3B — cue-bias remediation (24 items)
+
+Parent: #14
+
+## Goal
+Human-review and remediate the next scoped set of self-authored questions identified by Issue #14 cue-bias audit.",critical,critical_security_incident,critical_incident,650,65,rce|exploit,negative,-0.5030,0.1068,-0.1981,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+385,385,github,https://github.com/hrodrig/kzero/issues/14,"security(deps): bump google.golang.org/grpc for CVE-2026-84304 (OOM via HTTP/2 DATA fragmentation)
+
+## Dependabot
+
+- Alert: https://github.com/hrodrig/kzero/security/dependabot/9
+- Advisory: [GHSA-vp5",critical,critical_security_incident,critical_incident,700,70,rce|cve-|security,negative,-0.2960,-0.0926,-0.1943,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+401,401,github,https://github.com/gioxx/MarvellousSuspender/issues/532,"[Bug]: all suspended tab titles replaced with ""Replaced""
+
+### Before you start
+
+- [x] I searched the open and closed issues and did not find a duplicate.
+- [x] I am on the latest version available fro",critical,critical_security_incident,critical_incident,650,65,rce|malware,negative,-0.9514,0.0434,-0.4540,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+413,413,github,https://github.com/Taketo-Yoda/uv-sbom/issues/812,"feat: prioritize vulnerabilities by real-world exploitability (EPSS + CISA KEV)
+
+## Summary
+Add real-world exploitability prioritization to vulnerability findings using FIRST.org's EPSS (Exploit Predi",critical,critical_security_incident,critical_incident,600,60,rce|exploit|vulnerability,positive,0.5866,0.0760,0.3313,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+418,418,github,https://github.com/odysseus-dev/odysseus/issues/6414,"write_file truncates an existing file to 0 bytes on empty body, defensive guard needed (data loss)
+
+### Prerequisites
+
+- [x] I searched [open issues](https://github.com/odysseus-dev/odysseus/issues?q=",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9422,0.0651,-0.4386,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+443,443,github,https://github.com/EllisCreekFarm/homelab/issues/21,"Renovate Dashboard 🤖
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Config ",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9781,-0.0365,-0.5073,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+463,463,github,https://github.com/stSoftwareAU/NEAT-AI-Discovery/issues/2256,"Orphan sweep liveness keys on discovery.lock, which nothing in-tree writes and NEAT-AI spells .discovery.lock (src/discovery_cleanup.rs::is_directory_orphaned)
+
+<!-- finding-id: SEC-bbe3f392d7aa -->
+<",critical,critical_security_incident,critical_incident,800,80,rce|exploit|attack|security,negative,-0.9485,-0.0188,-0.4836,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+471,471,github,https://github.com/ghc-cloneRepoStaging-scaAndRenovate3/3934_Scott-Berry_0927_114225_ghc_gw2_failed/issues/7,"express-4.13.4.tgz: 11 vulnerabilities (highest severity is: 7.5) [main]
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>express-4.13.4.tgz</strong></summary>
+
+Fast, unopinionated, minimalist web",critical,security_threat,security_threat,900,90,exploit|cve-|threat|vulnerability|denial of service,negative,-0.9559,-0.0486,-0.5023,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+490,490,github,https://github.com/cfg-is/cfgms/issues/4316,"security: tenant scope becomes an explicit three-state value that fails closed
+
+## Problem
+
+Tenant authorization in the controller is expressed as a bare string, and an empty
+string means ""root, allow",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9426,-0.0641,-0.5033,2026-09-27 13:01:00.584483+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+561,561,github,https://github.com/grafana/ibm-db2-prometheus-exporter/issues/33,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Abandon",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.8960,0.0977,-0.3991,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+606,606,github,https://github.com/CanastaWiki/Canasta-CLI/issues/1595,"Compose: config set MYSQL_PASSWORD breaks the instance; no way to rotate the database password
+
+On Compose, there is no supported way to rotate the bundled database's root password, and the obvious at",critical,critical_security_incident,critical_incident,650,65,rce|cve-,negative,-0.9416,-0.0341,-0.4878,2026-09-27 13:31:00.388161+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+648,648,github,https://github.com/Ikey168/Noesis/issues/1928,"[Vulnerabilities] Define advisory, vulnerability, affected-version-range, weakness and exploitation-evidence records with revisions
+
+Parent: #1913
+Planning item: V02
+
+## Outcome
+Define the vulnerabili",critical,critical_security_incident,critical_incident,750,75,rce|exploit|vulnerability,negative,-0.8976,0.2200,-0.3388,2026-09-27 14:01:01.561965+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+694,694,github,https://github.com/iAverages/machina/issues/4,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.3738,0.0520,-0.1609,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+720,720,github,https://github.com/whenwhenwhenwhenwhen/when/issues/11,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Abandon",critical,critical_security_incident,critical_incident,650,65,rce|cve-,negative,-0.8846,0.0667,-0.4090,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+743,743,github,https://github.com/Uncle-Mitch/uqmarks/issues/97,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9049,-0.0859,-0.4954,2026-09-27 21:16:00.530974+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+748,748,github,https://github.com/sgajbi/lotus-performance/issues/380,"Lotus Performance Issue Discovery Ledger
+
+# Lotus Performance Issue Discovery Ledger
+
+Campaign ledger for `sgajbi/lotus-performance`. Future defect-discovery passes should update this issue instead of",critical,critical_security_incident,critical_incident,650,65,apt|rce,positive,0.9432,-0.0337,0.4548,2026-09-27 21:16:00.530974+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+868,868,github,https://github.com/randovania/randovania/issues/8383,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.6792,0.0511,-0.3140,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+890,890,github,https://github.com/sounisi5011/metalsmith-html-validator/issues/80,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.7525,0.2000,-0.2762,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+930,930,github,https://github.com/jaridmargolin/wss-manager/issues/107,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.7525,0.2000,-0.2762,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+942,942,github,https://github.com/vz-risk/VCDB/issues/24386,"Agentic Ransomware Took Down Enterprise in Ten Hours: AI Left 80-Page Audit
+
+""Palo Alto Networks Unit 42 documented a multi-agent AI ransomware attack that occurred on September 2, 2026, in which an a",critical,critical_security_incident,critical_incident,990,100,ransomware|rce|exploit|attack|security|incident,negative,-0.9300,-0.0361,-0.4831,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+956,956,github,https://github.com/astruzocyber/CVE/issues/791,"[VULN ALERT] CVE-2026-102335 (risk 41.4) - nginx/nginx
+
+**CVE:** CVE-2026-102335
+**Composite risk score:** 41.4/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for methodology)
+**Sour",critical,critical_security_incident,critical_incident,950,95,rce|exploit|cve-|attack,negative,-0.3660,-0.0664,-0.2162,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+959,959,github,https://github.com/astruzocyber/CVE/issues/787,"[VULN ALERT] CVE-2026-87741 (risk 51.3) - wordpress/wordpress, php/php
+
+**CVE:** CVE-2026-87741
+**Composite risk score:** 51.3/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for meth",critical,critical_security_incident,critical_incident,990,100,rce|exploit|cve-|attack|vulnerability,negative,-0.9277,-0.0680,-0.4978,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+985,985,github,https://github.com/tenedev/js-utils-kit/issues/70,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.7405,0.0481,-0.3462,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1013,1013,github,https://github.com/rhobs/konflux-coo/issues/3840,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Reposit",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9858,0.1204,-0.4327,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1020,1020,github,https://github.com/opentok/opentok-rtc/issues/792,"grunt-contrib-compress-1.6.0.tgz: 9 vulnerabilities (highest severity is: 9.8) unreachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png'",critical,critical_security_incident,critical_incident,950,95,rce|exploit|cve-|vulnerability,negative,-0.8811,-0.0031,-0.4421,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1032,1032,github,https://github.com/Vonage-Community/tutorial-interactive_tutorials/issues/345,"body-parser-1.20.4.tgz: 4 vulnerabilities (highest severity is: 5.3)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> V",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.9382,-0.1700,-0.5541,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1041,1041,github,https://github.com/momo-tong/openapi-generator-5.4.0/issues/7,"gatling-charts-highcharts-2.3.0.jar: 135 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.9826,-0.0563,-0.5194,2026-09-29 00:46:06.870479+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1099,1099,github,https://github.com/Kong/vscode-konnect-portal/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.7156,0.0247,-0.3455,2026-09-29 01:01:02.020198+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1102,1102,github,https://github.com/stSoftwareAU/NEAT-AI-Discovery/issues/2308,"WGSL is_finite_value NaN/Inf guard is a float self-comparison that fast-math may fold away (activation.wgsl, relu.wgsl, bias.wgsl)
+
+<!-- finding-id: SEC-e8e1dd84a447 -->
+<!-- cwe: CWE-754 -->
+
+Three W",critical,critical_security_incident,critical_incident,650,65,rce|exploit|attack|security,positive,0.5929,0.0920,0.3424,2026-09-29 01:01:02.020198+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1172,1171,github,https://github.com/circleci/ex/issues/813,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.6840,0.0000,-0.3420,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1179,1178,github,https://github.com/datarelay-labs/datarelay-link/issues/41,"[AI Work] v2.4.0 Release Closure
+
+PACKET_VERSION=2
+EVIDENCE_DIR=/home/aella/e2e-reports/full-user-e2e-20260928T135216Z
+ACTIVE_WORKTREE=/home/aella/datarelay-link-current
+FULL_USER_E2E_DISPOSITION=FAIL",critical,critical_security_incident,critical_incident,650,65,rce,negative,-0.9307,0.0219,-0.4544,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1196,1195,github,https://github.com/agusclap/ml-network-intrusion-detection/issues/1,"Project Charter: Detección de intrusiones en redes con ML
+
+# Project Charter: Detección de intrusiones en redes con Machine Learning
+
+Inteligencia Artificial - Ingeniería en Informática - UNDEF CRUC I",critical,security_threat,security_threat,850,85,exploit|backdoor|attack|ataque|security,negative,-0.7906,0.0115,-0.3895,2026-09-29 01:36:59.322755+00,correcto,no,S/N,severidad_incorrecta,si,"Da aviso solo de una posible amenza con ML, no indaga más en el tema.",severidad_incorrecta,si,Es solo una simple advertencia del uso de ML.
+1269,1268,github,https://github.com/amaybaum-prod/remediate-test/issues/23,"spring-web-4.2.1.RELEASE.jar: 39 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 heigh",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.9563,0.0261,-0.4651,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1272,1271,github,https://github.com/AlmaLinux/updates/issues/3654,"Release postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e ALSA-2026:69923
+
+postgresql:15 security update
+Severity: Important
+Description
+PostgreSQL is an advanced object-relational dat",critical,security_threat,security_threat,850,85,cve-|privilege escalation|sql injection|security,negative,-0.2023,0.0036,-0.0994,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1288,1287,github,https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/issues/1068,"Code Security Finding: SQL Injection (CWE-89, High Severity) in SqlInjection.java:3630 [main]
+
+# Code Security Finding
+<!-- <SAST-FINDING>7b580094-3a58-478e-82a8-a475ac9f48c5</SAST-FINDING> -->
+<!-- <",critical,critical_security_incident,critical_incident,750,75,rce|sql injection|attack|security|vulnerability,positive,0.6449,-0.0539,0.2955,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1296,1295,github,https://github.com/PenniLogic/android/issues/9,"Ship parser rules as remotely updatable configuration
+
+<!-- legacy-item: PVTI_lADOE0lPW84BiHHNzg452gg -->
+<!-- pennilogic-original-specification-sha256: 69040540141d7bf1676716777834c789d6f114647f95947",critical,critical_security_incident,critical_incident,700,70,rce|attack|security|vulnerability,negative,-0.9870,-0.0561,-0.5215,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1298,1297,github,https://github.com/Nexmo/enter-our-orbit/issues/20,"express-4.17.1.tgz: 13 vulnerabilities (highest severity is: 9.1) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 heigh",critical,critical_security_incident,critical_incident,950,95,rce|exploit|cve-|vulnerability,negative,-0.7236,-0.0537,-0.3887,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1300,1299,github,https://github.com/Nexmo/enter-our-orbit/issues/1,"cheerio-1.0.0-rc.5.tgz: 2 vulnerabilities (highest severity is: 7.5) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 he",critical,critical_security_incident,critical_incident,990,100,rce|exploit|cve-|threat|vulnerability,negative,-0.9532,-0.2122,-0.5827,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1305,1304,github,https://github.com/Vonage-Community/demo-vna-simswap-numberverification-video_meeting-demo/issues/7,"twig-1.17.1.tgz: 16 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnera",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.8504,0.0360,-0.4072,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+74,74,exploit-db,https://www.exploit-db.com/exploits/52659,Langflow  1.8.4 - Path Traversal to Remote Code Execution,high,critical_security_incident,critical_incident,500,50,remote code execution,negative,0.0000,-0.1000,-0.0500,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+88,88,exploit-db,https://www.exploit-db.com/exploits/52645,Joomla JCE_2.9.15 - Remote Code Execution,high,critical_security_incident,critical_incident,500,50,remote code execution,negative,0.0000,-0.1000,-0.0500,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+89,89,exploit-db,https://www.exploit-db.com/exploits/52644,ipTIME A3004T  - Remote Code Execution,high,critical_security_incident,critical_incident,500,50,remote code execution,negative,0.0000,-0.1000,-0.0500,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+118,118,github,https://github.com/Ayinkx/drips-wave-helper/issues/44,"New Stellar Wave issues
+
+# 🔥 8 new issue(s) with NO applications
+
+Nobody has applied yet — grab these first.
+
+| # | Issue | Points | Score | Matched |
+|---|-------|-------:|------:|---------|
+| 1 | [d",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,positive,0.9901,0.2243,0.6072,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+171,171,github,https://github.com/BroMarcus/church-app/issues/28,"KINGDOM NETWORK CONTROL ROOM — Active Work / Blocks / Deployment Queue
+
+# Kingdom Network Control Room
+
+This issue is the live coordination hub for all parallel ChatGPT workstreams on Kingdom Network.",high,critical_security_incident,critical_incident,500,50,rce,positive,0.9776,0.0794,0.5285,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+175,175,github,https://github.com/TSunDanceK/MyStockHarbor/issues/552,"Relay A: SEC data, earnings pages, earnings calendar, stock page (SEC panels)
+
+Code session **A**, from 2026-09-23 evening. It replaces #535 for this area; #535 is history, so read it for facts and ru",high,critical_security_incident,critical_incident,400,40,rce,positive,0.7472,-0.0080,0.3696,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+200,200,github,https://github.com/rebaze/rio/issues/43,"Demonstrate and enforce a verifiable SBOM handoff
+
+Start here: give a platform engineer or pipeline a concrete decision using today's outputs: do these SBOM bytes match the recorded output, and did th",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,positive,0.9538,0.0454,0.4996,2026-09-25 19:01:00.217315+00,ambiguo,si,Depende de como lo tome el lector.,ambiguo,si,"Posible puesto de trabajo, pero tambien podria ser una amenza.",ambiguo,si,No se puede determinar con certeza la finalidad del mensaje.
+218,218,github,https://github.com/NooksApp/nooks-release-server/issues/1,"Wiz - 'master' Branch Scan Overview
+
+<!-- WizIssue-54228afdb95d89ab8c7b7f4f7a6327702950692f8b37dfd4bcb09fd44903918b-master -->
+
+<a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https:/",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,neutral,-0.2244,0.2236,-0.0004,2026-09-25 19:16:00.709394+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+240,240,github,https://github.com/netlify-templates/astro-supabase-starter/issues/2,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4885,0.0000,0.2442,2026-09-25 19:16:00.709394+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+297,297,github,https://github.com/anaconda/anaconda-otel-ts/issues/2,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Awaitin",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.6083,0.0577,-0.2753,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+303,303,github,https://github.com/shilpo-rs/shilpo/issues/248,"Security advisories detected by cargo-deny
+
+## Automated Security Advisory Detection
+
+`cargo deny check advisories` reported security or maintenance advisories against the current dependency tree.
+
+##",high,general,other,500,50,security|incident|vulnerability,negative,-0.5020,0.1283,-0.1869,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+317,317,github,https://github.com/indykite/.github/issues/7,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.9825,-0.1400,-0.5613,2026-09-27 03:31:00.444598+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+326,326,github,https://github.com/boykush/finlake/issues/49,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Reposit",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,positive,0.8603,0.1116,0.4860,2026-09-27 03:31:00.444598+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+335,335,github,https://github.com/resend/resend-hono-example/issues/1,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7482,0.0508,0.3995,2026-09-27 03:31:00.444598+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+356,356,github,https://github.com/yashrajdighe/gh-actions/issues/11,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4885,0.0521,0.2703,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+382,382,github,https://github.com/Best-Verie/rea-express/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.5625,0.0098,0.2861,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+387,387,github,https://github.com/kwallach6/corvuscreations/issues/1,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.6449,0.0250,0.3350,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+396,396,github,https://github.com/zgunz42/servercopilot/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7482,0.0475,0.3978,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+409,409,github,https://github.com/canonical/multus-rock/issues/15,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,550,55,apt|rce,positive,0.9269,0.3027,0.6148,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+426,426,github,https://github.com/OCEANOFANYTHINGOFFICIAL/jquery-3.6.0/issues/5,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.6903,0.0833,0.3868,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+446,446,github,https://github.com/godwinishaku506-hub/stellar-CrowdPay--Blockchain/issues/3,"Escrow `deposit` accepts zero/negative/uncapped amounts and post-deadline deposits
+
+## Context
+Soroban escrow contract, `contracts/soroban/contracts/escrow/src/lib.rs:37-55`.
+
+## Problem
+`deposit` has",high,critical_security_incident,critical_incident,500,50,rce,negative,-0.3540,0.0250,-0.1645,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+503,503,github,https://github.com/beenuar/AiSOC/issues/652,"Interest: free enrichment sources (IP/URL reputation, malware-hash, crypto address OFAC)
+
+Disclosure: I'm the developer of Presend (https://presend.pages.dev), flagging that upfront -- this is a self-",high,critical_security_incident,critical_incident,500,50,rce|malware,positive,0.9394,0.2667,0.6030,2026-09-27 13:01:00.584483+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+534,534,github,https://github.com/nullabletype/dot-orbit/issues/32,"Harden package provenance and continuous security checks
+
+## What to build
+
+Make dependency provenance, vulnerability status, and code-security checks reproducible and continuously monitored without w",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.9830,0.0893,0.5361,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+558,558,github,https://github.com/tuna2134/mizu/issues/11,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.6449,0.0820,0.3635,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+562,562,github,https://github.com/Kaycee276/Chesster/issues/144,"[SECURITY] security(backend): Prevent Socket Injection and Client-Side Move Spoofing with Server Authority
+
+# [SECURITY] security(backend): Prevent Socket Injection and Client-Side Move Spoofing with ",high,security_threat,security_threat,400,40,exploit|security|vulnerability,positive,0.9566,0.0389,0.4977,2026-09-27 13:16:02.855775+00,severidad_incorrecta,parcial,Es una advertencia posiblemente de un bot.,ambiguo,parcial,Advertencia de un bot pero que podria implicar una posible amenza.,parcial,si,Advertencia posiblemente de un bot pero que puede tener repercuciones futuras. Ya que puede ser un tipo de monitoreo.
+566,566,github,https://github.com/openclaw/openclaw/issues/159230,"message_tool_only: stranded-reply recovery re-prompts the model to publish its private final and force-sends an English error notice to the DM (no config to disable)
+
+## Summary
+
+In `message_tool_only",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.4521,0.0480,-0.2020,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+611,611,github,https://github.com/doublewordai/control-layer/issues/251,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.5317,0.2825,-0.1246,2026-09-27 13:45:59.961289+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+652,652,github,https://github.com/ARSH871-bot/Netwise/issues/306,"Carry pfSense conversion skips into F-1 findings, not just a report parameter
+
+Filed from #302's review (@SamikaPerera). Not started -- this is the scope stub, deliberately kept out of #302 itself.
+
+#",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.4660,0.0791,-0.1934,2026-09-27 14:01:01.561965+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+666,666,github,https://github.com/SwanseaUniversityMedical/5s-Tes/issues/40,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Reposit",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.7911,0.3750,-0.2081,2026-09-27 14:01:01.561965+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+700,700,github,https://github.com/grafana/openapi-to-k6/issues/33,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Depreca",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.5759,0.1066,0.3412,2026-09-27 14:11:48.081401+00,falso_positivo,no_aplica,Reconmendaciones para usar Renovate.,ambiguo,no_aplica,Muestra posbile documentacion de una app pero se puede interpretar como una ameza por la manera en que figura el mensaje.,ambiguo,no_aplica,No se puede determinar con certeza la finalidad del mensaje.
+718,718,github,https://github.com/TimSchoenle/Portfolio/issues/15,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.9803,-0.0400,-0.5101,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+778,778,github,https://github.com/LeanerCloud/cloud-commitments-platform/issues/140,"sec(ci): sibling deploy and sanity workflows grant id-token write to ungated jobs
+
+Follow-up from LeanerCloud/cloud-commitments-cli#1649 / PR LeanerCloud/cloud-commitments-cli#1657. Same **structural*",high,general,other,400,40,attack|vulnerability,negative,-0.7569,-0.0204,-0.3886,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+815,815,hackernews,https://omnesis.dev/,"Imagine giving ChatGPT or any other agent access to your Whatsapp&#x2F;iMessage, bank transactions, health data, web pages you see, metadata about all the photos you took, places you visited, all your",high,critical_security_incident,critical_incident,400,40,rce|security,positive,0.9589,0.1943,0.5766,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+820,820,hackernews,URL no preservada — mención capturada vía Algolia HN API sin campo url,"Mobile applications rely heavily on APIs to connect users, backends, and third-party services. Yet API security is often overlooked during Mobile Application Security Testing. This can expose sensitiv",high,critical_security_incident,critical_incident,400,40,rce|attack|security,positive,0.7096,0.0625,0.3861,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+829,829,github,https://github.com/TimSchoenle/helm-charts/issues/18,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,500,50,rce|security,negative,-0.7865,0.0183,-0.3841,2026-09-28 22:46:00.557288+00,falso_positivo,no_aplica,Reconmendaciones para usar Renovate.,ambiguo,no_aplica,Muestra posbile documentacion de una app pero se puede interpretar como una ameza por la manera en que figura el mensaje.,ambiguo,no_aplica,No se puede determinar con certeza la finalidad del mensaje.
+860,860,github,https://github.com/00o-sh/containers/issues/20,"Renovate Dashboard 🤖
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.9656,0.1100,-0.4278,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+877,877,github,https://github.com/ki3lich/vod2pod-rss/issues/130,"Renovate Dashboard 🤖
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,positive,0.4359,0.0000,0.2180,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+884,884,github,https://github.com/SphericalKat/katbin/issues/17,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.8160,0.1131,0.4645,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+886,886,github,https://github.com/urgas9/py-upn-qr/issues/9,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7482,0.0000,0.3741,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+927,927,github,https://github.com/denysvitali/denvit-blog/issues/6,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4885,0.0308,0.2596,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+935,935,github,https://github.com/re-taro/atra.css/issues/1,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,550,55,apt|rce,positive,0.7830,0.2000,0.4915,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+952,952,github,https://github.com/koki-develop/samari/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7482,0.1450,0.4466,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+983,983,github,https://github.com/eddeee888/nx-plugins/issues/60,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4596,0.0952,0.2774,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+988,988,github,https://github.com/Swooshz-com/swooshz-platform/issues/164,"Platform lifecycle — direct production activation → hardening
+
+# Delivery — Platform lifecycle / production activation
+
+## Status / summary
+
+| Field | Value |
+| --- | --- |
+| Programme | #104 |
+| Outc",high,critical_security_incident,critical_incident,500,50,rce,positive,0.9672,0.0479,0.5075,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1005,1005,github,https://github.com/hackelia-micrantha/web/issues/60,"P1: Establish supply-chain security and deterministic toolchain governance
+
+## Summary
+
+Make dependency, action, runtime, package-manager, and container inputs explicit and continuously reviewed. Redu",high,critical_security_incident,critical_incident,400,40,rce|security,positive,0.9768,0.0223,0.4995,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1077,1077,github,https://github.com/ofalvai/obsidian-llm-workspace/issues/4,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7482,0.1450,0.4466,2026-09-29 00:46:06.870479+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1089,1089,github,https://github.com/berlysia/priorityqueuejs/issues/169,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.8061,0.1169,0.4615,2026-09-29 01:01:02.020198+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1120,1120,github,https://github.com/stevin-wilson/ephrem-ai/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.9192,0.0906,-0.4143,2026-09-29 01:15:59.240134+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1160,1159,github,https://github.com/c-3lab/oasismap/issues/436,"keycloak脆弱性対応(2026/09/28)
+
+9/24時点でCI上にてkeycloak(26.7.2)での脆弱性を確認
+
+keycloak公式では9/19に検知したもので、現時点で修正リリース版待ち
+https://github.com/keycloak/keycloak/issues/52971
+
+以下検出された脆弱性の詳細
+
+### 該当パッケージ
+- `org.bouncycastl",high,security_threat,security_threat,500,50,cve-|vulnerability,negative,-0.8044,0.0400,-0.3822,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1191,1190,github,https://github.com/zuizui0223/bita/issues/227,"Submit Ecology Letters access-routing Letter
+
+## Primary submission
+
+**Access constraints reroute floral exploitation across bird and insect visitor networks**
+
+Article type: **Ecology Letters Letter*",high,critical_security_incident,critical_incident,500,50,rce|exploit,positive,0.3378,0.1284,0.2331,2026-09-29 01:36:59.322755+00,ambiguo,parcial,Puede ser una nota o un posible link de amenza.,ambiguo,parcial,Sospechozo el texto que acomapaña el articulo.,ambiguo,si,No se puede determinar con certeza la finalidad del mensaje.
+1257,1256,github,https://github.com/endel/quic-zig/issues/44,"Full of security issues
+
+Point an LLM at the repo and tell it:
+
+```
+Find security-related bugs. No exploitation needed! Just the issues so I can fix them. The bugs need fixing even if defense-of-depth",high,security_threat,security_threat,450,45,exploit|security,negative,-0.4003,-0.0625,-0.2314,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1282,1281,github,https://github.com/luismayta/jetpackcompose-pokemon/issues/2,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.7650,0.0946,-0.3352,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1295,1294,github,https://github.com/marcusrbrown/dev-like/issues/10,"Fro Bot Autoheal
+
+Rolling issue for automated autoheal runs. Each run appends its findings below.
+
+<!-- fro-bot-autoheal:latest -->
+
+## Run 34857114142 — 2026-09-14
+
+**Verdict:** Same pre-existing fai",high,security_threat,security_threat,500,50,xss|security,negative,-0.5090,0.0278,-0.2406,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1331,1330,github,https://github.com/PreventionWeb/undrr-risk-resilience-maps/issues/35,"Round-up: follow-on work before v0.0.4
+
+> Migrated from https://github.com/unisdr/undrr-risk-resilience-maps/issues/15
+
+Follow-on work after the layer-state refactor (#14 phase 0, then PreventionWeb/u",high,critical_security_incident,critical_incident,550,55,rce|vulnerability,negative,-0.6923,0.0176,-0.3373,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+11,11,hackernews,https://www.techzine.eu/blogs/security/144469/should-we-stop-giving-cyber-threats-fancy-names/,Should we stop giving cyber threats fancy names?,medium,general,other,300,30,threat,negative,-0.3818,0.0000,-0.1909,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+17,17,hackernews,https://www.critic.run/,"Hey HN, I&#x27;m Shreyash from Feyn. We help companies build custom models from their data. Today we&#x27;re releasing Critic, a change review platform that lets you engage directly with the AI that w",medium,general,other,250,25,security|incident,positive,0.9382,0.1226,0.5304,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+37,37,hackernews,https://blog.blockstream.com/liquid-network-security-incident-assessment/,Liquid Network Security Incident Assessment,medium,general,other,250,25,security|incident,positive,0.3400,0.0000,0.1700,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+50,50,hackernews,https://www.theregister.com/security/2026/09/22/windows-closedquorum-malware-uses-ai-models-to-autonomously-select-post-compromise-actions/5298435,"First of its kind, AI malware. CLOSEDQUORUM",medium,security_threat,security_threat,250,25,malware,positive,0.5267,0.4250,0.4758,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+56,56,exploit-db,https://www.exploit-db.com/exploits/52677,PodcastGenerator 3.2.9 - Stored XSS,medium,security_threat,security_threat,200,20,xss,neutral,0.0000,0.0000,0.0000,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+59,59,exploit-db,https://www.exploit-db.com/exploits/52674,Fullhan FH8626V100 - Multiple Vulnerabilities,medium,general,other,200,20,,negative,-0.1531,0.0000,-0.0766,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+78,78,exploit-db,https://www.exploit-db.com/exploits/52655,flyto-core 2.26.7 - Arbitrary File Write,medium,general,other,200,20,,negative,0.0000,-0.1000,-0.0500,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+173,173,github,https://github.com/ANYTECHS/clips-frontend/issues/1161,"Implement Dependency Scanning
+
+**Description:** Dependencies are not regularly scanned for security vulnerabilities.
+
+**Acceptance Criteria:**
+- Set up dependency scanning
+- Configure automated scans",medium,general,other,200,20,security|vulnerability,positive,0.7506,0.0000,0.3753,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+213,213,github,https://github.com/GSA/data.gov/issues/6375,"Inventory making requests to suspicious endpoints
+
+_Please keep any sensitive details in [Google Drive](https://docs.google.com/document/d/1rW0VOzfCrjXOI0O1gTAOm225_fTbu5Cjrg7yJTYYBBg/edit)._
+
+**Date ",medium,general,other,300,30,vulnerability,negative,-0.5599,-0.0332,-0.2965,2026-09-25 19:16:00.709394+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+376,376,github,https://github.com/GlueOps/autoglue/issues/1122,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Pending",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.7762,-0.1146,0.3308,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+394,394,github,https://github.com/bugabinga/mothergod/issues/3,"📋 Operations log
+
+Running log of agent heartbeat/reviewer/researcher activity. Each run posts a status comment here.
+
+---
+_Generated by [Claude Code](https://claude.ai/code)_",medium,general,other,250,25,,neutral,0.0000,0.0000,0.0000,2026-09-27 03:46:00.389669+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+441,441,hackernews,https://ranum.com/security/computer_security/editorials/dumb/,The Six Dumbest Ideas in Computer Security,medium,general,other,250,25,security,negative,-0.2263,0.0000,-0.1132,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+468,468,github,https://github.com/JamesJedi420/containment-protocol/issues/3934,"Contradiction check: Difficulty rewards versus competency progression
+
+## Goal
+
+Run a bounded contradiction check before importing difficulty-tagged permanent personnel stat rewards, so high-risk assi",medium,security_threat,security_threat,250,25,exploit,positive,0.7700,0.0735,0.4217,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+514,514,github,https://github.com/MALIEV-Co-Ltd/Legacy.Maliev.DataMigration/issues/94,"Align canonical production exact-23 PostgreSQL schemas before guarded row delta
+
+A fresh production-only exact-23 live delta plan on 2026-09-26 stopped before row scanning or PostgreSQL writes at Coun",medium,critical_security_incident,critical_incident,350,35,rce,positive,0.9727,0.1452,0.5589,2026-09-27 13:01:00.584483+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+520,520,github,https://github.com/uBlockOrigin/uAssets/issues/30157,"🟥[uBO only] ALL YouTube issues: D-O-N-'T COMMENT till 100% read, understand, and followed the 1st post🟥
+
+# ⚠️ P-L-E-A-S-E, PLEASE, PLEASE, PLEASE read and follow all of the instructions first ⚠️
+
+> [!",medium,general,other,250,25,,positive,0.9713,0.1093,0.5403,2026-09-27 13:01:00.584483+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+529,529,github,https://github.com/astilbahq/ui/issues/1,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.7825,0.3067,0.5446,2026-09-27 13:16:02.855775+00,falso_positivo,no_aplica,Reconmendaciones para usar Renovate.,ambiguo,no_aplica,Muestra posbile documentacion de una app pero se puede interpretar como una ameza por la manera en que figura el mensaje.,ambiguo,no_aplica,No se puede determinar con certeza la finalidad del mensaje.
+533,533,github,https://github.com/juanpaulo/superset/issues/10,"[Security] selenium 3.141.0: 2 known vulnerabilities, upgrade to 4.14.0
+
+**Package:** `selenium` (currently 3.141.0)
+**Fixed in:** 4.14.0
+
+**Vulnerabilities:**
+- **CVE-2023-5590** (fixed in 4.14.0): N",medium,security_threat,security_threat,300,30,cve-|security,positive,0.4215,0.1000,0.2607,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+620,620,github,https://github.com/OWASP/cve-lite-cli/issues/420,"chore: fix TypeScript code quality violations from May 2026 audit
+
+Small, self-contained refactors from a code-quality audit. **Each bullet below is its own task and its own PR** - please do not try t",medium,security_threat,security_threat,300,30,cve-,positive,0.8705,0.1335,0.5020,2026-09-27 13:45:59.961289+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+624,624,github,https://github.com/namelessnotion/money-flow/issues/8,"ACH returns after settlement can't be recorded: late deposit returns cost the platform, late withdrawal returns strand customer money
+
+## What happens
+
+The ledger has no way to record an ACH return th",medium,security_threat,security_threat,250,25,exploit,positive,0.9286,0.0000,0.4643,2026-09-27 13:45:59.961289+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+639,639,github,https://github.com/tvofi/heatpump_optimizer/issues/201,"Audit — (tracking)
+
+Tracking issue for the open-issues programme (audit round 2 through leftover/product). Register: `docs/audit-2026-09.md`. Delivery-status: `docs/plan-2026-09-open-issues.md`. Durab",medium,general,other,250,25,,positive,0.9501,0.0316,0.4908,2026-09-27 13:45:59.961289+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+766,766,github,https://github.com/MihaiBojin/jazzy-fish/issues/11,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.4168,0.0000,0.2084,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+768,768,github,https://github.com/StellarDevHub/Web3-Student-Lab/issues/1353,"[SC-HARD-07] Continuous Bonding Curve with Invariant Math & Slippage Protection
+
+## 📋 Hard & Advanced Production Epic
+**Identifier**: `SC-HARD-07` | **Complexity**: `Hard / Advanced`
+
+### ⚙️ Specifica",medium,security_threat,security_threat,250,25,exploit,positive,0.8591,0.1000,0.4795,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+787,787,github,https://github.com/LeanerCloud/cloud-commitments-platform/issues/136,"chore(frontend/views): medium/low findings from the 2026-07-28 full review
+
+Reviewed commit: `be11bdcb5`. Note: `origin/main` moved to `3e9660d06` during the review; re-verify against current `main` b",medium,general,other,200,20,,negative,-0.7912,0.1172,-0.3370,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+798,798,github,https://github.com/ZacharyDonnelly/RawBase/issues/7,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.4931,0.2500,0.3715,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+822,822,hackernews,https://anas-security-portfolio.vercel.app/google-mcp-ssrf.html,I found an SSRF in Google's official MCP Toolbox (CVE-2026-14540),medium,security_threat,security_threat,250,25,cve-,neutral,0.0000,0.0000,0.0000,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+828,828,github,https://github.com/X-oss-byte/renderscript/issues/1,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.4931,0.2441,0.3686,2026-09-28 22:46:00.557288+00,falso_positivo,no_aplica,Reconmendaciones para usar Renovate.,ambiguo,no_aplica,Muestra posbile documentacion de una app pero se puede interpretar como una ameza por la manera en que figura el mensaje.,ambiguo,no_aplica,No se puede determinar con certeza la finalidad del mensaje.
+856,856,github,https://github.com/alnmaurofranco/be-the-hero-api-nestjs/issues/7,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.8314,0.1250,0.4782,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+945,945,github,https://github.com/unstable-studios/gridfinity-studio/issues/175,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.7482,0.0801,0.4141,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+951,951,github,https://github.com/EffortlessMetrics/perl-lsp-swarm/issues/16750,"fix(ci): remove four current-main workflow expression-in-run findings
+
+## Problem
+
+The trusted-base workflow security ratchet is red on current `main` after merged #16321. Main self-check run 36491570",medium,critical_security_incident,critical_incident,350,35,rce|security,positive,0.8704,0.0240,0.4472,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1004,1004,github,https://github.com/fro-bot/.github/issues/2828,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Pending",medium,critical_security_incident,critical_incident,300,30,apt,positive,0.9375,0.1738,0.5557,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1046,1046,github,https://github.com/JuryA/landscape_api_py3/issues/463,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.6562,0.2500,0.4531,2026-09-29 00:46:06.870479+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1057,1057,github,https://github.com/mintyvr543/Dinitrogen.exe-LEAK-/issues/1,"NO SKID!
+
+ASS MALWARE",medium,security_threat,security_threat,250,25,malware,positive,0.2363,0.0000,0.1182,2026-09-29 00:46:06.870479+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1117,1117,github,https://github.com/sanity-io/ui-workshop/issues/245,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. [More settings and logs here.](https://developer.mend.io/github/sanity-io/ui-workshop)
+
+---
+
+Using a [curated preset]",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.8071,0.1828,0.4949,2026-09-29 01:01:02.020198+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1121,1121,github,https://github.com/kosori/ui/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.6903,0.1250,0.4077,2026-09-29 01:15:59.240134+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1164,1163,github,https://github.com/tinysnake/sprout/issues/123,"Spec: consolidate Worker readiness observations, authority, and admission
+
+Part of #113.
+Related implementation and review history: #118. Preserves the accepted contracts of #114, #115, and #116.
+
+## ",medium,critical_security_incident,critical_incident,350,35,apt,positive,0.9902,0.0182,0.5042,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1209,1208,github,https://github.com/DataArt-Romania/lola-lab/issues/2,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.9015,0.0195,0.4605,2026-09-29 01:45:58.862473+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1238,1237,github,https://github.com/corbpaul/www-template/issues/97,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.4931,0.2441,0.3686,2026-09-29 01:45:58.862473+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1319,1318,github,https://github.com/ChurchCRM/CRM/issues/10131,"Bug: Event editor, calendar and check-in page hide the server's reason when an action fails
+
+**Pre-submission checks**
+- [x] I searched existing issues and did not find a duplicate.
+- [x] This is not ",medium,general,other,200,20,security|vulnerability,positive,0.9366,-0.0882,0.4242,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1326,1325,github,https://github.com/finos-osera/risk-navigator/issues/32,"29 Sept 2026 - Risk Navigator Patch Prioritization Meeting Minutes
+
+### Date
+
+2026 Sept 29 - 9:00 AM-10:00 AM CT 
+
+### Meeting Details
+
+- Meeting link: https://zoom-lfx.platform.linuxfoundation.org/me",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.9504,0.0803,0.5153,2026-09-29 15:01:03.348054+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+6,6,hackernews,https://github.blog/security/application-security/ai-powered-fuzzing-with-the-github-security-lab-taskflow-agent/,AI-Powered Fuzzing with the GitHub Security Lab Taskflow Agent,low,general,other,100,10,security,positive,0.3400,0.0000,0.1700,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+15,15,hackernews,https://www.theregister.com/security/2026/09/24/government-contractor-exposed-path-to-immigration-records/5298689,Government contractor exposed path to immigration records,low,general,other,50,5,,neutral,-0.0772,0.0000,-0.0386,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+20,20,hackernews,https://medium.com/meetcyber/ai-models-are-great-at-finding-security-bugs-but-can-they-tell-when-theyre-fixed-20052d828f2a,AI Models Are Great at Finding Security Bugs. Can They Tell When They're Fixed?,low,general,other,100,10,security,positive,0.7579,0.4500,0.6039,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+27,27,hackernews,https://arstechnica.com/security/2026/09/theres-a-new-way-to-break-rsa-thats-faster-than-anything-weve-seen-before/,There's a new way to break RSA that's faster than anything we've seen before,low,general,other,50,5,,positive,0.0000,0.1364,0.0682,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+35,35,hackernews,https://cursor.com/blog/rollouts-and-security-reviewer,Cursor launches bots that watch code from pull request to production,low,general,other,50,5,,neutral,0.0000,0.0000,0.0000,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+250,250,hackernews,https://arxiv.org/abs/2609.25682,C-to-Rust Fallacy: Automatic Refactoring != Memory Security,low,general,other,100,10,security,positive,0.4003,0.0000,0.2001,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+273,273,github,https://github.com/petaurora/kink-profile/issues/263,"Catalog V2 Batch 8 — Power exchange & roles
+
+## Goal
+
+Migrate **Power Exchange & Roles** into Catalog V2 without flattening orientation, named dynamics, style, and relationship structure into one peer",low,general,other,50,5,,positive,0.9985,0.0878,0.5431,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+278,278,github,https://github.com/MilkSU-Official/milksu/issues/177,"集成termcp
+
+[Termcp](https://github.com/open-mcp-ai/termcp) 可以用来远控kali linux 结合kali 工具skills打靶场",low,general,other,50,5,,neutral,0.0000,0.0000,0.0000,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+288,288,github,https://github.com/redtear1115/oikos/issues/1354,"crew: v1.6.0 Log
+
+這輪發生的事，最新的在最下面。需要你決定的事在 1353。
+
+- 2026-09-21 10:30：oikos-3f 當 coordinator。從 main 6296dbd 開了 4 個 worktree（A #1327、B #1347、C #1280、D #1268）。共享狀態放在 `~/Projects/js/oikos-worktrees/crew/`。",low,general,other,150,15,,positive,0.0000,0.1667,0.0833,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+440,440,hackernews,https://www.bloomberg.com/news/articles/2026-09-27/australia-s-deputy-pm-defends-data-security-after-openai-hack,Australia's Deputy PM Defends Data Security After OpenAI Hack,low,general,other,100,10,security,positive,0.3400,0.0000,0.1700,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+531,531,github,https://github.com/griffinwork40/agent-afk/issues/2288,"review: advisory findings from #2253 — daemon per-task working directory
+
+Non-blocking findings from the pre-merge review of #2253 (per-task working directory for scheduled tasks). These were reviewed",low,general,other,100,10,security,positive,0.2218,-0.0308,0.0955,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+805,805,hackernews,https://chiplis.com/ironsmith/,"Hey HN! Tried to show this off a couple times before but didn&#x27;t really get much traction, figured now that more time&#x27;s been spent in the UI&#x2F;UX side of things I&#x27;d give it another sh",low,general,other,50,5,,positive,0.9803,0.1675,0.5739,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+817,817,hackernews,https://engineering.myhoai.com/posts/debugging-postgres-performance-under-row-level-security/,Debugging Postgres Performance Under Row-Level Security,low,general,other,100,10,security,positive,0.3400,0.0000,0.1700,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+855,855,github,https://github.com/Uuriko/project-room/issues/1160,"Claims board (continued from #266)
+
+Project Room issue #266 hit GitHub's 2500-comment cap. This thread continues the claims board from #266.
+
+Protocol grammar: docs/ROOM-PROTOCOL.md (machine-readable ",low,general,other,150,15,,neutral,0.0000,0.0000,0.0000,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1096,1096,github,https://github.com/cds-snc/terraform-modules/issues/150,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",low,general,other,100,10,security,positive,0.9410,0.1084,0.5247,2026-09-29 01:01:02.020198+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1244,1243,hackernews,https://lists.debian.org/debian-security-announce/2026/msg00441.html,Linux Security Update,low,general,other,100,10,security,positive,0.3400,0.0000,0.1700,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1645,1644,github,https://github.com/amaybaum-prod/shopware/issues/225,"register-7.18.9.tgz: 2 vulnerabilities (highest severity is: 5.3) [trunk] (reachable)
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>register-7.18.9.tgz</strong></summary>
+
+babel require hook
+",critical,critical_security_incident,critical_incident,990,100,rce|exploit|cve-|threat|vulnerability|denial of service,negative,-0.9842,-0.3074,-0.6458,2026-09-29 17:01:01.537079+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1017,1017,github,https://github.com/opentok/opentok-rtc/issues/796,"grunt-bower-task-0.5.0.tgz: 7 vulnerabilities (highest severity is: 8.1) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=1",critical,critical_security_incident,critical_incident,950,95,rce|exploit|cve-|vulnerability,negative,-0.8625,-0.0585,-0.4605,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+182,182,github,https://github.com/stlatica/stlatica/issues/479,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.8955,0.1000,-0.3977,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+962,962,github,https://github.com/astruzocyber/CVE/issues/786,"[VULN ALERT] CVE-2026-19949 (risk 51.3) - wordpress/wordpress
+
+**CVE:** CVE-2026-19949
+**Composite risk score:** 51.3/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for methodology)",critical,critical_security_incident,critical_incident,990,100,rce|remote code execution|exploit|cve-|sql injection|attack,positive,0.8559,-0.0074,0.4243,2026-09-29 00:16:12.826275+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1753,1752,github,https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/issues/248,"Code Security Finding: SQL Injection (CWE-89, High Severity) in SqlInjection.java:6423 [main]
+
+# Code Security Finding
+<!-- <SAST-FINDING>e916c5ef-7fc8-4c75-85ec-887df5eebb2d</SAST-FINDING> -->
+<!-- <",critical,critical_security_incident,critical_incident,750,75,rce|sql injection|attack|security|vulnerability,positive,0.5615,0.0319,0.2967,2026-09-29 17:30:59.407283+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+2072,2071,github,https://github.com/iVipz/WebGoat/issues/141,"CVE-2025-69873 (Low) detected in ajv-6.6.2.tgz
+
+## CVE-2025-69873 - Low Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.p",critical,critical_security_incident,critical_incident,990,100,rce|exploit|cve-|attack|security|vulnerability|denial of service,negative,-0.8746,-0.1437,-0.5092,2026-09-29 19:31:00.450997+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1161,1160,github,https://github.com/taiyme/renovate-config/issues/2,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.8770,0.0635,-0.4067,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+307,307,github,https://github.com/deleonio/priority-pilot/issues/79,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Depreca",critical,critical_security_incident,critical_incident,700,70,apt|rce,negative,-0.7206,0.1462,-0.2872,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+870,870,github,https://github.com/aashutoshkumarbhardwaj/CreatorOs/issues/1383,"[Bug] Unimplemented SSRF Protection in URL Controller allows internal network scanning
+
+### Description
+The `controller/url.js` file contains a detailed `validateURL` function designed to prevent Serv",critical,critical_security_incident,critical_incident,650,65,rce|attack|vulnerability,negative,-0.8762,-0.0133,-0.4448,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+939,939,github,https://github.com/grafana/sustainability-o11y/issues/3,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Reposit",critical,critical_security_incident,critical_incident,700,70,apt|rce,negative,-0.9906,0.0354,-0.4776,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+476,476,github,https://github.com/ghc-cloneRepoStaging-scaAndRenovate3/3934_Scott-Berry_0927_114225_ghc_gw2_failed/issues/5,"ejs-2.7.4.tgz: 3 vulnerabilities (highest severity is: 9.8) [main]
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>ejs-2.7.4.tgz</strong></summary>
+
+Embedded JavaScript templates
+
+**Library home ",critical,security_threat,security_threat,800,80,exploit|cve-|threat|vulnerability,negative,-0.9876,-0.1675,-0.5775,2026-09-27 12:46:00.621361+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1996,1995,github,https://github.com/ChoeMinji/react-17.0.2/issues/61,"CVE-2020-7598 (Medium) detected in multiple libraries
+
+## CVE-2020-7598 - Medium Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.9643,-0.4444,-0.7044,2026-09-29 19:00:59.868016+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+2010,2009,github,https://github.com/betterPeleg/WebGoat/issues/244,"CVE-2026-41841 (Medium) detected in spring-webmvc-5.3.4.jar
+
+## CVE-2026-41841 - Medium Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnera",critical,critical_security_incident,critical_incident,990,100,rce|exploit|cve-|attack|vulnerability,negative,-0.8442,-0.2280,-0.5361,2026-09-29 19:00:59.868016+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1261,1260,github,https://github.com/amaybaum-prod/remediate-test/issues/28,"logback-classic-1.1.3.jar: 12 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=2",critical,critical_security_incident,critical_incident,750,75,rce|cve-|vulnerability,negative,-0.8992,0.0280,-0.4356,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+289,289,github,https://github.com/bohanyt/github-runner-local/issues/1,"GRL-000 — Control Tower, authority, claims, and project continuity
+
+## Purpose
+Durable coordination thread for **github-runner-local**, a public Windows wizard product for setting up a locally owned G",critical,critical_security_incident,critical_incident,800,80,apt|rce,negative,-0.9128,0.0696,-0.4216,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1432,1431,github,https://github.com/Kings-World/fabric-mod/issues/46,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",critical,critical_security_incident,critical_incident,600,60,rce|security|vulnerability,negative,-0.9790,-0.0938,-0.5364,2026-09-29 15:46:01.16417+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1184,1183,github,https://github.com/brentkelly/t3code-orchestrator/issues/136,"[Bug] Forge-supplied PR baseRef reaches git pull/fetch argv unvalidated — the card base-branch path is guarded, this one is not
+
+## Summary
+
+After a board card's PR merges, the local base branch is ad",critical,critical_security_incident,critical_incident,650,65,rce|exploit,negative,-0.5223,-0.0839,-0.3031,2026-09-29 01:36:59.322755+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+705,705,github,https://github.com/salsita/nodejs-modules/issues/239,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.9283,0.0000,0.4642,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1006,1006,github,https://github.com/aofdev/vscode-cointy/issues/47,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7657,0.1944,0.4801,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+880,880,github,https://github.com/KoalaFacts/HeroCrypt/issues/100,"Triage remaining code-scanning alerts on main
+
+## Context
+After #94 merged, the default branch has no open Dependabot alerts, but GitHub code scanning still reports 36 open alerts (checked 2026-09-28)",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.6976,0.0761,0.3868,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+567,567,github,https://github.com/alperien/chy/issues/2788,"repo-sync: build failed: sharutils
+
+The build gate held sharutils: it failed to build.
+
+package: sharutils
+void commit: cf0c605184
+blamed by the log: sharutils
+
+last 30 lines:
+
+```
+-> order sharutils",high,security_threat,security_threat,450,45,cve-,negative,-0.9393,-0.0833,-0.5113,2026-09-27 13:31:00.388161+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1694,1693,github,https://github.com/Cognigy/Cognigy-CLI/issues/515,"Renovate Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+#",high,critical_security_incident,critical_incident,450,45,rce,negative,-0.9792,0.2001,-0.3895,2026-09-29 17:15:59.183316+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+187,187,github,https://github.com/getopenpost/openpost/issues/280,"bug: get-analytics-overview is missing from the api:read automation catalogue
+
+## Description
+
+`GET /api/v1/analytics` already exists as the `get-analytics-overview` operation, but the operation is no",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.6112,0.1194,0.3653,2026-09-25 19:01:00.217315+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+846,846,github,https://github.com/mrsimpson/quiet-shell-mcp/issues/6,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4579,0.0926,0.2752,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+578,578,github,https://github.com/cozystack/cozystack/issues/4529,"harbor: Trivy is OOM-killed on its first scan with the default t1.nano preset
+
+Harbor's Trivy scanner is OOM-killed on its first scan with the default resources. The Harbor app defaults `trivy.resourc",high,critical_security_incident,critical_incident,400,40,rce|vulnerability,positive,0.8020,0.1669,0.4845,2026-09-27 13:31:00.388161+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1365,1364,github,https://github.com/NVIDIA/garak/issues/2248,"datasets pinned <4.0 blocks fix for CVE-2026-66007 (path traversal), same in 0.17.0
+
+garak's dependency spec pins `datasets>=3.0.0,<4.0` (both `pyproject.toml` and `requirements.txt`). This is unchang",high,security_threat,security_threat,400,40,cve-,negative,-0.5209,0.0667,-0.2271,2026-09-29 15:16:00.325203+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1601,1600,github,https://github.com/resend/resend-react-email-edge/issues/5,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.8877,0.0000,0.4439,2026-09-29 16:45:59.554598+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+398,398,github,https://github.com/LanternOps/breeze/issues/7028,"Drop notification_channels.config (contract step of #6379)
+
+Contract step of #6379 (expand step: PR #6993). Ship in the release **after** the one that carries #6993, so an image rollback across that r",high,security_threat,security_threat,400,40,exploit,negative,-0.9541,0.2040,-0.3750,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+921,921,github,https://github.com/RocketsAreNostalgic/ran-booster-github-provider/issues/28,"templates: implement initial-setup-only API-3 consumer
+
+## Ownership and start gate
+
+Consumer work package **A** in **RocketsAreNostalgic/.github#81**, within .github#47. Coordinate with .github#55 (p",high,critical_security_incident,critical_incident,400,40,rce|security,positive,0.1906,0.0104,0.1005,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+912,912,github,https://github.com/bpk68/react-visual-query-builder/issues/218,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7073,0.1032,0.4053,2026-09-28 23:46:07.708715+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+438,438,github,https://github.com/louise-davies/scigateway/issues/12,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,550,55,apt|rce,positive,0.6903,0.1352,0.4127,2026-09-27 04:01:01.424567+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+51,51,exploit-db,https://www.exploit-db.com/exploits/52682,"CVE-2026-80428 Unauthenticated PHP Object Injection via Shibboleth - ILIAS &lt; 9.22, 10.0 &lt; 10.10, 11.0 &lt; 11.3 - RCE",high,critical_security_incident,critical_incident,500,50,rce|cve-,neutral,0.0000,0.0000,0.0000,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+508,508,github,https://github.com/opentoucan/memer/issues/3,"Renovate Dashboard 🤖
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Open
+
+T",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.4885,0.2036,0.3460,2026-09-27 13:01:00.584483+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1073,1073,github,https://github.com/winjs-dev/cloud-utils/issues/14,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",high,critical_security_incident,critical_incident,450,45,rce|security|vulnerability,positive,0.7714,0.1514,0.4614,2026-09-29 00:46:06.870479+00,falso_positivo,no_aplica,Reconmendaciones para usar Renovate.,ambiguo,no_aplica,Muestra posbile documentacion de una app pero se puede interpretar como una ameza por la manera en que figura el mensaje.,ambiguo,no_aplica,No se puede determinar con certeza la finalidad del mensaje.
+771,771,github,https://github.com/openclaw/openclaw/issues/159897,"[Bug]: Stale managed-update handoff lease from a dead triage run blocks all updates; update repair does not clear it (Windows, 2026.9.5)
+
+### Summary
+A `triage` action left a lease in `managed-update",medium,general,other,200,20,,negative,-0.7209,-0.1638,-0.4424,2026-09-27 21:30:59.439333+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+120,120,github,https://github.com/natarajanganapathi/GHAW/issues/147,"[aw] Dependabot Vulnerability To Jira Sync failed
+
+### Workflow Failure
+
+**Workflow:** [Dependabot Vulnerability To Jira Sync](https://github.com/natarajanganapathi/GHAW/blob/main/.github/workflows/de",medium,general,other,300,30,vulnerability,negative,-0.9752,-0.0975,-0.5364,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1769,1768,github,https://github.com/tdsoftpl/cool-stack/issues/4,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.9324,0.1250,0.5287,2026-09-29 17:45:59.40509+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+87,87,exploit-db,https://www.exploit-db.com/exploits/52646,Duplicati 2.2.0.3 - JWT Signing Key Leak,medium,general,other,200,20,,negative,-0.3400,0.0000,-0.1700,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+823,823,hackernews,https://arxiv.org/abs/2608.13685,Weird Machines in Transport Layer Security,medium,general,other,250,25,security,negative,0.1779,-0.5000,-0.1610,2026-09-28 22:46:00.557288+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1770,1769,github,https://github.com/relative-ci/compare/issues/254,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.4931,0.2500,0.3715,2026-09-29 17:45:59.40509+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1289,1288,github,https://github.com/nats-io/nats-general/issues/112,"[CNCF TOC] Security response role assignment documentation
+
+## CNCF TOC Graduation Due Diligence - Required remediation
+
+Ref: https://github.com/cncf/toc/issues/2042
+
+## Recommended repo
+
+`nats-io/nat",medium,general,other,200,20,security|vulnerability,positive,0.9740,0.0550,0.5145,2026-09-29 14:46:00.383077+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+1014,1014,github,https://github.com/github/gh-aw/issues/64112,"[aw] Smoke Temporary ID reported incomplete result
+
+### Workflow Failure
+
+**Workflow:** [Smoke Temporary ID](https://github.com/github/gh-aw/blob/main/.github/workflows/smoke-temporary-id.md)  
+**Bran",medium,general,other,200,20,,negative,-0.8793,-0.1718,-0.5256,2026-09-29 00:31:17.520022+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+305,305,github,https://github.com/Danathar/atomic-image-builder/issues/11,"🐝 Hive Advisory Report
+
+This issue collects advisory findings from Hive agents.
+
+At lower ACMM levels, some agents work in advisory mode — they analyze code and post findings here but do not create is",medium,general,other,250,25,,negative,-0.4255,0.0562,-0.1846,2026-09-27 03:16:03.27469+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+710,710,github,https://github.com/aigovsensing/ai-suit-sensing/issues/194,"AI학습데이터 저작권 소송 모니터링 (2026-09-27 Sun)
+
+## 📋 자동 수집 리포트
+
+이 이슈에는 자동 수집된 리포트가 댓글로 누적됩니다.
+
+---
+
+## 📡 데이터 수집 출처
+
+| 출처 | 설명 |
+|------|------|
+| **Google News RSS** | Google News에서 제공하는 RSS(Really Simple Syndi",medium,general,other,250,25,,negative,-0.9829,0.0567,-0.4631,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+535,535,github,https://github.com/YuKongA/ghostlock-app/issues/179,"Confirmed compatibility with Poco X7 Pro and Xiaomi Pad 7
+
+Tried the exploit on both and worked just fine.",medium,security_threat,security_threat,250,25,exploit,positive,0.1027,0.4083,0.2555,2026-09-27 13:16:02.855775+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+943,943,github,https://github.com/rshade/mcp-devtools-server/issues/11,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",medium,critical_security_incident,critical_incident,300,30,rce,positive,0.7556,0.1265,0.4410,2026-09-29 00:01:02.634313+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+704,704,github,https://github.com/TanStack/devtools/issues/158,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View th",low,general,other,50,5,,positive,0.8580,0.2467,0.5523,2026-09-27 14:11:48.081401+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+223,223,github,https://github.com/aj3423/SpamBlocker/issues/664,"Testers wanted for ""Google Closed Testing""
+
+We are publishing it on Google Play, it needs to be tested by 20 users for at least 14 days.
+If you have Google Play installed, please help, thank you.
+
+The",low,general,other,100,10,,positive,0.9349,-0.0659,0.4345,2026-09-25 19:16:00.709394+00,correcto,si,S/N,ambiguo,no,No se puede saber con certeza si es o no una busqueda de un testing.,ambiguo,no,El hecho de que realicen publicaciones para puestos de trabajo en los cuales solicitan información de la persona de informal puede comprometer su seguridad.
+80,80,exploit-db,https://www.exploit-db.com/exploits/52653,Linuxfabrik monitoring_plugins_6.0.0 - SSRF,low,general,other,50,5,,neutral,0.0000,0.0000,0.0000,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N
+86,86,exploit-db,https://www.exploit-db.com/exploits/52647,Nmap  7.99  - Extension Header Integer Underflow,low,general,other,50,5,,neutral,0.0000,0.0000,0.0000,2026-09-25 18:48:12.237765+00,correcto,si,S/N,correcto,si,S/N,correcto,si,S/N

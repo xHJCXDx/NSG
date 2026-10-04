@@ -1,0 +1,17 @@
+ mentions_in_fault_window 
+--------------------------
+                       37
+(1 row)
+
+ sentiment_label | final_sentiment_score | confidence_score | count 
+-----------------+-----------------------+------------------+-------
+ neutral         |                0.0000 |            0.500 |    37
+(1 row)
+
+ criticality_level | count 
+-------------------+-------
+ high              |     2
+ low               |    12
+ medium            |    23
+(3 rows)
+

@@ -1,0 +1,43 @@
+2026-10-03 21:15:42,031 - INFO - Analysis complete: label=positive, confidence=0.738
+2026-10-03 21:15:42,037 - INFO - Analysis complete: label=negative, confidence=0.751
+2026-10-03 21:15:42,042 - INFO - Analysis complete: label=positive, confidence=0.756
+2026-10-03 21:15:42,052 - INFO - Analysis complete: label=positive, confidence=0.587
+2026-10-03 21:15:42,057 - INFO - Analysis complete: label=positive, confidence=0.779
+2026-10-03 21:15:42,063 - INFO - Analysis complete: label=positive, confidence=0.702
+2026-10-03 21:15:42,069 - INFO - Analysis complete: label=positive, confidence=0.837
+2026-10-03 21:15:42,077 - INFO - Analysis complete: label=positive, confidence=0.672
+2026-10-03 21:15:42,087 - INFO - Analysis complete: label=positive, confidence=0.530
+2026-10-03 21:15:42,093 - INFO - Analysis complete: label=positive, confidence=0.744
+2026-10-03 21:15:42,101 - INFO - Analysis complete: label=negative, confidence=0.505
+2026-10-03 21:15:42,109 - INFO - Analysis complete: label=positive, confidence=0.715
+2026-10-03 21:15:42,115 - INFO - Analysis complete: label=positive, confidence=0.851
+2026-10-03 21:15:42,121 - INFO - Analysis complete: label=positive, confidence=0.715
+2026-10-03 21:15:42,126 - INFO - Analysis complete: label=negative, confidence=0.623
+2026-10-03 21:15:42,135 - INFO - Analysis complete: label=positive, confidence=0.561
+2026-10-03 21:15:42,138 - INFO - Analysis complete: label=neutral, confidence=0.908
+2026-10-03 21:15:42,142 - INFO - Analysis complete: label=negative, confidence=0.648
+2026-10-03 21:15:42,149 - INFO - Analysis complete: label=negative, confidence=0.490
+2026-10-03 21:15:42,155 - INFO - Analysis complete: label=negative, confidence=0.557
+2026-10-03 21:15:42,160 - INFO - Analysis complete: label=negative, confidence=0.959
+2026-10-03 21:15:42,165 - INFO - Analysis complete: label=positive, confidence=0.623
+2026-10-03 21:15:42,169 - INFO - Analysis complete: label=negative, confidence=0.853
+2026-10-03 21:15:42,178 - INFO - Analysis complete: label=negative, confidence=0.568
+2026-10-03 21:15:42,185 - INFO - Analysis complete: label=negative, confidence=0.543
+2026-10-03 21:15:42,190 - INFO - Analysis complete: label=negative, confidence=0.761
+2026-10-03 21:15:42,199 - INFO - Analysis complete: label=negative, confidence=0.647
+2026-10-03 21:15:42,206 - INFO - Analysis complete: label=positive, confidence=0.762
+2026-10-03 21:15:42,212 - INFO - Analysis complete: label=positive, confidence=0.752
+2026-10-03 21:15:42,222 - INFO - Analysis complete: label=negative, confidence=0.593
+2026-10-03 21:15:42,228 - INFO - Analysis complete: label=positive, confidence=0.552
+2026-10-03 21:15:42,236 - INFO - Analysis complete: label=positive, confidence=0.579
+2026-10-03 21:15:42,245 - INFO - Analysis complete: label=positive, confidence=0.504
+2026-10-03 21:15:42,253 - INFO - Analysis complete: label=negative, confidence=0.673
+2026-10-03 21:15:42,261 - INFO - Analysis complete: label=positive, confidence=0.516
+[2026-10-03 21:24:22 +0000] [1] [INFO] Handling signal: term
+[2026-10-03 21:24:22 +0000] [7] [INFO] Worker exiting (pid: 7)
+[2026-10-03 21:24:22 +0000] [1] [INFO] Shutting down: Master
+[2026-10-03 21:24:43 +0000] [1] [INFO] Starting gunicorn 26.2.0
+[2026-10-03 21:24:43 +0000] [1] [INFO] Listening at: http://0.0.0.0:5000 (1)
+[2026-10-03 21:24:43 +0000] [1] [INFO] Using worker: sync
+[2026-10-03 21:24:43 +0000] [7] [INFO] Booting worker with pid: 7
+[2026-10-03 21:24:43 +0000] [1] [INFO] Control socket listening at /home/appuser/.gunicorn/gunicorn.ctl

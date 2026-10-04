@@ -46,7 +46,6 @@ async def proxy_webhook(
                 content=body,
                 headers={
                     "Content-Type": request.headers.get("Content-Type", "application/json"),
-                    **({"X-Webhook-Secret": settings.WEBHOOK_SECRET} if settings.WEBHOOK_SECRET else {}),
                 },
             )
         except httpx.HTTPError:

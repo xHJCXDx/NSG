@@ -45,7 +45,7 @@ describe('loginWithCredentials', () => {
     await expect(loginWithCredentials('admin', 'wrong-password')).rejects.toMatchObject(new LoginError('rate_limited'));
   });
 
-  it('maps backend failures to a service unavailable login error code', async () => {
+  it('maps server failures to a service unavailable login error code', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,
       status: 503,

@@ -16,6 +16,9 @@ export interface ThreatReviewRequest {
   review_status: ThreatReviewStatus;
   review_notes?: string;
   remediation_status?: ThreatRemediationStatus;
+  threat_type?: string;
+  threat_category?: string;
+  criticality_level?: ThreatSeverity;
 }
 
 export interface RelatedMention {
@@ -42,6 +45,15 @@ export interface Threat {
   reviewedAt?: string | null;
   reviewNotes?: string | null;
   remediationStatus?: ThreatRemediationStatus | null;
+  alert?: ThreatAlertSummary | null;
+}
+
+export interface ThreatAlertSummary {
+  alertId: number;
+  acknowledged: boolean;
+  acknowledgedBy?: string | null;
+  acknowledgedAt?: string | null;
+  deliveryStatus?: string | null;
 }
 
 export interface RawRelatedMention {
@@ -82,6 +94,15 @@ export interface RawThreat {
   reviewed_at?: string | null;
   review_notes?: string | null;
   remediation_status?: string | null;
+  alert?: RawThreatAlertSummary | null;
+}
+
+export interface RawThreatAlertSummary {
+  alert_id?: number | string;
+  acknowledged?: boolean | null;
+  acknowledged_by?: string | null;
+  acknowledged_at?: string | null;
+  delivery_status?: string | null;
 }
 
 export interface RawThreatsResponse {

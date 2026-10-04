@@ -43,6 +43,16 @@ class RelatedMentionResponse(BaseModel):
     platform: Optional[str] = None
 
 
+class AlertSummaryResponse(BaseModel):
+    """Alert acknowledgement metadata embedded in threat list responses."""
+
+    alert_id: int
+    acknowledged: bool = False
+    acknowledged_by: Optional[str] = None
+    acknowledged_at: Optional[datetime] = None
+    delivery_status: Optional[str] = None
+
+
 class ThreatListResponse(ThreatListItem):
     """Threat list item shaped for the current frontend contract."""
 
@@ -50,6 +60,9 @@ class ThreatListResponse(ThreatListItem):
     detection_rules_triggered: Optional[list[str]] = None
     contextual_notes: Optional[str] = None
     related_mention: Optional[RelatedMentionResponse] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    alert: Optional[AlertSummaryResponse] = None
 
 
 class ThreatDetail(BaseModel):
@@ -104,6 +117,9 @@ class ThreatReviewRequest(BaseModel):
     review_status: ThreatReviewStatus
     review_notes: Optional[str] = None
     remediation_status: Optional[ThreatRemediationStatus] = None
+    threat_type: Optional[str] = None
+    threat_category: Optional[str] = None
+    criticality_level: Optional[ThreatCriticalityLevel] = None
 
 
 class PaginatedThreatsResponse(BaseModel):

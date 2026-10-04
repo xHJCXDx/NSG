@@ -147,7 +147,7 @@ describe('fetchThreatsBySeverity', () => {
 
     await expect(fetchThreatsBySeverity('fake-jwt')).resolves.toEqual(data);
 
-    expect(fetchMock).toHaveBeenCalledWith(THREATS_BY_SEVERITY_ENDPOINT, {
+    expect(fetchMock).toHaveBeenCalledWith(`${THREATS_BY_SEVERITY_ENDPOINT}?days=30`, {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });
@@ -176,7 +176,7 @@ describe('fetchPlatformDistribution', () => {
 
     await expect(fetchPlatformDistribution('fake-jwt')).resolves.toEqual(data);
 
-    expect(fetchMock).toHaveBeenCalledWith(PLATFORM_DISTRIBUTION_ENDPOINT, {
+    expect(fetchMock).toHaveBeenCalledWith(`${PLATFORM_DISTRIBUTION_ENDPOINT}?days=30`, {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });
@@ -205,7 +205,7 @@ describe('fetchThreatCategories', () => {
 
     await expect(fetchThreatCategories('fake-jwt')).resolves.toEqual(data);
 
-    expect(fetchMock).toHaveBeenCalledWith(THREAT_CATEGORIES_ENDPOINT, {
+    expect(fetchMock).toHaveBeenCalledWith(`${THREAT_CATEGORIES_ENDPOINT}?days=30`, {
       headers: { Authorization: 'Bearer fake-jwt' },
     });
   });

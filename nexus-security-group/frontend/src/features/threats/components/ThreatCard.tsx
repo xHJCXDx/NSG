@@ -98,6 +98,9 @@ export function ThreatCard({ threat }: ThreatCardProps) {
   const evidence = threat.evidence ?? [];
   const visibleEvidence = evidenceExpanded ? evidence : evidence.slice(0, EVIDENCE_VISIBLE_LIMIT);
   const hasMoreEvidence = evidence.length > EVIDENCE_VISIBLE_LIMIT;
+  const alert = threat.alert;
+  const hasAlertData = Boolean(alert);
+  const alertAcknowledged = alert?.acknowledged === true;
 
   const summary = stripMarkdown(threat.summary ?? '');
   const summaryTruncated = summary.length > SUMMARY_TRUNCATE_LENGTH && !summaryExpanded;
@@ -107,13 +110,13 @@ export function ThreatCard({ threat }: ThreatCardProps) {
     <article className={`glass-card p-5 space-y-4 border-l-4 ${border}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-wide text-brand-400 font-semibold">{threat.type}</p>
-          <h2 className="mt-1 text-xl font-bold text-content-heading">{threat.category ?? t.threats.card.fallbackCategory}</h2>
+          <p className="text-sm uppercase tracking-wide text-brand-400 font-semibold">{t.threats.classifications[threat.type] ?? threat.type.replace(/_/g, ' ')}</p>
+          <h2 className="mt-1 text-xl font-bold text-content-heading">{(threat.category && t.threats.categories[threat.category]) ?? threat.category ?? t.threats.card.fallbackCategory}</h2>
           <p className="text-xs text-content-muted">{t.threats.card.detectedLabel}: {timeAgo(threat.detectedAt, t.threats.card.unknownDate)}</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${badge}`}>
-            {threat.severity}
+            {t.threats.severityLabels[threat.severity] ?? threat.severity}
           </span>
           <span className="rounded-full border border-edge px-3 py-1 text-xs text-content-secondary">
             {t.threats.card.confidenceLabel} {formatPercent(threat.confidence)}
@@ -126,6 +129,15 @@ export function ThreatCard({ threat }: ThreatCardProps) {
           <span className={`rounded-full border px-3 py-1 text-xs font-medium ${REVIEW_STATUS_BADGE[threat.reviewStatus]}`}>
             {t.analytics.reviewStatus[threat.reviewStatus]}
           </span>
+          {hasAlertData && (
+            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+              alertAcknowledged
+                ? 'border-green-400/30 bg-green-500/10 text-green-200'
+                : 'border-red-400/30 bg-red-500/10 text-red-200'
+            }`}>
+              {alertAcknowledged ? t.threats.card.alertAcknowledged : t.threats.card.alertActive}
+            </span>
+          )}
         </div>
       </div>
 
@@ -203,11 +215,42 @@ export function ThreatCard({ threat }: ThreatCardProps) {
       </div>
 
       {/* Review info + expandable panel */}
+      {hasAlertData && (
+        <div className={`rounded-xl border px-3 py-2 text-sm ${
+          alertAcknowledged
+            ? 'border-green-400/20 bg-green-500/5 text-green-100'
+            : 'border-red-400/20 bg-red-500/5 text-red-100'
+        }`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">
+              {alertAcknowledged ? t.threats.card.alertAcknowledged : t.threats.card.alertActive}
+            </span>
+            <span className="text-xs text-content-muted">#{alert?.alertId}</span>
+            {alert?.deliveryStatus && (
+              <span className="text-xs text-content-muted">{t.threats.card.alertDeliveryStatus}: {alert.deliveryStatus}</span>
+            )}
+          </div>
+          {alertAcknowledged && (
+            <p className="mt-1 text-xs text-content-muted">
+              {t.threats.card.alertAcknowledgedBy} {alert?.acknowledgedBy ?? t.threats.card.unknownUser}
+              {alert?.acknowledgedAt ? ` · ${new Date(alert.acknowledgedAt).toLocaleString()}` : ''}
+            </p>
+          )}
+        </div>
+      )}
+
       {threat.reviewedBy && !reviewExpanded && (
-        <p className="text-xs text-content-muted">
-          {t.threats.review.reviewedBy} {threat.reviewedBy}
-          {threat.reviewedAt && <> · {new Date(threat.reviewedAt).toLocaleString()}</>}
-        </p>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-400" />
+            {t.threats.review.reviewedBy} {threat.reviewedBy}
+          </span>
+          {threat.reviewedAt && (
+            <span className="text-xs text-content-muted">
+              {new Date(threat.reviewedAt).toLocaleString()}
+            </span>
+          )}
+        </div>
       )}
 
       {canWrite && (

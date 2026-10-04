@@ -1,0 +1,201 @@
+sample_id,mention_id,source,evaluador,pertinencia_evaluador,criticidad_evaluador,confianza_evaluador,criticidad_sistema_corregida,risk_score_sistema_corregido,keywords_sistema_corregidas,criticidad_original,acuerdo_criticidad_exacta,acuerdo_banda_alerta,diferencia_nivel_evaluador_menos_sistema,observacion_evaluador
+REV46-NEW-BLIND-001,2,hackernews,Lucas,parcial,low,alta,low,10,security,low,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-001,2,hackernews,Tomas,si,low,alta,low,10,security,low,true,true,0,"Funcionalidad de seguridad web; es pertinente al tema, pero no describe una vulnerabilidad o incidente activo."
+REV46-NEW-BLIND-002,32,hackernews,Lucas,parcial,low,alta,low,15,security,low,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-002,32,hackernews,Tomas,si,medium,media,low,15,security,low,false,true,1,"Trata riesgos de seguridad asociados a IA y una advertencia ante un organismo internacional; es relevante, aunque de carácter estratégico."
+REV46-NEW-BLIND-003,48,hackernews,Lucas,parcial,low,alta,low,10,security,low,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-003,48,hackernews,Tomas,si,high,alta,low,10,security,low,false,false,2,Aborda directamente el límite de seguridad de contenedores y su posible ruptura como boundary.
+REV46-NEW-BLIND-004,150,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-004,150,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,"Dashboard de dependencias; puede aportar a seguridad de cadena de suministro, pero el texto visible se centra en mantenimiento."
+REV46-NEW-BLIND-005,151,hackernews,Lucas,no,no_aplica,alta,medium,25,compromised,medium,false,true,,Texto fuera de contexto de ciberseguridad/vulnerabilidades técnicas.
+REV46-NEW-BLIND-005,151,hackernews,Tomas,si,high,alta,medium,25,compromised,medium,false,false,1,Describe el compromiso de una plataforma y de unas 12.000 cuentas; incidente de seguridad claramente relevante.
+REV46-NEW-BLIND-006,201,github,Lucas,si,medium,media,low,15,incident,medium,false,true,1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-006,201,github,Tomas,parcial,low,media,low,15,incident,medium,true,true,0,"Implementación de un canal de Telegram; puede involucrar seguridad de integración, pero el contenido principal es funcional."
+REV46-NEW-BLIND-007,224,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-007,224,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,Gestión de actualizaciones de dependencias sin evidencia explícita de una vulnerabilidad concreta.
+REV46-NEW-BLIND-008,225,github,Lucas,si,critical,media,medium,20,,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-008,225,github,Tomas,parcial,low,media,medium,20,,critical,false,true,-1,Dashboard de Renovate y problemas de actualización; relación indirecta con seguridad de dependencias.
+REV46-NEW-BLIND-009,233,github,Lucas,si,medium,media,low,5,,medium,false,true,1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-009,233,github,Tomas,no,no_aplica,alta,low,5,,medium,false,true,,Contenido centrado en scoring y recomendaciones de trading; no se observa un asunto de ciberseguridad.
+REV46-NEW-BLIND-010,268,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-010,268,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,Deprecaciones y reemplazos de dependencias; relevancia indirecta para mantenimiento y riesgo de software.
+REV46-NEW-BLIND-011,325,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-011,325,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,"Dependencias deprecadas/abandonadas; riesgo potencial de mantenimiento, pero sin vulnerabilidad concreta."
+REV46-NEW-BLIND-012,346,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-012,346,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,Mantenimiento de dependencias y estado de CI; relación indirecta con seguridad de software.
+REV46-NEW-BLIND-013,360,github,Lucas,si,critical,media,medium,20,,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-013,360,github,Tomas,parcial,low,media,medium,20,,critical,false,true,-1,"Dependencias deprecadas; puede afectar superficie de riesgo, pero no presenta una amenaza concreta."
+REV46-NEW-BLIND-014,369,github,Lucas,si,critical,media,high,40,,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-014,369,github,Tomas,no,no_aplica,alta,high,40,,critical,false,false,,"Describe un proyecto/aplicación open source y decisiones de dominio, sin hallazgo de seguridad identificable."
+REV46-NEW-BLIND-015,377,github,Lucas,si,critical,media,low,10,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-015,377,github,Tomas,si,high,alta,low,10,,medium,false,false,2,"Incluye artefactos firmados, onboarding de Azure y restricciones sobre descargas; hay controles de seguridad relevantes."
+REV46-NEW-BLIND-016,382,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-016,382,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,Dashboard de dependencias; la pertinencia de seguridad depende de los paquetes concretos y no se evidencia un hallazgo.
+REV46-NEW-BLIND-017,383,github,Lucas,si,critical,media,high,45,cve-|security,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-017,383,github,Tomas,si,high,alta,high,45,cve-|security,critical,true,true,0,CVE-2026-84445 con severidad High y DoS en gRPC; vulnerabilidad explícita y accionable.
+REV46-NEW-BLIND-018,428,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-018,428,github,Tomas,parcial,low,alta,low,5,,medium,true,true,0,"Dashboard declara que no encontró CVEs; es contexto de seguridad de dependencias, pero no un hallazgo."
+REV46-NEW-BLIND-019,449,github,Lucas,si,critical,media,high,40,,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-019,449,github,Tomas,no,no_aplica,alta,high,40,,critical,false,false,,"Registro operativo de gestión de ramas y repositorio, sin contenido de seguridad sustantivo."
+REV46-NEW-BLIND-020,465,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-020,465,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,"Dashboard de dependencias; posible relación con supply-chain security, sin hallazgo explícito en el fragmento."
+REV46-NEW-BLIND-021,479,github,Lucas,si,critical,media,critical,100,remote code execution|exploit|cve-|threat|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-021,479,github,Tomas,si,critical,alta,critical,100,remote code execution|exploit|cve-|threat|vulnerability,critical,true,true,0,Incluye cinco vulnerabilidades con máximo CVSS 9.8 en una dependencia alcanzable; riesgo crítico explícito.
+REV46-NEW-BLIND-022,518,github,Lucas,si,critical,media,low,10,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-022,518,github,Tomas,no,no_aplica,alta,low,10,,medium,false,true,,Organización de un workstream de noticias y despliegues; no contiene un problema de seguridad sustantivo.
+REV46-NEW-BLIND-023,530,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-023,530,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,Dashboard de Renovate; mantenimiento de dependencias sin vulnerabilidad explícita en el contenido evaluado.
+REV46-NEW-BLIND-024,538,github,Lucas,si,medium,media,medium,20,security|vulnerability,medium,true,true,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-024,538,github,Tomas,si,medium,alta,medium,20,security|vulnerability,medium,true,true,0,"Documenta decisiones de seguridad, ejecución no-root, escaneo de vulnerabilidades, dependencias y SBOM."
+REV46-NEW-BLIND-025,548,github,Lucas,parcial,low,media,low,5,,medium,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-025,548,github,Tomas,si,high,media,low,5,,medium,false,false,2,"Flujo de pairing desde una interfaz autenticada; afecta autenticación/autorización y superficie de acceso, aunque es una funcionalidad."
+REV46-NEW-BLIND-026,593,github,Lucas,parcial,low,media,medium,25,security,medium,false,true,-1,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-026,593,github,Tomas,si,critical,alta,medium,25,security,medium,false,false,2,Fallo de bootstrap de RBAC que puede conceder ownership sin identidad configurada; afecta control de acceso.
+REV46-NEW-BLIND-027,595,github,Lucas,parcial,low,media,low,5,,low,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-027,595,github,Tomas,parcial,low,media,low,5,,low,true,true,0,Actualizaciones de Python y dependencias mediante Renovate; relación indirecta con mantenimiento seguro.
+REV46-NEW-BLIND-028,600,github,Lucas,si,critical,media,high,45,attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-028,600,github,Tomas,si,critical,alta,high,45,attack|security|vulnerability,critical,false,true,1,Hallazgo confirmado de manipulación de rutas con severidad Critical; vulnerabilidad directa.
+REV46-NEW-BLIND-029,673,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-029,673,github,Tomas,no,no_aplica,media,medium,20,security|vulnerability,high,false,true,,"El contenido se centra en reconciliación de metadatos del repositorio y configuración de GitHub, sin un hallazgo de seguridad claro."
+REV46-NEW-BLIND-030,681,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-030,681,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,Dashboard de dependencias/deprecaciones; relevancia indirecta para riesgo de software.
+REV46-NEW-BLIND-031,693,github,Lucas,si,critical,media,high,40,,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-031,693,github,Tomas,parcial,medium,media,high,40,,critical,false,false,-1,"Control de etapas y evidencias de un proceso automatizado; tiene implicaciones de integridad/gobernanza, pero no es un hallazgo de seguridad directo."
+REV46-NEW-BLIND-032,718,github,Lucas,si,critical,media,medium,20,,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-032,718,github,Tomas,parcial,low,media,medium,20,,high,false,true,-1,"Problemas de Renovate y dependencias abandonadas; riesgo potencial de mantenimiento, no vulnerabilidad concreta."
+REV46-NEW-BLIND-033,721,github,Lucas,si,critical,media,high,50,exploit|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-033,721,github,Tomas,si,critical,alta,high,50,exploit|security|vulnerability,critical,false,true,1,"Reporta 9 vulnerabilidades de npm, 8 High y 1 Critical; el hallazgo es explícitamente de seguridad."
+REV46-NEW-BLIND-034,732,github,Lucas,no,no_aplica,alta,low,10,,low,false,true,,Texto fuera de contexto de ciberseguridad/vulnerabilidades técnicas.
+REV46-NEW-BLIND-034,732,github,Tomas,no,no_aplica,alta,low,10,,low,false,true,,Funcionalidad de notificaciones para descargas de Sonarr/Radarr; no se identifica un riesgo de seguridad.
+REV46-NEW-BLIND-035,852,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-035,852,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,"Dashboard de dependencias; posible relevancia de supply chain, pero sin hallazgo concreto en el contenido."
+REV46-NEW-BLIND-036,921,github,Lucas,si,critical,media,low,15,security,high,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-036,921,github,Tomas,no,no_aplica,alta,low,15,security,high,false,true,,Implementación de un consumidor/API y flujo de trabajo; no se identifica un asunto de seguridad principal.
+REV46-NEW-BLIND-037,957,github,Lucas,si,critical,media,high,45,cve-|privilege escalation,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-037,957,github,Tomas,si,high,alta,high,45,cve-|privilege escalation,critical,true,true,0,Alerta CVE con CVSS 7.2 y evaluación de riesgo; vulnerabilidad de seguridad explícita.
+REV46-NEW-BLIND-038,968,github,Lucas,si,critical,media,medium,20,,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-038,968,github,Tomas,parcial,low,media,medium,20,,high,false,true,-1,Deprecaciones/reemplazos de dependencias; relación indirecta con seguridad de software.
+REV46-NEW-BLIND-039,984,github,Lucas,parcial,low,media,medium,30,security,medium,false,true,-1,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-039,984,github,Tomas,si,high,alta,medium,30,security,medium,false,false,1,Hilo explícitamente orientado a activación de producción y hardening/assurance; seguridad operacional es parte central.
+REV46-NEW-BLIND-040,1016,github,Lucas,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-040,1016,github,Tomas,si,critical,alta,critical,70,exploit|cve-|vulnerability,critical,true,true,0,15 vulnerabilidades alcanzables con máxima severidad 9.1; exposición directa de dependencias vulnerables.
+REV46-NEW-BLIND-041,1020,github,Lucas,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-041,1020,github,Tomas,si,critical,alta,critical,70,exploit|cve-|vulnerability,critical,true,true,0,"9 vulnerabilidades, máxima severidad 9.8, aunque marcadas como no alcanzables; sigue siendo un hallazgo de seguridad, con menor exposición práctica."
+REV46-NEW-BLIND-042,1029,github,Lucas,si,medium,media,medium,20,,high,true,true,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-042,1029,github,Tomas,no,no_aplica,alta,medium,20,,high,false,true,,Problema de renderizado de templates en Django sin evidencia de impacto de seguridad en el texto.
+REV46-NEW-BLIND-043,1066,github,Lucas,si,critical,media,medium,25,cve-,medium,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-043,1066,github,Tomas,si,critical,alta,medium,25,cve-,medium,false,false,2,Base image con 50 CVEs High/Critical y 12 sin parche; hallazgo de seguridad de infraestructura claramente relevante.
+REV46-NEW-BLIND-044,1067,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-044,1067,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,Dashboard de dependencias y configuración de Renovate; sin vulnerabilidad concreta.
+REV46-NEW-BLIND-045,1082,github,Lucas,si,medium,media,high,45,security|vulnerability|denial of service,high,false,false,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-045,1082,github,Tomas,si,high,alta,high,45,security|vulnerability|denial of service,high,true,true,0,Vulnerabilidad de memoria use-after-return en libpng al procesar entradas malformadas.
+REV46-NEW-BLIND-046,1099,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-046,1099,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,Dashboard de dependencias; relación indirecta con seguridad de supply chain.
+REV46-NEW-BLIND-047,1101,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-047,1101,github,Tomas,si,medium,alta,medium,20,security|vulnerability,high,true,true,0,"Define controles de propósito, acceso, retención, auditoría y consentimiento; es gobernanza de seguridad/privacidad."
+REV46-NEW-BLIND-048,1150,github,Lucas,si,high,media,medium,35,exploit|security,medium,false,false,1,Vulnerabilidad de alto impacto.
+REV46-NEW-BLIND-048,1150,github,Tomas,si,high,alta,medium,35,exploit|security,medium,false,false,1,"Hallazgo de bypass de rutas protegidas, categorizado como Broken Access Control y severidad High."
+REV46-NEW-BLIND-049,1152,github,Lucas,si,critical,media,low,15,,critical,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-049,1152,github,Tomas,no,no_aplica,media,low,15,,critical,false,true,,Tarea de autoridad/costes de producto; no se identifica un problema de seguridad.
+REV46-NEW-BLIND-050,1186,github,Lucas,parcial,low,media,high,40,,high,false,false,-2,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-050,1186,github,Tomas,no,no_aplica,alta,high,40,,high,false,false,,Fallo de CI sin indicios de impacto de seguridad; es un problema operativo de integración.
+REV46-NEW-BLIND-051,1187,github,Lucas,si,critical,media,low,15,vulnerability,high,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-051,1187,github,Tomas,si,high,alta,low,15,vulnerability,high,false,false,2,Escaneo de Wiz sobre la rama principal; contenido explícitamente asociado a seguridad y remediación.
+REV46-NEW-BLIND-052,1195,github,Lucas,si,medium,media,high,55,backdoor|ataque|security,critical,false,false,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-052,1195,github,Tomas,si,high,alta,high,55,backdoor|ataque|security,critical,true,true,0,Proyecto de detección de intrusiones de red mediante ML; seguridad es el objetivo central.
+REV46-NEW-BLIND-053,1199,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-053,1199,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,"Dashboard de dependencias; posible relación con supply-chain security, sin hallazgo concreto."
+REV46-NEW-BLIND-054,1205,github,Lucas,parcial,low,alta,low,15,security,low,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-054,1205,github,Tomas,si,high,alta,low,15,security,low,false,false,2,Tracker dedicado a auditorías OWASP Top 10 y STRIDE; seguridad de aplicaciones es el objetivo explícito.
+REV46-NEW-BLIND-055,1210,github,Lucas,si,critical,media,critical,65,cve-|attack|security|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-055,1210,github,Tomas,si,high,alta,critical,65,cve-|attack|security|vulnerability,critical,false,true,-1,Vulnerabilidad de hostname confusion con exposición de información sensible; hallazgo de seguridad explícito.
+REV46-NEW-BLIND-056,1237,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-056,1237,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,"Dashboard de dependencias; mantenimiento general con posible impacto de seguridad, sin vulnerabilidad concreta."
+REV46-NEW-BLIND-057,1248,hackernews,Lucas,parcial,low,alta,medium,30,security,medium,false,true,-1,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-057,1248,hackernews,Tomas,si,medium,alta,medium,30,security,medium,true,true,0,"Benchmark explícitamente centrado en modelos de IA de seguridad ofensiva; tema de seguridad, aunque no es un incidente."
+REV46-NEW-BLIND-058,1291,github,Lucas,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-058,1291,github,Tomas,si,high,alta,high,50,sql injection|attack|security|vulnerability,critical,true,true,0,SQL Injection CWE-89 con severidad High; hallazgo directo de seguridad de aplicaciones.
+REV46-NEW-BLIND-059,1305,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-059,1305,github,Tomas,si,high,alta,medium,20,security|vulnerability,high,false,false,1,CVE de severidad High en una dependencia transitiva; vulnerabilidad explícita.
+REV46-NEW-BLIND-060,1314,github,Lucas,parcial,low,media,low,10,security,medium,true,true,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-060,1314,github,Tomas,si,critical,alta,low,10,security,medium,false,false,3,Clave JWT hard-coded que permite account takeover; impacto de autenticación/compromiso de cuentas.
+REV46-NEW-BLIND-061,1369,github,Lucas,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-061,1369,github,Tomas,si,critical,alta,critical,70,exploit|cve-|vulnerability,critical,true,true,0,"15 vulnerabilidades alcanzables, máxima severidad 9.8; hallazgo de seguridad crítico."
+REV46-NEW-BLIND-062,1372,github,Lucas,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-062,1372,github,Tomas,si,critical,alta,critical,70,exploit|cve-|vulnerability,critical,true,true,0,"34 vulnerabilidades alcanzables, máxima severidad 9.3; exposición elevada de dependencia."
+REV46-NEW-BLIND-063,1398,github,Lucas,si,medium,media,medium,25,,critical,true,true,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-063,1398,github,Tomas,no,no_aplica,alta,medium,25,,critical,false,true,,Fallo de DLL/CI en pruebas sin indicios de seguridad; es un problema de estabilidad operativa.
+REV46-NEW-BLIND-064,1408,github,Lucas,si,medium,media,medium,30,vulnerability,medium,true,true,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-064,1408,github,Tomas,si,medium,alta,medium,30,vulnerability,medium,true,true,0,Propuesta para sanitizar divulgación de excepciones internas en OAuth; trata exposición de información de seguridad.
+REV46-NEW-BLIND-065,1425,github,Lucas,si,critical,media,medium,25,vulnerability|denial of service,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-065,1425,github,Tomas,si,high,alta,medium,25,vulnerability|denial of service,high,false,false,1,CVE en js-yaml por complejidad cuadrática; vulnerabilidad de dependencia explícita.
+REV46-NEW-BLIND-066,1435,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-066,1435,github,Tomas,si,high,alta,medium,20,security|vulnerability,high,false,false,1,Advisory High de AssertJ relacionado con XXE; vulnerabilidad de dependencia explícita.
+REV46-NEW-BLIND-067,1485,github,Lucas,si,critical,media,high,50,critical vulnerability|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-067,1485,github,Tomas,no,no_aplica,media,high,50,critical vulnerability|security|vulnerability,critical,false,false,,"Gate de lanzamiento y congelamiento de funcionalidades; es gestión de release, sin hallazgo de seguridad claro."
+REV46-NEW-BLIND-068,1490,github,Lucas,si,medium,media,low,10,security,medium,false,true,1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-068,1490,github,Tomas,si,high,alta,low,10,security,medium,false,false,2,Posible filtración de token Plex a terceros mediante redirecciones cross-origin; secreto sensible expuesto.
+REV46-NEW-BLIND-069,1522,github,Lucas,si,critical,media,medium,25,security,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-069,1522,github,Tomas,si,high,alta,medium,25,security,high,false,false,1,Actualización de dependencias vulnerables de runtime; el objetivo es remediar advisories de seguridad.
+REV46-NEW-BLIND-070,1529,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-070,1529,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,"Dashboard de dependencias; posible relación con seguridad de supply chain, sin vulnerabilidad concreta."
+REV46-NEW-BLIND-071,1560,github,Lucas,si,medium,media,medium,20,attack,medium,true,true,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-071,1560,github,Tomas,si,medium,media,medium,20,attack,medium,true,true,0,"Validación de manifests, aislamiento DI y modelo de permisos en un cargador de plugins; contiene controles de seguridad."
+REV46-NEW-BLIND-072,1563,github,Lucas,si,critical,media,medium,20,,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-072,1563,github,Tomas,parcial,low,media,medium,20,,high,false,true,-1,"Dependencias abandonadas; riesgo de mantenimiento y potencial de seguridad, pero no hay vulnerabilidad concreta."
+REV46-NEW-BLIND-073,1592,github,Lucas,si,medium,media,low,10,,low,false,true,1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-073,1592,github,Tomas,no,no_aplica,alta,low,10,,low,false,true,,Bug funcional del flujo de auditoría/catálogos; no se identifica un problema de seguridad.
+REV46-NEW-BLIND-074,1601,github,Lucas,si,critical,media,high,40,malware,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-074,1601,github,Tomas,si,critical,alta,high,40,malware,critical,false,true,1,Bypass de ACL de Windows con posible compromiso de identidad y base de mensajes; impacto crítico.
+REV46-NEW-BLIND-075,1631,github,Lucas,si,critical,media,critical,65,exploit|cve-|threat|vulnerability,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-075,1631,github,Tomas,si,high,alta,critical,65,exploit|cve-|threat|vulnerability,critical,false,true,-1,Dependencia vulnerable alcanzable con CVSS máximo 7.5; hallazgo de seguridad directo.
+REV46-NEW-BLIND-076,1634,github,Lucas,si,critical,media,medium,20,security|vulnerability,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-076,1634,github,Tomas,parcial,low,media,medium,20,security|vulnerability,high,false,true,-1,Dashboard de dependencias; relación indirecta con mantenimiento seguro.
+REV46-NEW-BLIND-077,1666,github,Lucas,si,critical,media,medium,20,,high,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-077,1666,github,Tomas,parcial,low,media,medium,20,,high,false,true,-1,Dashboard de dependencias; relación indirecta con supply-chain security.
+REV46-NEW-BLIND-078,1674,github,Lucas,si,critical,media,medium,35,security|vulnerability,critical,false,false,2,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-078,1674,github,Tomas,parcial,low,media,medium,35,security|vulnerability,critical,false,true,-1,Dashboard con dependencias deprecadas; relevancia indirecta para seguridad.
+REV46-NEW-BLIND-079,1713,github,Lucas,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-079,1713,github,Tomas,si,high,alta,high,50,sql injection|attack|security|vulnerability,critical,true,true,0,SQL Injection CWE-89 con severidad High; hallazgo SAST directo.
+REV46-NEW-BLIND-080,1725,github,Lucas,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-080,1725,github,Tomas,si,high,alta,high,50,sql injection|attack|security|vulnerability,critical,true,true,0,SQL Injection CWE-89 con severidad High; hallazgo SAST directo.
+REV46-NEW-BLIND-081,1733,github,Lucas,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-081,1733,github,Tomas,si,high,alta,high,50,sql injection|attack|security|vulnerability,critical,true,true,0,SQL Injection CWE-89 con severidad High; hallazgo SAST directo.
+REV46-NEW-BLIND-082,1735,github,Lucas,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-082,1735,github,Tomas,si,high,alta,high,50,sql injection|attack|security|vulnerability,critical,true,true,0,SQL Injection CWE-89 con severidad High; hallazgo SAST directo.
+REV46-NEW-BLIND-083,1770,github,Lucas,si,critical,media,critical,60,cve-|security|denial of service,critical,true,true,0,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-083,1770,github,Tomas,si,high,alta,critical,60,cve-|security|denial of service,critical,false,true,-1,Escaneo de seguridad con múltiples CVE/OSV y vulnerabilidades de dependencias; hallazgo explícito.
+REV46-NEW-BLIND-084,1792,github,Lucas,si,high,media,high,45,malware|security,high,true,true,0,Vulnerabilidad de alto impacto.
+REV46-NEW-BLIND-084,1792,github,Tomas,no,no_aplica,alta,high,45,malware|security,high,false,false,,Reporte de annoyance/banner de sitio web; no se identifica vulnerabilidad o riesgo de seguridad.
+REV46-NEW-BLIND-085,1804,github,Lucas,si,medium,media,critical,65,phishing|trojan|attack|security|vulnerability,critical,false,false,-2,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-085,1804,github,Tomas,si,high,alta,critical,65,phishing|trojan|attack|security|vulnerability,critical,false,true,-1,XSS reflejado confirmado con severidad High; vulnerabilidad directa de aplicación web.
+REV46-NEW-BLIND-086,1830,github,Lucas,si,critical,media,low,5,,medium,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-086,1830,github,Tomas,parcial,low,media,low,5,,medium,true,true,0,"Dashboard de dependencias; posible relación con seguridad de supply chain, sin hallazgo concreto."
+REV46-NEW-BLIND-087,1904,github,Lucas,si,critical,media,high,55,xss|attack|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-087,1904,github,Tomas,si,medium,alta,high,55,xss|attack|vulnerability,critical,false,false,-1,Vulnerabilidad WS-2017-0234 de severidad Medium en jQuery DataTables.
+REV46-NEW-BLIND-088,1927,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-088,1927,github,Tomas,si,low,alta,high,55,cve-|attack|security|vulnerability,critical,false,false,-2,CVE-2026-49356 clasificada como Low; vulnerabilidad explícita.
+REV46-NEW-BLIND-089,1930,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-089,1930,github,Tomas,si,medium,alta,high,55,cve-|attack|security|vulnerability,critical,false,false,-1,CVE-2026-44292 clasificada como Medium; vulnerabilidad explícita.
+REV46-NEW-BLIND-090,1937,github,Lucas,si,critical,media,low,5,,high,false,false,3,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-090,1937,github,Tomas,si,high,media,low,5,,high,false,false,2,Problema de identidad/attestation de procesos Windows que afecta la aplicación de grants; implicación de autorización relevante.
+REV46-NEW-BLIND-091,1938,github,Lucas,si,medium,media,high,50,exploit|attack,high,false,false,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-091,1938,github,Tomas,si,low,alta,high,50,exploit|attack,high,false,false,-2,Hallazgo de seguridad SEC-005 con severidad Low y posible corrupción de datos.
+REV46-NEW-BLIND-092,1974,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-092,1974,github,Tomas,si,critical,alta,high,55,cve-|attack|security|vulnerability,critical,false,true,1,CVE-2024-38821 clasificada como Critical en Spring Security; vulnerabilidad explícita.
+REV46-NEW-BLIND-093,1987,github,Lucas,si,critical,media,high,50,cve-|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-093,1987,github,Tomas,si,low,alta,high,50,cve-|vulnerability,critical,false,false,-2,CVE-2024-38820 clasificada como Low; vulnerabilidad explícita.
+REV46-NEW-BLIND-094,2003,github,Lucas,si,critical,media,high,50,cve-|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-094,2003,github,Tomas,si,high,alta,high,50,cve-|vulnerability,critical,true,true,0,CVE-2026-102276 clasificada como High en múltiples librerías; vulnerabilidad explícita.
+REV46-NEW-BLIND-095,2004,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-095,2004,github,Tomas,si,medium,alta,high,55,cve-|attack|security|vulnerability,critical,false,false,-1,CVE-2026-67213 clasificada como Medium; vulnerabilidad con posible DoS.
+REV46-NEW-BLIND-096,2009,github,Lucas,si,critical,media,high,55,cve-|attack|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-096,2009,github,Tomas,si,medium,alta,high,55,cve-|attack|vulnerability,critical,false,false,-1,CVE-2026-41841 clasificada como Medium; vulnerabilidad de divulgación de información.
+REV46-NEW-BLIND-097,2015,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-097,2015,github,Tomas,si,medium,alta,high,55,cve-|attack|security|vulnerability,critical,false,false,-1,CVE-2026-70597 clasificada como Medium; bypass de controles de Electron con posible ejecución de código.
+REV46-NEW-BLIND-098,2030,github,Lucas,si,medium,media,critical,65,phishing|trojan|attack|security|vulnerability,critical,false,false,-2,Vulnerabilidad de impacto moderado o mención genérica.
+REV46-NEW-BLIND-098,2030,github,Tomas,si,high,alta,critical,65,phishing|trojan|attack|security|vulnerability,critical,false,true,-1,XSS reflejado confirmado con severidad High; vulnerabilidad directa de aplicación web.
+REV46-NEW-BLIND-099,2076,github,Lucas,parcial,low,media,critical,65,phishing|malware|security,critical,false,false,-3,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV46-NEW-BLIND-099,2076,github,Tomas,no,no_aplica,alta,critical,65,phishing|malware|security,critical,false,false,,Reporte de annoyance de AdGuard sobre un sitio; no representa un hallazgo de ciberseguridad.
+REV46-NEW-BLIND-100,2088,github,Lucas,si,critical,media,high,55,cve-|attack|security|vulnerability,critical,false,true,1,Vulnerabilidad de severidad crítica.
+REV46-NEW-BLIND-100,2088,github,Tomas,si,high,alta,high,55,cve-|attack|security|vulnerability,critical,true,true,0,"CVE-2025-62718 clasificada como High, con posibilidad de proxy bypass/SSRF; vulnerabilidad explícita."

@@ -42,7 +42,7 @@ describe('keywords api', () => {
     });
   });
 
-  it('creates a keyword with the backend KeywordCreate payload', async () => {
+  it('creates a keyword with the KeywordCreate payload', async () => {
     const payload: KeywordCreatePayload = {
       keyword_text: 'acme',
       keyword_type: 'keyword',
@@ -64,7 +64,7 @@ describe('keywords api', () => {
     });
   });
 
-  it('patches a keyword with partial backend KeywordUpdate payload', async () => {
+  it('patches a keyword with partial KeywordUpdate payload', async () => {
     const payload: KeywordUpdatePayload = { keyword_text: 'acme corp', keyword_weight: 30, is_active: false };
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
@@ -101,7 +101,7 @@ describe('keywords api', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend details and network failures to keyword errors', async () => {
+  it('maps error details and network failures to keyword errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
     await expect(listKeywords('fake-jwt')).rejects.toMatchObject(new ListKeywordsError('Forbidden', 403));
 

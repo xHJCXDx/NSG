@@ -1,4 +1,5 @@
 export const KEYWORDS_ENDPOINT = '/api/keywords';
+export const KEYWORD_CATEGORIES_ENDPOINT = '/api/keyword-categories';
 
 export const KEYWORD_PRIORITY_MIN = 1;
 export const KEYWORD_PRIORITY_MAX = 100;
