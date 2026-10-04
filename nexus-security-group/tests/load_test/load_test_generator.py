@@ -537,10 +537,11 @@ def run_load_test(conn, args: argparse.Namespace) -> None:
     total_elapsed = time.perf_counter() - total_start
     print()  # newline after \r progress
 
-    # psycopg2 execute_batch rowcount is not always reliable across PG versions;
-    # use count - errors as a safe lower bound.
-    if inserted == 0 or inserted > count:
-        inserted = count - errors
+    # psycopg2 execute_batch rowcount is not reliable across PostgreSQL/driver
+    # versions and may report only the last batch statement count. Because
+    # generated external_id values are unique and failed batches are counted in
+    # errors, the reproducible lower-bound for this test is count - errors.
+    inserted = count - errors
 
     print_report(count, inserted, errors, latencies_ms, total_elapsed, platform_counts)
 
