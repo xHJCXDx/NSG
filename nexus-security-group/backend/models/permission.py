@@ -1,6 +1,5 @@
 from sqlalchemy import (
     BigInteger,
-    CheckConstraint,
     Column,
     DateTime,
     ForeignKey,
@@ -34,15 +33,15 @@ class Permission(Base):
 
 
 class RolePermission(Base):
-    """Pivot table mapping existing role names to permission catalog entries."""
+    """Pivot table mapping roles to permission catalog entries via FK."""
 
     __tablename__ = "role_permissions"
 
-    __table_args__ = (
-        CheckConstraint("role IN ('admin', 'analyst')", name="check_role_permissions_role"),
+    role_id = Column(
+        BigInteger,
+        ForeignKey("roles.role_id", ondelete="CASCADE"),
+        primary_key=True,
     )
-
-    role = Column(String(20), primary_key=True)
     permission_id = Column(
         BigInteger,
         ForeignKey("permissions.permission_id", ondelete="CASCADE"),
@@ -51,3 +50,4 @@ class RolePermission(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     permission = relationship("Permission", back_populates="role_permissions")
+    role_rel = relationship("Role", back_populates="role_permissions")

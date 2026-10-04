@@ -19,7 +19,7 @@ describe('fetchMentions', () => {
     });
   });
 
-  it('maps supported raw backend aliases without inferring sentiment or status', async () => {
+  it('maps supported raw API aliases without inferring sentiment or status', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({

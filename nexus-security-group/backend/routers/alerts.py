@@ -10,6 +10,7 @@ from auth import require_permission
 logger = logging.getLogger("nsg.alerts")
 from database import get_db
 from models import Alert
+from models.threat_detection import ThreatDetection
 from schemas.alert import AlertDeliveryStatus, AlertResponse
 from schemas.auth import TokenData
 from services.activity_audit import record_user_activity
@@ -70,6 +71,16 @@ def acknowledge_alert(
     alert.acknowledged = True
     alert.acknowledged_by = current_user.username
     alert.acknowledged_at = datetime.now(timezone.utc)
+
+    threat = db.query(ThreatDetection).filter(
+        ThreatDetection.detection_id == alert.detection_id,
+        ThreatDetection.review_status == "pending",
+    ).first()
+    if threat:
+        threat.review_status = "reviewing"
+        threat.reviewed_by = current_user.username
+        threat.reviewed_at = datetime.now(timezone.utc)
+
     record_user_activity(
         db,
         username=current_user.username or "unknown",

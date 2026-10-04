@@ -99,7 +99,7 @@ describe('AutomationTriggers', () => {
     expect(errorBanner).toHaveTextContent(AUTOMATION_COPY.error.fallback);
   });
 
-  it('shows backend error detail when proxy returns an error response', async () => {
+  it('shows error detail when proxy returns an error response', async () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
       ok: false,

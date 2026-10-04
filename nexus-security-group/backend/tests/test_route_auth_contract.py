@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from auth import get_current_user, router as auth_router
 from database import get_db
 from main import app
-from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, threats, users
+from routers import activity, alerts, dashboard, keywords, logs, metrics, n8n, permissions, roles, threats, users
 from schemas.auth import TokenData
 
 
@@ -43,7 +43,11 @@ PERMISSION_PROTECTED_ROUTES = {
     ("/api/keywords/{keyword_id}", "DELETE"): "keywords:delete",
     ("/api/n8n/webhook/{webhook_id}", "POST"): "workflows:execute",
     ("/api/permissions", "GET"): "permissions:read",
-    ("/api/permissions/roles/{role}", "PUT"): "permissions:write",
+    ("/api/permissions/roles/{role_id}", "PUT"): "permissions:write",
+    ("/api/roles", "GET"): "permissions:read",
+    ("/api/roles", "POST"): "permissions:write",
+    ("/api/roles/{role_id}", "PATCH"): "permissions:write",
+    ("/api/roles/{role_id}", "DELETE"): "permissions:write",
     ("/api/threats", "GET"): "threats:read",
     ("/api/threats/{threat_id}", "GET"): "threats:read",
     ("/api/threats/{threat_id}/review", "PATCH"): "threats:write",
@@ -65,6 +69,7 @@ ROUTERS_UNDER_AUTH_CONTRACT = (
     metrics.router,
     n8n.router,
     permissions.router,
+    roles.router,
     threats.router,
     users.router,
 )

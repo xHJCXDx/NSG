@@ -89,7 +89,7 @@ describe('useMentions', () => {
     expect(result.current.error).toBe('Failed to load mentions');
   });
 
-  it('filters by text client-side and exposes available platforms from backend', async () => {
+  it('filters by text client-side and exposes available platforms from the API', async () => {
     vi.spyOn(mentionsApi, 'fetchMentions').mockResolvedValue(paginatedResponse);
 
     const { result } = renderHook(() => useMentions(), { wrapper: createWrapper() });

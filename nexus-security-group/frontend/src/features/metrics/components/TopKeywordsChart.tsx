@@ -9,6 +9,7 @@ interface TopKeywordsChartProps {
   data: TopKeywordEntry[];
   isLoading?: boolean;
   error?: unknown;
+  onRetry?: () => void;
 }
 
 function getBarColor(entry: TopKeywordEntry): string {
@@ -19,7 +20,7 @@ function getBarColor(entry: TopKeywordEntry): string {
   return '#0ea5e9';
 }
 
-export function TopKeywordsChart({ data, isLoading, error }: TopKeywordsChartProps) {
+export function TopKeywordsChart({ data, isLoading, error, onRetry }: TopKeywordsChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -46,16 +47,31 @@ export function TopKeywordsChart({ data, isLoading, error }: TopKeywordsChartPro
 
   if (error) {
     return (
-      <ChartCard title={t.analytics.charts.topKeywords}>
-        <div className="flex h-[350px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      <ChartCard title={t.analytics.charts.topKeywords} subtitle={t.analytics.chartHelp.topKeywords}>
+        <div className="flex h-[350px] flex-col items-center justify-center gap-3 text-center">
+          <p className="text-sm font-medium text-red-400">{t.analytics.error}</p>
+          <p className="max-w-sm text-xs text-content-muted">{t.analytics.chartHelp.topKeywordsError}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/20"
+            >
+              {t.analytics.retry}
+            </button>
+          )}
+        </div>
       </ChartCard>
     );
   }
 
   if (data.length === 0) {
     return (
-      <ChartCard title={t.analytics.charts.topKeywords}>
-        <div className="flex h-[350px] items-center justify-center text-content-muted">{t.analytics.noData}</div>
+      <ChartCard title={t.analytics.charts.topKeywords} subtitle={t.analytics.chartHelp.topKeywords}>
+        <div className="flex h-[350px] flex-col items-center justify-center gap-2 text-center">
+          <p className="text-sm font-medium text-content-secondary">{t.analytics.emptyStates.topKeywordsTitle}</p>
+          <p className="max-w-sm text-xs text-content-muted">{t.analytics.emptyStates.topKeywordsDescription}</p>
+        </div>
       </ChartCard>
     );
   }
@@ -63,7 +79,7 @@ export function TopKeywordsChart({ data, isLoading, error }: TopKeywordsChartPro
   const chartHeight = Math.max(350, data.length * 32);
 
   return (
-    <ChartCard title={t.analytics.charts.topKeywords}>
+    <ChartCard title={t.analytics.charts.topKeywords} subtitle={t.analytics.chartHelp.topKeywords}>
       <div style={{ height: chartHeight }} className="w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>

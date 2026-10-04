@@ -3,8 +3,10 @@ import { KeyRound, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from '../../../shared/i18n/translations';
 import { useDateFormat } from '../../../shared/contexts/DateFormatContext';
 import { useAuth } from '../../auth';
-import { CreateKeywordError, DeleteKeywordError, UpdateKeywordError } from '../api';
+import { CategoryError, CreateKeywordError, DeleteKeywordError, UpdateKeywordError } from '../api';
 import { KEYWORD_DEFAULT_PRIORITY, KEYWORD_PRIORITY_MAX, KEYWORD_PRIORITY_MIN } from '../contract';
+import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { useCreateCategoryMutation } from '../hooks/useCreateCategoryMutation';
 import { useCreateKeywordMutation } from '../hooks/useCreateKeywordMutation';
 import { useDeleteKeywordMutation } from '../hooks/useDeleteKeywordMutation';
 import { useKeywordsQuery } from '../hooks/useKeywordsQuery';
@@ -43,15 +45,20 @@ export function KeywordsPage() {
   const { formatDateTime } = useDateFormat();
   const { hasPermission } = useAuth();
   const { data: keywords = [], isLoading, error: listError } = useKeywordsQuery();
+  const { data: categories = [] } = useCategoriesQuery();
   const createMutation = useCreateKeywordMutation();
   const updateMutation = useUpdateKeywordMutation();
   const deleteMutation = useDeleteKeywordMutation();
+  const createCategoryMutation = useCreateCategoryMutation();
 
   const canWrite = hasPermission('keywords', 'write');
   const canDelete = hasPermission('keywords', 'delete');
 
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<KeywordFormState>(initialFormState);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newEditCategoryName, setNewEditCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -243,12 +250,45 @@ export function KeywordsPage() {
                 <label className="block text-sm font-medium text-content-secondary" htmlFor="keyword-category">
                   {t.keywords.form.categoryLabel}
                 </label>
-                <input
+                <select
                   id="keyword-category"
                   className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-4 py-2.5 text-content-primary outline-none transition focus:border-brand-500"
                   value={form.category}
                   onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
-                />
+                >
+                  <option value="">{t.keywords.form.categoryPlaceholder}</option>
+                  {categories.map((cat) => (
+                    <option key={cat.category_id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                {canWrite && (
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      className="flex-1 rounded-lg border border-edge-input bg-surface-input px-3 py-1.5 text-xs text-content-primary outline-none transition focus:border-brand-500"
+                      placeholder={t.keywords.form.newCategoryLabel}
+                      value={newCategoryName}
+                      onChange={(event) => { setNewCategoryName(event.target.value); setCategoryError(null); }}
+                    />
+                    <button
+                      type="button"
+                      disabled={!newCategoryName.trim() || createCategoryMutation.isPending}
+                      onClick={async () => {
+                        try {
+                          const created = await createCategoryMutation.mutateAsync({ name: newCategoryName.trim() });
+                          setForm((prev) => ({ ...prev, category: created.name }));
+                          setNewCategoryName('');
+                          setCategoryError(null);
+                        } catch (err) {
+                          setCategoryError(err instanceof CategoryError ? err.message : 'Error');
+                        }
+                      }}
+                      className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {createCategoryMutation.isPending ? t.keywords.form.addingCategory : t.keywords.form.addCategoryButton}
+                    </button>
+                  </div>
+                )}
+                {categoryError && <p className="mt-1 text-xs text-red-400" role="alert">{categoryError}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-content-secondary" htmlFor="keyword-priority">
@@ -362,7 +402,36 @@ export function KeywordsPage() {
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-content-secondary" htmlFor={`edit-category-${keyword.keyword_id}`}>{t.keywords.form.categoryLabel}</label>
-                                  <input id={`edit-category-${keyword.keyword_id}`} className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500" value={editForm.category} onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))} disabled={updateMutation.isPending} />
+                                  <select id={`edit-category-${keyword.keyword_id}`} className="mt-1.5 w-full rounded-xl border border-edge-input bg-surface-input px-3 py-2 text-content-primary outline-none transition focus:border-brand-500" value={editForm.category} onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))} disabled={updateMutation.isPending}>
+                                    <option value="">{t.keywords.form.categoryPlaceholder}</option>
+                                    {categories.map((cat) => (
+                                      <option key={cat.category_id} value={cat.name}>{cat.name}</option>
+                                    ))}
+                                  </select>
+                                  {canWrite && (
+                                    <div className="mt-2 flex gap-2">
+                                      <input
+                                        className="flex-1 rounded-lg border border-edge-input bg-surface-input px-3 py-1.5 text-xs text-content-primary outline-none transition focus:border-brand-500"
+                                        placeholder={t.keywords.form.newCategoryLabel}
+                                        value={newEditCategoryName}
+                                        onChange={(event) => setNewEditCategoryName(event.target.value)}
+                                      />
+                                      <button
+                                        type="button"
+                                        disabled={!newEditCategoryName.trim() || createCategoryMutation.isPending}
+                                        onClick={async () => {
+                                          try {
+                                            const created = await createCategoryMutation.mutateAsync({ name: newEditCategoryName.trim() });
+                                            setEditForm((prev) => ({ ...prev, category: created.name }));
+                                            setNewEditCategoryName('');
+                                          } catch { /* category error handled silently in edit */ }
+                                        }}
+                                        className="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        {createCategoryMutation.isPending ? t.keywords.form.addingCategory : t.keywords.form.addCategoryButton}
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                                 <div>
                                   <label className="block text-xs font-medium text-content-secondary" htmlFor={`edit-priority-${keyword.keyword_id}`}>{t.keywords.form.priorityLabel}</label>

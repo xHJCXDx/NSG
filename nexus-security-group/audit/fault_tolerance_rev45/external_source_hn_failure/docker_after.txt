@@ -1,0 +1,8 @@
+NAMES                 STATUS
+osint-frontend        Up 3 hours (healthy)
+osint-n8n             Up 3 hours
+osint-dashboard-api   Up 3 hours (healthy)
+osint-postgres-n8n    Up 3 hours (healthy)
+osint-postgres        Up 3 hours (healthy)
+osint-sentiment-api   Up 15 minutes (healthy)
+osint-traefik         Up 3 hours

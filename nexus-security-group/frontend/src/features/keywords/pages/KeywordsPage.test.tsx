@@ -55,7 +55,7 @@ describe('KeywordsPage', () => {
     localStorage.clear();
   });
 
-  it('lists backend keywords and exposes write/delete controls when permitted', async () => {
+  it('lists keywords and exposes write/delete controls when permitted', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => [keyword] } as Response);
 
     renderKeywordsPage();

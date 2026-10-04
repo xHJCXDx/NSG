@@ -193,6 +193,19 @@ CREATE INDEX idx_alerts_delivery_status ON alerts(delivery_status);
 CREATE INDEX idx_alerts_status_severity ON alerts(delivery_status, alert_severity);
 
 -- ============================================
+-- TABLA: keyword_categories
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS keyword_categories (
+    category_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_keyword_categories_name ON keyword_categories(name);
+
+-- ============================================
 -- TABLA: keywords_monitor
 -- ============================================
 
@@ -420,7 +433,10 @@ CREATE UNIQUE INDEX ON workflow_performance_stats (workflow_name, date);
 CREATE OR REPLACE FUNCTION refresh_all_materialized_views()
 RETURNS void AS $$
 BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY daily_mention_stats;
+    -- daily_mention_stats has a unique index on expressions (COALESCE), which
+    -- triggers "index on expressions" errors with CONCURRENTLY on PG 16.
+    -- Using non-concurrent refresh; acceptable for scheduled maintenance windows.
+    REFRESH MATERIALIZED VIEW daily_mention_stats;
     REFRESH MATERIALIZED VIEW CONCURRENTLY top_keywords_stats;
     REFRESH MATERIALIZED VIEW CONCURRENTLY workflow_performance_stats;
 END;
@@ -457,8 +473,10 @@ BEGIN
     RAISE NOTICE 'Purge completed: % mentions, % logs deleted (cutoff: %)',
                   deleted_mentions, deleted_logs, cutoff_date;
 
-    VACUUM ANALYZE social_mentions;
-    VACUUM ANALYZE execution_logs;
+    -- NOTE: VACUUM cannot run inside a transaction/procedure.
+    -- Run manually after calling this procedure:
+    --   VACUUM ANALYZE social_mentions;
+    --   VACUUM ANALYZE execution_logs;
 END;
 $$;
 
@@ -472,8 +490,12 @@ BEGIN
     ANALYZE keywords_monitor;
     ANALYZE execution_logs;
 
-    REINDEX TABLE CONCURRENTLY social_mentions;
-    REINDEX TABLE CONCURRENTLY threat_detections;
+    -- NOTE: REINDEX CONCURRENTLY cannot run inside a procedure (transaction block).
+    -- For zero-downtime reindexing, run manually outside the procedure:
+    --   REINDEX TABLE CONCURRENTLY social_mentions;
+    --   REINDEX TABLE CONCURRENTLY threat_detections;
+    REINDEX TABLE social_mentions;
+    REINDEX TABLE threat_detections;
 
     PERFORM refresh_all_materialized_views();
 
@@ -599,6 +621,32 @@ CREATE POLICY user_isolation_policy ON threat_detections
     USING (reviewed_by = current_user OR reviewed_by IS NULL);
 
 -- ============================================
+-- TABLA: roles
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS roles (
+    role_id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_roles_name ON roles(name);
+
+CREATE TRIGGER update_roles_updated_at
+    BEFORE UPDATE ON roles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+GRANT ALL PRIVILEGES ON TABLE roles TO osint_admin;
+GRANT ALL PRIVILEGES ON SEQUENCE roles_role_id_seq TO osint_admin;
+GRANT SELECT ON TABLE roles TO osint_analyst;
+GRANT SELECT ON TABLE roles TO osint_readonly;
+
+-- ============================================
 -- TABLA: system_users
 -- ============================================
 
@@ -606,7 +654,7 @@ CREATE TABLE IF NOT EXISTS system_users (
     user_id BIGSERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'analyst' CONSTRAINT check_system_users_role CHECK (role IN ('admin', 'analyst')),
+    role_id BIGINT NOT NULL REFERENCES roles(role_id),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_by VARCHAR(100),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -614,7 +662,7 @@ CREATE TABLE IF NOT EXISTS system_users (
 );
 
 CREATE INDEX idx_system_users_username ON system_users(username);
-CREATE INDEX idx_system_users_role ON system_users(role);
+CREATE INDEX idx_system_users_role_id ON system_users(role_id);
 CREATE INDEX idx_system_users_is_active ON system_users(is_active);
 
 CREATE TRIGGER update_system_users_updated_at
@@ -650,13 +698,13 @@ CREATE TRIGGER update_permissions_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE IF NOT EXISTS role_permissions (
-    role VARCHAR(20) NOT NULL CONSTRAINT check_role_permissions_role CHECK (role IN ('admin', 'analyst')),
+    role_id BIGINT NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE,
     permission_id BIGINT NOT NULL REFERENCES permissions(permission_id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (role, permission_id)
+    PRIMARY KEY (role_id, permission_id)
 );
 
-CREATE INDEX idx_role_permissions_role ON role_permissions(role);
+CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
 CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
 
 GRANT ALL PRIVILEGES ON TABLE permissions TO osint_admin;
@@ -674,6 +722,14 @@ GRANT SELECT ON TABLE role_permissions TO osint_readonly;
 -- DATOS INICIALES
 -- ============================================
 
+INSERT INTO keyword_categories (name, description)
+VALUES
+    ('critical', 'Amenazas de máxima severidad que requieren atención inmediata'),
+    ('high', 'Amenazas de alta prioridad que requieren seguimiento'),
+    ('medium', 'Amenazas de prioridad media para monitoreo continuo'),
+    ('low', 'Indicadores de baja prioridad para registro y contexto')
+ON CONFLICT (name) DO NOTHING;
+
 INSERT INTO keywords_monitor (keyword_text, keyword_type, keyword_category, keyword_weight, trigger_immediate_alert, description)
 VALUES
     ('ransomware', 'threat_term', 'critical', 30, TRUE, 'Menciones de ransomware'),
@@ -687,6 +743,11 @@ VALUES
     ('filtración', 'threat_term', 'high', 20, FALSE, 'Filtraciones (español)'),
     ('hackeado', 'threat_term', 'medium', 15, FALSE, 'Compromisos (español)')
 ON CONFLICT (keyword_text) DO NOTHING;
+
+INSERT INTO roles (name, description, is_system) VALUES
+    ('admin', 'Full system access', TRUE),
+    ('analyst', 'Standard analyst access', TRUE)
+ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO permissions (resource, action, description)
 VALUES
@@ -711,8 +772,8 @@ VALUES
 ON CONFLICT (resource, action) DO UPDATE
 SET description = EXCLUDED.description;
 
-INSERT INTO role_permissions (role, permission_id)
-SELECT role_permission.role, permissions.permission_id
+INSERT INTO role_permissions (role_id, permission_id)
+SELECT roles.role_id, permissions.permission_id
 FROM (
     VALUES
         ('admin', 'dashboard', 'read'),
@@ -744,11 +805,12 @@ FROM (
         ('analyst', 'workflows', 'read'),
         ('analyst', 'workflows', 'execute'),
         ('analyst', 'logs', 'read')
-) AS role_permission(role, resource, action)
+) AS role_permission(role_name, resource, action)
+JOIN roles ON roles.name = role_permission.role_name
 JOIN permissions
   ON permissions.resource = role_permission.resource
  AND permissions.action = role_permission.action
-ON CONFLICT (role, permission_id) DO NOTHING;
+ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 -- ============================================
 -- COMENTARIOS
@@ -758,9 +820,11 @@ COMMENT ON TABLE social_mentions IS 'Menciones recopiladas de redes sociales y f
 COMMENT ON TABLE sentiment_analysis IS 'Resultados de análisis de sentimiento (VADER + TextBlob)';
 COMMENT ON TABLE threat_detections IS 'Detecciones de amenazas potenciales';
 COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas';
+COMMENT ON TABLE keyword_categories IS 'Categorías de keywords gestionadas por administradores';
 COMMENT ON TABLE keywords_monitor IS 'Keywords monitoreados activamente';
 COMMENT ON TABLE execution_logs IS 'Auditoría de ejecuciones de workflows';
 COMMENT ON TABLE user_activity IS 'Actividad de usuarios del sistema';
+COMMENT ON TABLE roles IS 'Roles RBAC del sistema; is_system=TRUE protege roles nativos de edición/eliminación';
 COMMENT ON TABLE system_users IS 'Usuarios autenticables del sistema; user_activity permanece solo como auditoría';
 COMMENT ON TABLE permissions IS 'Catálogo normalizado de permisos recurso/acción para RBAC granular';
 COMMENT ON TABLE role_permissions IS 'Asignación de permisos a roles compatibles admin/analyst';

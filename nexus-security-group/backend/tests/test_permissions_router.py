@@ -6,15 +6,16 @@ from fastapi.testclient import TestClient
 from auth import get_current_user
 from database import get_db
 from main import app
-from models import Permission, RolePermission
+from models import Permission, Role, RolePermission
 from routers.permissions import list_permissions, router, update_role_permissions
 from schemas.auth import TokenData
 from schemas.permission import PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate
 
 
 class FakeQuery:
-    def __init__(self, all_result=None):
+    def __init__(self, all_result=None, first_result=None):
         self.all_result = all_result or []
+        self.first_result = first_result
         self.deleted = False
         self.filter_args = []
 
@@ -25,6 +26,9 @@ class FakeQuery:
         self.filter_args.append(args)
         return self
 
+    def first(self):
+        return self.first_result
+
     def all(self):
         return self.all_result
 
@@ -34,9 +38,10 @@ class FakeQuery:
 
 
 class FakeDb:
-    def __init__(self, permissions=None, role_permissions=None):
+    def __init__(self, permissions=None, role_permissions=None, roles=None, role=None):
         self.permission_query = FakeQuery(permissions)
         self.role_permission_query = FakeQuery(role_permissions)
+        self.role_query = FakeQuery(all_result=roles or [], first_result=role)
         self.added = []
         self.committed = False
 
@@ -45,6 +50,8 @@ class FakeDb:
             return self.permission_query
         if model is RolePermission:
             return self.role_permission_query
+        if model is Role:
+            return self.role_query
         raise AssertionError(f"Unexpected query model: {model}")
 
     def add(self, obj):
@@ -66,10 +73,18 @@ def _permission(permission_id, resource, action, description=None):
     })()
 
 
-def _role_permission(role, permission_id):
+def _role_permission(role_id, permission_id):
     return type("RolePermissionRow", (), {
-        "role": role,
+        "role_id": role_id,
         "permission_id": permission_id,
+    })()
+
+
+def _role(role_id, name, is_system=True):
+    return type("RoleRow", (), {
+        "role_id": role_id,
+        "name": name,
+        "is_system": is_system,
     })()
 
 
@@ -77,7 +92,7 @@ def test_main_registers_api_permissions_routes():
     paths = app.openapi()["paths"]
 
     assert "get" in paths["/api/permissions"]
-    assert "put" in paths["/api/permissions/roles/{role}"]
+    assert "put" in paths["/api/permissions/roles/{role_id}"]
 
 
 def test_permission_routes_declare_response_models_and_permission_dependencies():
@@ -85,7 +100,7 @@ def test_permission_routes_declare_response_models_and_permission_dependencies()
         return next(route for route in router.routes if route.path == path and method in route.methods)
 
     list_route = route_for("/api/permissions", "GET")
-    update_route = route_for("/api/permissions/roles/{role}", "PUT")
+    update_route = route_for("/api/permissions/roles/{role_id}", "PUT")
 
     assert list_route.response_model is PermissionMatrixResponse
     assert update_route.response_model is RolePermissionsResponse
@@ -106,7 +121,8 @@ def test_list_permissions_returns_catalog_and_role_matrix():
     ]
     fake_db = FakeDb(
         permissions=permissions,
-        role_permissions=[_role_permission("admin", 1), _role_permission("admin", 2), _role_permission("analyst", 1)],
+        role_permissions=[_role_permission(1, 1), _role_permission(1, 2), _role_permission(2, 1)],
+        roles=[_role(1, "admin"), _role(2, "analyst")],
     )
     current_user = TokenData(username="root", role="admin", permissions=["permissions:read"])
 
@@ -124,11 +140,14 @@ def test_update_role_permissions_replaces_role_assignment():
         _permission(1, "dashboard", "read"),
         _permission(2, "permissions", "read"),
     ]
-    fake_db = FakeDb(permissions=permissions)
+    fake_db = FakeDb(
+        permissions=permissions,
+        role=_role(2, "analyst"),
+    )
     current_user = TokenData(username="root", role="admin", permissions=["permissions:write"])
 
     result = update_role_permissions(
-        role="analyst",
+        role_id=2,
         request=RolePermissionsUpdate(permissions=["permissions:read", "dashboard:read", "dashboard:read"]),
         db=fake_db,
         current_user=current_user,
@@ -137,9 +156,9 @@ def test_update_role_permissions_replaces_role_assignment():
     assert result == {"role": "analyst", "permissions": ["dashboard:read", "permissions:read"]}
     assert fake_db.role_permission_query.deleted is True
     assert fake_db.committed is True
-    assert [(assignment.role, assignment.permission_id) for assignment in fake_db.added] == [
-        ("analyst", 1),
-        ("analyst", 2),
+    assert [(assignment.role_id, assignment.permission_id) for assignment in fake_db.added] == [
+        (2, 1),
+        (2, 2),
     ]
 
 
@@ -150,7 +169,7 @@ def test_permissions_routes_reject_missing_bearer_token():
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
 
-    response = client.put("/api/permissions/roles/analyst", json={"permissions": ["dashboard:read"]})
+    response = client.put("/api/permissions/roles/1", json={"permissions": ["dashboard:read"]})
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated"
 
@@ -175,7 +194,8 @@ def test_authenticated_user_without_permissions_read_cannot_list_permissions():
 def test_authenticated_user_with_permissions_read_can_list_permissions():
     fake_db = FakeDb(
         permissions=[_permission(1, "permissions", "read")],
-        role_permissions=[_role_permission("admin", 1)],
+        role_permissions=[_role_permission(1, 1)],
+        roles=[_role(1, "admin"), _role(2, "analyst")],
     )
     authz_app = FastAPI()
     authz_app.include_router(router)
@@ -205,7 +225,7 @@ def test_authenticated_user_without_permissions_write_cannot_update_role_permiss
     )
 
     response = TestClient(authz_app).put(
-        "/api/permissions/roles/analyst",
+        "/api/permissions/roles/1",
         json={"permissions": ["dashboard:read"]},
     )
 
@@ -214,7 +234,10 @@ def test_authenticated_user_without_permissions_write_cannot_update_role_permiss
 
 
 def test_authenticated_user_with_permissions_write_can_update_role_permissions():
-    fake_db = FakeDb(permissions=[_permission(1, "dashboard", "read")])
+    fake_db = FakeDb(
+        permissions=[_permission(1, "dashboard", "read")],
+        role=_role(2, "analyst"),
+    )
     authz_app = FastAPI()
     authz_app.include_router(router)
     authz_app.dependency_overrides[get_db] = lambda: fake_db
@@ -226,7 +249,7 @@ def test_authenticated_user_with_permissions_write_can_update_role_permissions()
     )
 
     response = TestClient(authz_app).put(
-        "/api/permissions/roles/analyst",
+        "/api/permissions/roles/2",
         json={"permissions": ["dashboard:read"]},
     )
 
@@ -236,7 +259,10 @@ def test_authenticated_user_with_permissions_write_can_update_role_permissions()
 
 
 def test_update_role_permissions_rejects_unknown_permission_key():
-    fake_db = FakeDb(permissions=[_permission(1, "dashboard", "read")])
+    fake_db = FakeDb(
+        permissions=[_permission(1, "dashboard", "read")],
+        role=_role(2, "analyst"),
+    )
     authz_app = FastAPI()
     authz_app.include_router(router)
     authz_app.dependency_overrides[get_db] = lambda: fake_db
@@ -248,7 +274,7 @@ def test_update_role_permissions_rejects_unknown_permission_key():
     )
 
     response = TestClient(authz_app).put(
-        "/api/permissions/roles/analyst",
+        "/api/permissions/roles/2",
         json={"permissions": ["does:notexist"]},
     )
 
@@ -257,7 +283,10 @@ def test_update_role_permissions_rejects_unknown_permission_key():
 
 
 def test_update_role_permissions_preserves_admin_write_permission():
-    fake_db = FakeDb(permissions=[_permission(1, "dashboard", "read"), _permission(2, "permissions", "write")])
+    fake_db = FakeDb(
+        permissions=[_permission(1, "dashboard", "read"), _permission(2, "permissions", "write")],
+        role=_role(1, "admin"),
+    )
     authz_app = FastAPI()
     authz_app.include_router(router)
     authz_app.dependency_overrides[get_db] = lambda: fake_db
@@ -269,7 +298,7 @@ def test_update_role_permissions_preserves_admin_write_permission():
     )
 
     response = TestClient(authz_app).put(
-        "/api/permissions/roles/admin",
+        "/api/permissions/roles/1",
         json={"permissions": ["dashboard:read"]},
     )
 

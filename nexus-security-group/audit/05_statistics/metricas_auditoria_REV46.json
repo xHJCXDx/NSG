@@ -1,0 +1,124 @@
+{
+  "metadata": {
+    "confidence_level": 0.95,
+    "bootstrap_iterations": 10000,
+    "random_seed": 42,
+    "population_frame": "REV46 extended campaign",
+    "population_inclusion_criterion": "social_mentions.collected_at between 2026-09-25 18:48:00+00 and 2026-09-29 19:31:05.363840+00",
+    "sample_source": "REV37/REV45 historical audit matrix"
+  },
+  "input_hashes": {
+    "01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv": "dc36e7448577e9ab44f8ae683782e48e9f260d6afd4d160e845959ff01b4565c",
+    "08_campaign_reconciliation/poblacion_campana_REV46.csv": "15c602da381012a841ce03ecdd9e788eac49b0557c8ca91e4fd4199d273bfe43",
+    "08_campaign_reconciliation/detecciones_campana_REV46.csv": "e21be91dbae9da1e275748e18bd0eed8b0e18b3d5a35f9637b5ceafffb613e36",
+    "08_campaign_reconciliation/alertas_campana_REV46.csv": "0ce5bc8d652217c45625a49fdbf71db290412baead465edeb9e6a8c4737bf40a"
+  },
+  "population": {
+    "n": 2102,
+    "counts_by_source": {
+      "exploit-db": 50,
+      "github": 1934,
+      "hackernews": 118
+    },
+    "detections_by_criticality": {
+      "critical": 732,
+      "high": 697,
+      "low": 182,
+      "medium": 491
+    },
+    "alerts_by_severity": {
+      "critical": 732,
+      "high": 697
+    },
+    "high_or_critical_detections": 1429,
+    "high_or_critical_detection_rate": 0.6798287345385348
+  },
+  "sample": {
+    "n": 200,
+    "sample_fraction": 0.09514747859181731,
+    "counts_by_source": {
+      "exploit-db": 10,
+      "github": 171,
+      "hackernews": 19
+    }
+  },
+  "relevance": {
+    "strict_correct": 190,
+    "partial": 1,
+    "ambiguous": 8,
+    "severity_incorrect": 1,
+    "strict_sample_relevance": 0.95,
+    "strict_wilson_ci95": {
+      "lower": 0.9104218518612239,
+      "upper": 0.972617354399236
+    },
+    "weighted_relevance_by_population_source": 0.946194379065329,
+    "weighted_stratified_bootstrap_ci95": {
+      "lower": 0.9085304444110593,
+      "upper": 0.9784777516261316
+    },
+    "by_source": {
+      "exploit-db": {
+        "population_n": 50,
+        "sample_n": 10,
+        "correct": 10,
+        "sample_relevance": 1.0
+      },
+      "github": {
+        "population_n": 1934,
+        "sample_n": 171,
+        "correct": 161,
+        "sample_relevance": 0.9415204678362573
+      },
+      "hackernews": {
+        "population_n": 118,
+        "sample_n": 19,
+        "correct": 19,
+        "sample_relevance": 1.0
+      }
+    },
+    "without_dependency_dashboard": {
+      "n": 127,
+      "correct": 122,
+      "strict_relevance": 0.9606299212598425,
+      "high_or_critical_sample_alerts": 74,
+      "wilson_ci95": {
+        "lower": 0.9111437777951379,
+        "upper": 0.983068202524781
+      }
+    },
+    "dependency_dashboard_only": {
+      "n": 73,
+      "correct": 68,
+      "strict_relevance": 0.9315068493150684,
+      "high_or_critical_sample_alerts": 55,
+      "wilson_ci95": {
+        "lower": 0.8494789495941523,
+        "upper": 0.9703909613481619
+      }
+    }
+  },
+  "false_positive_reporting": {
+    "consensus_fp": 0,
+    "consensus_fp_rate": 0.0,
+    "evaluator_a_fp": 5,
+    "evaluator_a_fp_rate": 0.025,
+    "recommended_text": "0/200 by consensus; 5/200 = 2.5% according to evaluator A before consensus."
+  },
+  "criticality_conservative": {
+    "counts": {
+      "correcta_plena": 191,
+      "incorrecta": 2,
+      "no_aplica": 5,
+      "parcial": 2
+    },
+    "evaluable_n": 195,
+    "correcta_plena": 191,
+    "correcta_plena_rate_evaluable": 0.9794871794871794,
+    "wilson_ci95": {
+      "lower": 0.9484529877708384,
+      "upper": 0.9919947493815419
+    },
+    "interpretation": "Consistency with the audited artifact among evaluable cases; not an independent validation of severity."
+  }
+}

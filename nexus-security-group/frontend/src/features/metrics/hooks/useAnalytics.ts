@@ -151,10 +151,12 @@ export function useAnalytics(days = 30) {
     topKeywords: topKeywords.data ?? [],
     topKeywordsLoading: topKeywords.isLoading,
     topKeywordsError: topKeywords.error,
+    topKeywordsRetry: topKeywords.refetch,
 
     workflowHealth: workflowHealth.data ?? [],
     workflowHealthLoading: workflowHealth.isLoading,
     workflowHealthError: workflowHealth.error,
+    workflowHealthRetry: workflowHealth.refetch,
 
     isLoading,
     error,

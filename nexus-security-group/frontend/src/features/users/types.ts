@@ -1,16 +1,22 @@
-export type UserRole = 'admin' | 'analyst';
-
-export type RoleName = UserRole;
+export interface Role {
+  role_id: number;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  is_active: boolean;
+  created_at: string;
+  permissions: string[];
+}
 
 export interface CreateUserPayload {
   username: string;
   password: string;
-  role: UserRole;
+  role: string;
   is_active: boolean;
 }
 
 export interface UpdateUserPayload {
-  role?: UserRole;
+  role?: string;
   is_active?: boolean;
   password?: string;
 }
@@ -18,7 +24,7 @@ export interface UpdateUserPayload {
 export interface UserResponse {
   user_id: number;
   username: string;
-  role: UserRole;
+  role: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -40,7 +46,7 @@ export interface PermissionEntry {
 
 export interface PermissionMatrixResponse {
   permissions: PermissionEntry[];
-  role_permissions: Record<RoleName, string[]>;
+  role_permissions: Record<string, string[]>;
 }
 
 export interface RolePermissionsUpdate {
@@ -48,6 +54,11 @@ export interface RolePermissionsUpdate {
 }
 
 export interface RolePermissionsResponse {
-  role: RoleName;
+  role: string;
   permissions: string[];
+}
+
+export interface CreateRolePayload {
+  name: string;
+  description?: string;
 }

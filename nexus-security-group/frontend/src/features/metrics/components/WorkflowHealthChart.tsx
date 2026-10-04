@@ -9,9 +9,10 @@ interface WorkflowHealthChartProps {
   data: WorkflowHealthEntry[];
   isLoading?: boolean;
   error?: unknown;
+  onRetry?: () => void;
 }
 
-export function WorkflowHealthChart({ data, isLoading, error }: WorkflowHealthChartProps) {
+export function WorkflowHealthChart({ data, isLoading, error, onRetry }: WorkflowHealthChartProps) {
   const t = useTranslation();
   const { theme } = useTheme();
 
@@ -38,22 +39,37 @@ export function WorkflowHealthChart({ data, isLoading, error }: WorkflowHealthCh
 
   if (error) {
     return (
-      <ChartCard title={t.analytics.charts.workflowHealth}>
-        <div className="flex h-[300px] items-center justify-center text-red-400">{t.analytics.error}</div>
+      <ChartCard title={t.analytics.charts.workflowHealth} subtitle={t.analytics.chartHelp.workflowHealth}>
+        <div className="flex h-[300px] flex-col items-center justify-center gap-3 text-center">
+          <p className="text-sm font-medium text-red-400">{t.analytics.error}</p>
+          <p className="max-w-sm text-xs text-content-muted">{t.analytics.chartHelp.workflowHealthError}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-200 transition hover:bg-red-500/20"
+            >
+              {t.analytics.retry}
+            </button>
+          )}
+        </div>
       </ChartCard>
     );
   }
 
   if (data.length === 0) {
     return (
-      <ChartCard title={t.analytics.charts.workflowHealth}>
-        <div className="flex h-[300px] items-center justify-center text-content-muted">{t.analytics.noData}</div>
+      <ChartCard title={t.analytics.charts.workflowHealth} subtitle={t.analytics.chartHelp.workflowHealth}>
+        <div className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
+          <p className="text-sm font-medium text-content-secondary">{t.analytics.emptyStates.workflowHealthTitle}</p>
+          <p className="max-w-sm text-xs text-content-muted">{t.analytics.emptyStates.workflowHealthDescription}</p>
+        </div>
       </ChartCard>
     );
   }
 
   return (
-    <ChartCard title={t.analytics.charts.workflowHealth}>
+    <ChartCard title={t.analytics.charts.workflowHealth} subtitle={t.analytics.chartHelp.workflowHealth}>
       <div className="h-[300px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

@@ -22,39 +22,38 @@
 
 set -e
 
-echo "[n8n-entrypoint] Cleaning stale webhook registrations …"
-
 # Run from n8n's install directory so require('pg') resolves against
 # n8n's bundled node_modules (the image does not install pg globally).
 cd /usr/local/lib/node_modules/n8n
 
+echo "[n8n-entrypoint] Cleaning stale webhook registrations …"
+
+# Delete all webhook_entity rows so n8n can re-register them cleanly.
+# Uses Node.js + pg driver bundled with n8n (no psql available in alpine image).
 node -e "
 const { Client } = require('pg');
-const client = new Client({
-  host:     process.env.DB_POSTGRESDB_HOST,
-  port:     parseInt(process.env.DB_POSTGRESDB_PORT || '5432', 10),
-  database: process.env.DB_POSTGRESDB_DATABASE,
-  user:     process.env.DB_POSTGRESDB_USER,
+const c = new Client({
+  host: process.env.DB_POSTGRESDB_HOST || 'postgres',
+  port: parseInt(process.env.DB_POSTGRESDB_PORT || '5432'),
+  database: process.env.DB_POSTGRESDB_DATABASE || 'n8n_internal',
+  user: process.env.DB_POSTGRESDB_USER,
   password: process.env.DB_POSTGRESDB_PASSWORD,
 });
+c.connect()
+  .then(() => c.query('DELETE FROM webhook_entity'))
+  .then(r => { console.log('[n8n-entrypoint] Deleted ' + r.rowCount + ' stale webhook(s)'); return c.end(); })
+  .catch(e => { console.warn('[n8n-entrypoint] Webhook cleanup skipped:', e.message); process.exit(0); });
+" || true
 
-(async () => {
-  try {
-    await client.connect();
-    const res = await client.query('DELETE FROM webhook_entity');
-    console.log('[n8n-entrypoint] Cleared ' + res.rowCount + ' stale webhook(s).');
-  } catch (err) {
-    // Table may not exist on a fresh database — not an error.
-    if (err.code === '42P01') {
-      console.log('[n8n-entrypoint] webhook_entity not found (fresh DB) — skipping.');
-    } else {
-      console.error('[n8n-entrypoint] Warning: could not clean webhooks:', err.message);
-    }
-  } finally {
-    await client.end();
-  }
-})();
-"
+echo "[n8n-entrypoint] Publishing workflows …"
+
+# Get workflow IDs (filter out n8n startup noise) and publish each one
+for WF_ID in $(n8n list:workflow 2>/dev/null | grep '|' | cut -d'|' -f1); do
+  if [ -n "$WF_ID" ]; then
+    echo "[n8n-entrypoint] Publishing workflow $WF_ID …"
+    n8n publish:workflow --id="$WF_ID" 2>&1 || true
+  fi
+done
 
 echo "[n8n-entrypoint] Starting n8n …"
 exec n8n "$@"

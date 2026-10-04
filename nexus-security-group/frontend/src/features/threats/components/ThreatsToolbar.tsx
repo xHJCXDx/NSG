@@ -38,7 +38,7 @@ export function ThreatsToolbar({ filters, availableFilters, onFiltersChange }: T
             <option value="">{t.threats.toolbar.severityPlaceholder}</option>
             {availableFilters.severityOptions.map((opt) => (
               <option key={opt} value={opt} className="bg-surface-primary text-content-primary">
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {t.threats.severityLabels[opt] ?? opt.charAt(0).toUpperCase() + opt.slice(1)}
               </option>
             ))}
           </select>
@@ -56,7 +56,7 @@ export function ThreatsToolbar({ filters, availableFilters, onFiltersChange }: T
             <option value="">{t.threats.toolbar.classificationPlaceholder}</option>
             {availableFilters.classificationOptions.map((opt) => (
               <option key={opt} value={opt} className="bg-surface-primary text-content-primary">
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {t.threats.classifications[opt] ?? opt.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
               </option>
             ))}
           </select>

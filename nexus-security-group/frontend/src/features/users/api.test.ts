@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createUser, CreateUserError, deleteUser, DeleteUserError, fetchPermissions, FetchPermissionsError, listUsers, ListUsersError, updateRolePermissions, UpdatePermissionsError, updateUser, UpdateUserError } from './api';
-import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
+import { createRole, createUser, CreateUserError, deleteRole, deleteUser, DeleteUserError, fetchPermissions, FetchPermissionsError, fetchRoles, listUsers, ListUsersError, RolesError, updateRolePermissions, UpdatePermissionsError, updateUser, UpdateUserError } from './api';
+import { PERMISSIONS_ENDPOINT, PERMISSIONS_ROLE_ENDPOINT, ROLES_ENDPOINT, USERS_COPY, USERS_ENDPOINT } from './contract';
 import type { CreateUserPayload, PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate, UpdateUserPayload } from './types';
 
 const payload: CreateUserPayload = {
@@ -15,7 +15,7 @@ describe('createUser', () => {
     vi.restoreAllMocks();
   });
 
-  it('posts the payload with JSON and auth headers and returns the backend response', async () => {
+  it('posts the payload with JSON and auth headers and returns the server response', async () => {
     const response = {
       user_id: 1,
       username: 'alice',
@@ -47,7 +47,7 @@ describe('createUser', () => {
     [403, 'Admins only'],
     [409, 'Username already exists'],
     [422, 'Password is too short'],
-  ])('maps backend detail for %i responses', async (status, detail) => {
+  ])('maps error detail for %i responses', async (status, detail) => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: false,
       status,
@@ -99,7 +99,7 @@ describe('listUsers', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to list errors', async () => {
+  it('maps error detail and network failures to list errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Admins only' }) } as Response);
     await expect(listUsers('fake-jwt')).rejects.toMatchObject(new ListUsersError('Admins only', 403));
 
@@ -141,7 +141,7 @@ describe('updateUser', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to update errors', async () => {
+  it('maps error detail and network failures to update errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
     await expect(updateUser('fake-jwt', 2, { is_active: false })).rejects.toMatchObject(new UpdateUserError('Forbidden', 403));
 
@@ -155,7 +155,7 @@ describe('deleteUser', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls DELETE with auth headers and returns the backend soft-deleted user', async () => {
+  it('calls DELETE with auth headers and returns the soft-deleted user', async () => {
     const response = {
       user_id: 2,
       username: 'bob',
@@ -181,7 +181,7 @@ describe('deleteUser', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend detail and network failures to delete errors', async () => {
+  it('maps error detail and network failures to delete errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 409, json: async () => ({ detail: 'Cannot deactivate the last active admin user' }) } as Response);
     await expect(deleteUser('fake-jwt', 2)).rejects.toMatchObject(new DeleteUserError('Cannot deactivate the last active admin user', 409));
 
@@ -286,9 +286,9 @@ describe('updateRolePermissions', () => {
       json: async () => rolePermissionsFixture,
     } as Response);
 
-    await expect(updateRolePermissions('fake-jwt', 'analyst', updatePayload)).resolves.toEqual(rolePermissionsFixture);
+    await expect(updateRolePermissions('fake-jwt', 2, updatePayload)).resolves.toEqual(rolePermissionsFixture);
 
-    expect(fetchMock).toHaveBeenCalledWith(`${PERMISSIONS_ROLE_ENDPOINT}/analyst`, {
+    expect(fetchMock).toHaveBeenCalledWith(`${PERMISSIONS_ROLE_ENDPOINT}/2`, {
       method: 'PUT',
       headers: {
         Authorization: 'Bearer fake-jwt',
@@ -301,7 +301,7 @@ describe('updateRolePermissions', () => {
   it('throws UpdatePermissionsError before calling fetch when token is null', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch');
 
-    await expect(updateRolePermissions(null, 'analyst', updatePayload)).rejects.toThrow(
+    await expect(updateRolePermissions(null, 2, updatePayload)).rejects.toThrow(
       USERS_COPY.errors.updateWithoutToken,
     );
     expect(fetchMock).not.toHaveBeenCalled();
@@ -315,7 +315,7 @@ describe('updateRolePermissions', () => {
       json: async () => ({ detail }),
     } as Response);
 
-    await expect(updateRolePermissions('fake-jwt', 'analyst', updatePayload)).rejects.toMatchObject(
+    await expect(updateRolePermissions('fake-jwt', 2, updatePayload)).rejects.toMatchObject(
       new UpdatePermissionsError(detail, 400),
     );
   });
@@ -327,7 +327,7 @@ describe('updateRolePermissions', () => {
       json: async () => ({}),
     } as Response);
 
-    await expect(updateRolePermissions('fake-jwt', 'analyst', updatePayload)).rejects.toMatchObject(
+    await expect(updateRolePermissions('fake-jwt', 2, updatePayload)).rejects.toMatchObject(
       new UpdatePermissionsError(USERS_COPY.errors.badRequest, 400),
     );
   });
@@ -339,8 +339,145 @@ describe('updateRolePermissions', () => {
       json: async () => ({}),
     } as Response);
 
-    await expect(updateRolePermissions('fake-jwt', 'analyst', updatePayload)).rejects.toMatchObject(
+    await expect(updateRolePermissions('fake-jwt', 2, updatePayload)).rejects.toMatchObject(
       new UpdatePermissionsError(USERS_COPY.errors.forbidden, 403),
+    );
+  });
+});
+
+const rolesFixture = [
+  { role_id: 1, name: 'admin', description: 'Full access', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+  { role_id: 2, name: 'analyst', description: 'Standard access', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+];
+
+describe('fetchRoles', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sends GET with auth header and returns roles array', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => rolesFixture,
+    } as Response);
+
+    await expect(fetchRoles('fake-jwt')).resolves.toEqual(rolesFixture);
+
+    expect(fetchMock).toHaveBeenCalledWith(ROLES_ENDPOINT, {
+      headers: { Authorization: 'Bearer fake-jwt' },
+    });
+  });
+
+  it('throws RolesError when token is null', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+    await expect(fetchRoles(null)).rejects.toThrow(USERS_COPY.errors.fetchWithoutToken);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('throws RolesError with detail on non-ok response', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({ detail: 'Forbidden' }),
+    } as Response);
+
+    await expect(fetchRoles('fake-jwt')).rejects.toMatchObject(
+      new RolesError('Forbidden', 403),
+    );
+  });
+
+  it('throws RolesError with serviceUnavailable on network error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
+
+    await expect(fetchRoles('fake-jwt')).rejects.toMatchObject(
+      new RolesError(USERS_COPY.errors.serviceUnavailable),
+    );
+  });
+});
+
+describe('createRole', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sends POST with JSON body and returns created role', async () => {
+    const created = { role_id: 3, name: 'security_ops', description: 'SecOps team', is_system: false, created_at: '2026-09-25T00:00:00Z', permissions: [] };
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => created,
+    } as Response);
+
+    await expect(createRole('fake-jwt', { name: 'security_ops', description: 'SecOps team' })).resolves.toEqual(created);
+
+    expect(fetchMock).toHaveBeenCalledWith(ROLES_ENDPOINT, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer fake-jwt', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'security_ops', description: 'SecOps team' }),
+    });
+  });
+
+  it('throws RolesError when token is null', async () => {
+    await expect(createRole(null, { name: 'test' })).rejects.toThrow(USERS_COPY.errors.updateWithoutToken);
+  });
+
+  it('throws RolesError with detail on 409 conflict', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: async () => ({ detail: 'Role already exists' }),
+    } as Response);
+
+    await expect(createRole('fake-jwt', { name: 'admin' })).rejects.toMatchObject(
+      new RolesError('Role already exists', 409),
+    );
+  });
+});
+
+describe('deleteRole', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('sends DELETE with auth header and resolves void', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    } as Response);
+
+    await expect(deleteRole('fake-jwt', 5)).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(`${ROLES_ENDPOINT}/5`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer fake-jwt' },
+    });
+  });
+
+  it('throws RolesError when token is null', async () => {
+    await expect(deleteRole(null, 5)).rejects.toThrow(USERS_COPY.errors.deleteUserWithoutToken);
+  });
+
+  it('throws RolesError with detail on 409 (users assigned)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: async () => ({ detail: 'Cannot delete role with 3 assigned user(s)' }),
+    } as Response);
+
+    await expect(deleteRole('fake-jwt', 5)).rejects.toMatchObject(
+      new RolesError('Cannot delete role with 3 assigned user(s)', 409),
+    );
+  });
+
+  it('throws RolesError with detail on 400 (system role)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ detail: 'System roles cannot be deleted' }),
+    } as Response);
+
+    await expect(deleteRole('fake-jwt', 1)).rejects.toMatchObject(
+      new RolesError('System roles cannot be deleted', 400),
     );
   });
 });

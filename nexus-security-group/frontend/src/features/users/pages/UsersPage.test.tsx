@@ -8,6 +8,17 @@ import { DateFormatProvider } from '../../../shared/contexts/DateFormatContext';
 import { AuthProvider } from '../../auth';
 import { UsersPage } from './UsersPage';
 
+vi.mock('../hooks/useRolesQuery', () => ({
+  useRolesQuery: () => ({
+    data: [
+      { role_id: 1, name: 'admin', description: 'System administrator', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+      { role_id: 2, name: 'analyst', description: 'Security analyst', is_system: true, created_at: '2026-01-01T00:00:00Z', permissions: [] },
+    ],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 const encodePayload = (payload: unknown) =>
   btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 
@@ -117,7 +128,7 @@ describe('UsersPage', () => {
 
     expect(await screen.findByText('User created')).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByText('alice')).toHaveLength(1));
-    expect(screen.getByText(/Backend confirmed alice as admin/)).toBeInTheDocument();
+    expect(screen.getByText(/User alice created with role admin/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith('/api/users', expect.objectContaining({ body: expect.stringContaining('"username":"alice"') }));
   });
@@ -127,7 +138,7 @@ describe('UsersPage', () => {
     [422, 'Password is too short'],
     [401, 'Session expired'],
     [403, 'Admins only'],
-  ])('surfaces actionable backend errors for %i responses', async (status, detail) => {
+  ])('surfaces actionable server errors for %i responses', async (status, detail) => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, json: async () => [] } as Response).mockResolvedValueOnce({
       ok: true,
@@ -156,7 +167,7 @@ describe('UsersPage', () => {
 
     renderUsersPage(`header.${encodePayload({ permissions: ['users:read'] })}.signature`);
 
-    expect(screen.getByRole('note')).toHaveTextContent('users:write');
+    expect(screen.getByRole('note')).toHaveTextContent('write permissions');
     expect(screen.queryByRole('button', { name: 'Create user' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
   });
@@ -286,7 +297,7 @@ describe('UsersPage', () => {
     expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
   });
 
-  it('displays backend delete errors', async () => {
+  it('displays delete errors', async () => {
     const user = userEvent.setup();
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce({ ok: true, json: async () => [bobUser] } as Response)

@@ -13,7 +13,7 @@ export class LoginError extends Error {
 
 export async function loginWithCredentials(username: string, password: string) {
   const formData = new URLSearchParams();
-  formData.append('username', username);
+  formData.append('username', username.trim().toLowerCase());
   formData.append('password', password);
 
   let response: Response;

@@ -1,0 +1,2889 @@
+sample_id,mention_id,detection_id,source,source_url,criticality_original,risk_score_original,matched_keywords_original,criticality_corrected_full_text,risk_score_corrected_full_text,matched_keywords_corrected_full_text,criticality_changed_full_text,consenso_final_previo,consenso_criticidad_previo,text_content
+REV45-BLIND-001,51,51,exploit-db,https://www.exploit-db.com/exploits/52682,high,50,rce|cve-,high,50,rce|cve-,no,correcto,si,"CVE-2026-80428 Unauthenticated PHP Object Injection via Shibboleth - ILIAS &lt; 9.22, 10.0 &lt; 10.10, 11.0 &lt; 11.3 - RCE"
+REV45-BLIND-002,74,74,exploit-db,https://www.exploit-db.com/exploits/52659,high,50,remote code execution,high,50,remote code execution,no,correcto,si,Langflow  1.8.4 - Path Traversal to Remote Code Execution
+REV45-BLIND-003,88,88,exploit-db,https://www.exploit-db.com/exploits/52645,high,50,remote code execution,high,50,remote code execution,no,correcto,si,Joomla JCE_2.9.15 - Remote Code Execution
+REV45-BLIND-004,89,89,exploit-db,https://www.exploit-db.com/exploits/52644,high,50,remote code execution,high,50,remote code execution,no,correcto,si,ipTIME A3004T  - Remote Code Execution
+REV45-BLIND-005,169,169,github,https://github.com/KKloudTarus/synapse-ce/issues/1327,critical,85,apt|rce|security|incident,medium,35,security|incident,sí,correcto,si,"EPIC: External integrations for alerting, ticketing and documentation publishing
+
+<!-- synapse-epic:external-integrations:v1 -->
+
+## Why this EPIC
+
+Synapse finds, verifies and reports security issues, but almost none of that reaches the tools where teams work. A new critical finding, a breached SLA, a pending approval, an expiring risk acceptance or a finished DAST run stays inside the console until someone opens it. There is no Jira handoff, no Confluence page, no Teams or Telegram channel, and no per-person routing.
+
+This EPIC closes the gap end to end: event producers, delivery, message content with default and custom templates, channels, ticketing, documentation publishing, per-user routing, inbound webhooks and the admin UI.
+
+Priority: the notification and integration flows come first. Every alert must reach chat, email, pager and ticketing with a sensible built-in template, and a tenant must be able to replace that template with its own wording without a code change.
+
+Planning inputs:
+- Code audit of `main` at `09f9a927` (2026-09-25). Every claim below cites the file that backs it.
+- An architecture, security and fact-check review of the first draft. Its findings are folded into this text.
+
+## Baseline: what exists (credit it, do not rebuild)
+
+The delivery engine is solid. What is missing is most of what feeds it and everything beyond chat and email.
+
+| Capability | State on `main` | Evidence |
+|---|---|---|
+| Durable tenant notification framework | Transactional capture into `notification_source_records`, idempotent events on `(tenant, source_kind, source_id)`, one delivery per (event, channel, recipient), leased `notification.deliver` jobs, 8 attempts (10 s base doubling, 1 h cap, deterministic ±10% jitter), `Retry-After`, dead letter, crash reconcile, audit per attempt | `internal/usecase/notification/service.go:421-528`, `internal/infrastructure/persistence/postgres/notification_repository.go:326-453`, `migrations/0163_notification_framework.sql` |
+| Channel types | `webhook` (HMAC-SHA256 over `timestamp.body`), `slack` (incoming webhook on `hooks.slack.com` only), `email` (global SMTP relay from env, `text/plain`, STARTTLS, PLAIN auth) | `internal/domain/notification/notification.go:17-25`, `internal/infrastructure/notificationsender/sender.go:72-175`, `internal/platform/config/config.go:911-916` |
+| Channel secrets | Sealed with the vault cipher, AAD bound to tenant/channel/version, append-only version table, masked destination in the API | `service.go:319-333,361,368`, `0163…sql:23-31,208-230` |
+| SSRF guard | `safehttp` resolves and vets every address at dial time, no redirects, no proxy | `internal/infrastructure/safehttp/client.go:21-80` |
+| Admin UI | `/settings/alerting`: channels, rules, delivery history with attempt drill-down | `web/src/pages/Settings/Alerting.tsx` |
+| Integration framework | Provider registry, sealed credentials, origin change deletes credentials, scheduler, operation history. Read-only capabilities `test_connection`, `discover_pipelines`, `read_runs`. One provider: Jenkins | `internal/domain/integration/model.go:57-60`, `registry.go`, `postgres/integration_store.go:105-118`, `cmd/synapse-api/main.go:924` |
+| SCM connectors | Tenant host-matched PATs used by clone and PR decoration | `internal/domain/scmconnector/connector.go`, `cmd/synapse-api/main.go:972` |
+| SCM PR decoration | GitHub (status, check run, comment), GitLab (status, MR note), Bitbucket (status, Code Insights, comment). SaaS hosts only | `internal/infrastructure/scmdecoration/github.go:24`, `gitlab.go:26`, `bitbucket.go:26` |
+| Legacy incident alert webhook | Deployment-wide, in-process, best effort, not durable | `internal/usecase/alerting/service.go`, `internal/infrastructure/alertsink/webhook/webhook.go` |
+
+The delivery discipline above is a floor for every new provider in this EPIC:
+- No plaintext credentials in columns and no credential returned by any API.
+- No outbound URL outside the SSRF guard.
+- No send without d"
+REV45-BLIND-006,173,173,github,https://github.com/ANYTECHS/clips-frontend/issues/1161,medium,20,security|vulnerability,medium,20,security|vulnerability,no,correcto,si,"Implement Dependency Scanning
+
+**Description:** Dependencies are not regularly scanned for security vulnerabilities.
+
+**Acceptance Criteria:**
+- Set up dependency scanning
+- Configure automated scans
+- Add scanning to CI/CD
+- Create vulnerability remediation process
+- Monitor security advisories
+- Document dependency updates"
+REV45-BLIND-007,175,175,github,https://github.com/TSunDanceK/MyStockHarbor/issues/552,high,40,rce,low,15,,sí,correcto,si,"Relay A: SEC data, earnings pages, earnings calendar, stock page (SEC panels)
+
+Code session **A**, from 2026-09-23 evening. It replaces #535 for this area; #535 is history, so read it for facts and rulings only. Instructions come only from **COWORK comments on this issue**.
+
+## Rules (unchanged from #535)
+- Report every reply here as `CODE-A #n — topic`, with the first line `OWNER: …`. Reply to the owner in chat with one line only.
+- Read-only relays and opening PRs are fine. **Merge only with the owner's GO typed in your chat**, after a Cowork preview check, each PR on its rebased head with check-all + tsc passing.
+- The repo is PUBLIC: no links, tokens or credentials in relay inputs, logs or comments.
+- Follow `claude/tiingo-contract-and-limits-2026-09-23.md`. Copy rules: filed facts only; hedged wording; no fake precision; hide, don't delete, with a dated comment.
+
+## Area and file ownership
+**A owns:** `lib/server/sec*`, report dates / outlook / expectedToReport, `secEarnings*`, `secValuation`, `secShareHistory`, the FX module, `app/stock/[symbol]/earnings/**`, the SEC panels on `/stock/[symbol]` (earnings snapshot tile, profile/About, valuation, dilution chart), `/earnings-calendar`, `lib/server/earningsCalendar.ts`, the SEC jobs (sec-facts, sec-filings, sec-daily-index, report-dates).
+
+**A must not edit** price/quote/history/price-pool, Pickers/screeners, dashboard, search, IPO, SPX, news or Tiingo files. Those belong to **Relay B**. Shared files (`vercel.json`, `scripts/check-all.mjs`, `scripts/relay-run.mjs`) take **append-only** edits; rebase before every merge.
+
+## Queue (in order)
+1. **#550** (score rules) and **#551** (dilution axis / precision / ""Est."" copy): adopt them as they are, post their status, and wait for Cowork's preview check.
+2. **Calendar off FMP** (#535 CODE #25 plan plus COWORK #23 rulings):
+   - PR 1, data: the report-date backlog slice, the V3 reader, and the 6-K rule **only if R7 + a cadence filter gives ≤ 5% false positives**; otherwise foreign 6-K filers stay off the grid, with a note.
+   - PR 2, grid: SEC candidates via a day index, names, admission, ""—"" off-pool, estimate columns hidden, and the earnings-area FMP touches removed.
+   - Acceptance: renders correctly with `FMP_API_KEY` unset.
+3. **Estimated next-report window** (#535 COWORK #18 §1): measure precision by horizon, then build one builder everywhere.
+4. **Snapshot cards** (COWORK #18 §2): Revenue, EPS, FCF, and the margins with pp change.
+5. **TSM brief** (COWORK #22):
+   - §0: the TWD rate via FRED `DEXTAUS` (this also releases TSM's currency lock and fixes CHT);
+   - §2: the FX-in-growth measurement;
+   - §1: ADR multiples from a cited 20-F Item 12.D / F-6 ratio map, never defaulting to 1.
+6. **IFRS follow-ups:** the OCF continuing-ops fallback, after the fills-vs-altered check.
+7. **Safeguards** (COWORK #17) **for A's jobs:** per-item backoff, per-run command cap, daily circuit breaker, stop on Redis error, capped catch-up, Edge Config kill switch. Relay B builds the shared alert GitHub Action.
+
+## Daily check-in (05:00 UTC)
+One comment covering:
+- filing-job fills and notices (KO, DUK, V, F, TSM)
+- cold-fill counters and outcomes
+- the re-read queue
+- the commands per day for each A job"
+REV45-BLIND-008,213,213,github,https://github.com/GSA/data.gov/issues/6375,medium,30,vulnerability,medium,30,vulnerability,no,correcto,si,"Inventory making requests to suspicious endpoints
+
+_Please keep any sensitive details in [Google Drive](https://docs.google.com/document/d/1rW0VOzfCrjXOI0O1gTAOm225_fTbu5Cjrg7yJTYYBBg/edit)._
+
+**Date of report:** 2026-09-25
+**Severity:**
+**Due date:** 
+
+_Due date is based on severity and described in RA-5. 15-days for Critical, 30-days for High, and 90-days for Moderate and lower._
+
+- [ ] Analysis has been performed and an issue has been linked to address other occurrences for this class of vulnerability\* (_link_)
+
+_\* When a finding is identified, we create two issues. One to address the specific instance identified in the report. The other is to identify and address all other occurrences of this vulnerability within the application._
+
+### Brief description
+<!-- Please link to the Google Doc heading describing this issue -->"
+REV45-BLIND-009,218,218,github,https://github.com/NooksApp/nooks-release-server/issues/1,high,40,rce|vulnerability,low,15,vulnerability,sí,correcto,si,"Wiz - 'master' Branch Scan Overview
+
+<!-- WizIssue-54228afdb95d89ab8c7b7f4f7a6327702950692f8b37dfd4bcb09fd44903918b-master -->
+
+<a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/banners/pull_request_banner_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/banners/pull_request_banner_light.svg""><img align=""top"" valign=""top"" alt=""Wiz Remediation Pull Request Banner"" title=""Wiz Remediation Pull Request Banner"" src=""https://assets.wiz.io/wiz-code/banners/pull_request_banner_light.svg""></picture></a>
+
+### Configured Wiz Branch Policies
+<a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/vulnerability_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/vulnerability_light.svg""><img align=""top"" valign=""top"" alt=""Vulnerability Finding"" title=""Vulnerability Finding"" src=""https://assets.wiz.io/wiz-code/finding_type_icons/vulnerability_light.svg""></picture></a> <a href=""https://app.wiz.io/policies/cicd-policies#~(filters~(search~(contains~%27Default%20vulnerabilities%20policy)))"" target=""_blank"">Default vulnerabilities policy</a><br><a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/secret_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/secret_light.svg""><img align=""top"" valign=""top"" alt=""Secret Finding"" title=""Secret Finding"" src=""https://assets.wiz.io/wiz-code/finding_type_icons/secret_light.svg""></picture></a> <a href=""https://app.wiz.io/policies/cicd-policies#~(filters~(search~(contains~%27Default%20secrets%20policy)))"" target=""_blank"">Default secrets policy</a><br><a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/configuration_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/configuration_light.svg""><img align=""top"" valign=""top"" alt=""IaC Misconfiguration"" title=""IaC Misconfiguration"" src=""https://assets.wiz.io/wiz-code/finding_type_icons/configuration_light.svg""></picture></a> <a href=""https://app.wiz.io/policies/cicd-policies#~(filters~(search~(contains~%27Default%20IaC%20policy)))"" target=""_blank"">Default IaC policy</a><br><a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/data_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/data_light.svg""><img align=""top"" valign=""top"" alt=""Data Finding"" title=""Data Finding"" src=""https://assets.wiz.io/wiz-code/finding_type_icons/data_light.svg""></picture></a> <a href=""https://app.wiz.io/policies/cicd-policies#~(filters~(search~(contains~%27Default%20sensitive%20data%20policy)))"" target=""_blank"">Default sensitive data policy</a><br><a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/sast_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/sast_light.svg""><img align=""top"" valign=""top"" alt=""SAST Finding"" title=""SAST Finding"" src=""https://assets.wiz.io/wiz-code/finding_type_icons/sast_light.svg""></picture></a> <a href=""https://app.wiz.io/policies/cicd-policies#~(filters~(search~(contains~%27Default%20SAST%20policy%20(Wiz%20CI/CD%20scan))))"" target=""_blank"">Default SAST policy (Wiz CI/CD scan)</a><br>
+
+### Wiz Scan Summary
+
+| Scanner | Findings |
+|:--------|---------:|
+| <a><picture><source media=""(prefers-color-scheme: dark)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/vulnerability_dark.svg""><source media=""(prefers-color-scheme: light)"" srcset=""https://assets.wiz.io/wiz-code/finding_type_icons/vulnerability_light.svg""><img align=""top"" valign=""top"" alt=""Vulnerability Fi"
+REV45-BLIND-010,273,273,github,https://github.com/petaurora/kink-profile/issues/263,low,5,,low,5,,no,correcto,si,"Catalog V2 Batch 8 — Power exchange & roles
+
+## Goal
+
+Migrate **Power Exchange & Roles** into Catalog V2 without flattening orientation, named dynamics, style, and relationship structure into one peer list.
+
+Parent V2 issue: #255  
+Completed prior batches: #256–#261  
+Deferred R&P batch: #262  
+M16 parent: #124
+
+This is a design/migration batch only. Do not mutate runtime canonical data.
+
+## Canonical Power Exchange & Roles corpus
+
+- Dominance
+- Submission
+- Master/slave dynamic
+- Owner/property dynamic
+- Daddy/babygirl dynamic
+- Mommy/little dynamic
+- Caretaker/little dynamic
+- Pet/Owner dynamic
+- Handler/pet dynamic
+- Total power exchange fantasy
+- 24/7 power exchange
+- Weekend / temporary TPE
+- Switching
+- Bratting
+- Brat taming
+- Training dynamic
+- Ownership ritual
+- Protective dominance
+- Gentle dominance
+- Soft submission
+- Disciplined submission
+- Devotional submission
+- Worship kink
+
+Relevant modern staged additions:
+- Financial domination / findom
+- Algorithmic / system authority
+- related digital/financial/control concepts in neighboring categories
+
+## First-pass conceptual layers
+
+### 1. Core orientation / role preference
+Candidates:
+- **Dominance**
+- **Submission**
+- **Switching**
+
+These appear independently rateable and foundational.
+
+Open question:
+Should Switching remain standalone, or be represented as explicit preference for both Dominance and Submission plus a switching identity/mode?
+
+### 2. Named dynamic / relationship structure
+Candidate families:
+- Master/slave
+- Owner/property
+- Caregiver/little
+- Pet/Owner or Handler/Pet
+- Training dynamic
+- Total Power Exchange
+
+These should be evaluated using the standard Item test:
+> Would someone independently rate this named dynamic, and would collapsing it into generic Dominance/Submission lose meaningful identity?
+
+### 3. Style / flavor refinements
+Likely refinements rather than standalone Items:
+
+**Dominance styles**
+- protective
+- gentle / soft
+- possibly disciplinary
+- possibly service-oriented / nurturing where validated
+
+**Submission styles**
+- soft / affectionate
+- disciplined / accountability-focused
+- devotional
+
+These should remain explicitly rateable refinements where useful.
+
+### 4. Scope / temporal structure
+Likely refinements of Power Exchange / TPE rather than standalone Items:
+- scene-only
+- ongoing
+- 24/7
+- temporary / weekend
+- other bounded durations
+
+Avoid creating separate Items solely for duration/scope.
+
+## First-pass migration hypotheses
+
+### Dominance
+**Standalone Item.**
+
+Potential refinements:
+- style: protective, gentle, disciplinary, etc.
+- scope/context where useful
+- relationship framing where not better represented by another named dynamic
+
+### Submission
+**Standalone Item.**
+
+Potential refinements:
+- style: soft/affectionate, disciplined, devotional
+- scope/context where useful
+
+### Switching
+**Likely standalone Item**, because enjoyment of role-switching itself may be meaningful beyond independently liking Dominance and Submission.
+
+### Master/slave dynamic
+Candidate **standalone Item**.
+
+Reason:
+Strong named relationship identity, protocol intensity, symbolic hierarchy, and distinct terminology.
+
+### Owner/property dynamic
+Candidate **standalone Item**.
+
+Reason:
+Strong ownership/belonging framing that is independently meaningful and already appears throughout the catalog.
+
+### Caregiver/little dynamic
+Candidate **standalone family**.
+
+Possible role-pair refinements:
+- Daddy / babygirl
+- Mommy / little
+- Caretaker / little
+- other validated caregiver/little role labels
+
+This may be more discoverable than three peer Items.
+
+### Pet dynamic
+Candidate family or relation to Pet Play.
+
+Potential role structures:
+- Pet / Owner
+- Handler / Pet
+
+Key question:
+Does the **relationship dynamic** deserve its own Item/family separate from **Pet Play**, or should these be refinements/relationship modes under Pet Play?
+
+### Total Power Exchange (TPE)
+Candidate **standalone Item / family**.
+
+Potential scope refinements:
+- 24/7
+- temporary / weeke"
+REV45-BLIND-011,287,287,github,https://github.com/Naiyi-Chia/IPAS-AI-trainer/issues/50,critical,65,rce|exploit,medium,20,,sí,correcto,si,"[Question Review] #14 Batch 3B — cue-bias remediation (24 items)
+
+Parent: #14
+
+## Goal
+Human-review and remediate the next scoped set of self-authored questions identified by Issue #14 cue-bias audit.
+
+## Priority
+High length cue (2–3x)
+
+## Scope
+Exactly 24 questions:
+- Q064–Q066 — AI 專案規劃 (L21/L21202; max ratio 2.29x)
+- Q067–Q069 — AI 風險管理 (L21/L21203; max ratio 2.61x)
+- Q070–Q072 — 數據準備與模型選擇 (L21/L21301; max ratio 2.82x)
+- Q073–Q075 — 部署與系統集成 (L21/L21302; max ratio 2.27x)
+- Q088–Q090 — 資料湖與資料倉儲 (L22/L22202; max ratio 2.03x)
+- Q091–Q093 — 批次與串流處理 (L22/L22203; max ratio 2.65x)
+- Q097–Q099 — 分群分析 (L22/L22302; max ratio 2.80x)
+- Q103–Q105 — 大數據與模型訓練 (L22/L22401; max ratio 2.29x)
+
+## Requirements
+- Start from the latest `question/issue-14-remediation` Epic Integration Branch at implementation time; do not use earlier prototype branches or `dev` directly as baseline.
+- Preserve each question's level / subject / topic / concept / difficulty / answer index / sourceType unless a verified content error is first reflected in this Issue.
+- Rewrite distractors to be plausible alternatives at the same semantic level.
+- Remove exploitable length / completeness / absurd-distractor / grammar cues.
+- Reduce repeated option-pattern memorization within every reviewed cluster.
+- Keep one unambiguous correct answer and explanation consistency.
+- Do not modify official past-paper content, localStorage behavior, or unrelated UI/code.
+
+## Acceptance Criteria
+- [ ] Exactly the scoped IDs change; no other question content changes.
+- [ ] Total self-authored question count remains 483 and IDs remain unique.
+- [ ] Protected metadata and answer indices remain unchanged unless this Issue is updated first for a verified content error.
+- [ ] Every modified item is manually reviewed for one unambiguous correct answer and plausible distractors.
+- [ ] No modified item has correct-option / average-distractor length ratio >= 2.0x.
+- [ ] Each reviewed option-set cluster is no longer duplicated verbatim across the bank.
+- [ ] Audit metrics are re-run and before/after evidence is recorded.
+- [ ] JS syntax plus representative Practice / Mock rendering and scoring smoke checks pass.
+- [ ] Engineering Ready for Review report is posted before any PR is opened.
+
+## Integration Mechanics
+Engineering QA → concise Engineering Ready → ChatGPT independent Technical Review → PR to `question/issue-14-remediation` (created / updated automatically) → clean review / conflict checks → merge to Epic Integration Branch.
+
+Per-Sub-issue Human Epic Integration Approval is not required under Playbook v1.6. This internal epic accumulation is not canonical Integration Approval or Product Verify. Any blocker, conflict, or unexpected scope stops automation.
+
+## Sequencing
+Implement after earlier #14 batches that touch the one-line question DB have been integrated into `question/issue-14-remediation`, to avoid branch/diff conflicts.
+
+## Integration Strategy
+- Base branch: `question/issue-14-remediation`
+- PR target: `question/issue-14-remediation`
+- Do not target `dev` directly for this Sub-issue.
+- After Technical Review PASS, a clean Sub-issue PR may merge into the epic branch without a separate Human Gate.
+- Canonical Human Integration Approval and Product Verify occur only at the final `question/issue-14-remediation → dev` integration defined by Parent Issue #14."
+REV45-BLIND-012,288,288,github,https://github.com/redtear1115/oikos/issues/1354,low,15,,low,15,,no,correcto,si,"crew: v1.6.0 Log
+
+這輪發生的事，最新的在最下面。需要你決定的事在 1353。
+
+- 2026-09-21 10:30：oikos-3f 當 coordinator。從 main 6296dbd 開了 4 個 worktree（A #1327、B #1347、C #1280、D #1268）。共享狀態放在 `~/Projects/js/oikos-worktrees/crew/`。"
+REV45-BLIND-013,303,303,github,https://github.com/shilpo-rs/shilpo/issues/248,high,50,security|incident|vulnerability,high,50,security|incident|vulnerability,no,correcto,si,"Security advisories detected by cargo-deny
+
+## Automated Security Advisory Detection
+
+`cargo deny check advisories` reported security or maintenance advisories against the current dependency tree.
+
+### Audit Log
+```text
+error[unmaintained]: Bincode is unmaintained
+   ┌─ /home/runner/work/shilpo/shilpo/Cargo.lock:66:1
+   │
+66 │ bincode 1.3.3 registry+https://github.com/rust-lang/crates.io-index
+   │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+   │
+   ├ ID: RUSTSEC-2025-0141
+   ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2025-0141
+   ├ Due to a doxxing and harassment incident, the bincode team has taken the decision to cease development permanently.
+     
+     The team considers version 1.3.3 a complete version of bincode that is not in need of any updates.
+     
+     ## Alternatives to consider
+     
+     * [wincode](https://crates.io/crates/wincode)
+     * [postcard](https://crates.io/crates/postcard)
+     * [bitcode](https://crates.io/crates/bitcode)
+     * [rkyv](https://crates.io/crates/rkyv)
+   ├ Announcement: https://git.sr.ht/~stygianentity/bincode/tree/v3.0/item/README.md
+   ├ Solution: No safe upgrade is available!
+   ├ bincode v1.3.3
+     └── heed-types v0.21.0
+         └── heed v0.22.1
+             ├── shilpo-ext-runtime v0.1.0
+             │   └── shilpo v0.1.0
+             └── shilpo-services v0.1.0
+                 ├── shilpo v0.1.0 (*)
+                 └── (dev) shilpo-device v0.1.0
+                     ├── shilpo v0.1.0 (*)
+                     └── shilpo-services v0.1.0 (*)
+
+error[vulnerability]: h2 unbounded empty DATA frames
+    ┌─ /home/runner/work/shilpo/shilpo/Cargo.lock:303:1
+    │
+303 │ h2 0.4.15 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ security vulnerability detected
+    │
+    ├ ID: RUSTSEC-2026-0258
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2026-0258
+    ├ The h2 crate, used internally by hyper, had a flaw that would accept and queue empty DATA frames without limit.
+      If streams were not actively drained, this could lead to unbounded memory usage, or a panic if the length overflows.
+      
+      Low severity.
+      
+      Patched in v0.4.16.
+    ├ Announcement: https://github.com/hyperium/hyper/security/advisories/GHSA-q83h-524g-xf6h
+    ├ Solution: Upgrade to >=0.4.16 (try `cargo update -p h2`)
+    ├ h2 v0.4.15
+      ├── hyper v1.11.0
+      │   ├── hyper-rustls v0.27.9
+      │   │   └── zed-reqwest v0.12.15-zed
+      │   │       ├── reqwest_client v0.1.0
+      │   │       │   └── storybook v0.1.0
+      │   │       ├── shilpo v0.1.0
+      │   │       ├── shilpo-ext-runtime v0.1.0
+      │   │       │   └── shilpo v0.1.0 (*)
+      │   │       ├── shilpo-ui v0.1.0
+      │   │       │   ├── shilpo v0.1.0 (*)
+      │   │       │   ├── shilpo-theme-daemon v0.1.0
+      │   │       │   │   ├── shilpo v0.1.0 (*)
+      │   │       │   │   └── storybook v0.1.0 (*)
+      │   │       │   └── storybook v0.1.0 (*)
+      │   │       └── storybook v0.1.0 (*)
+      │   ├── hyper-util v0.1.20
+      │   │   ├── hyper-rustls v0.27.9 (*)
+      │   │   └── zed-reqwest v0.12.15-zed (*)
+      │   └── zed-reqwest v0.12.15-zed (*)
+      └── zed-reqwest v0.12.15-zed (*)
+
+error[unmaintained]: `instant` is unmaintained
+    ┌─ /home/runner/work/shilpo/shilpo/Cargo.lock:363:1
+    │
+363 │ instant 0.1.13 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ unmaintained advisory detected
+    │
+    ├ ID: RUSTSEC-2024-0384
+    ├ Advisory: https://rustsec.org/advisories/RUSTSEC-2024-0384
+    ├ This crate is no longer maintained, and the author recommends using the maintained [`web-time`] crate instead.
+      
+      [`web-time`]: https://crates.io/crates/web-time
+    ├ Solution: No safe upgrade is available!
+    ├ instant v0.1.13
+      └── shilpo-ui v0.1.0
+          ├── shilpo v0.1.0
+          ├── shilpo-th"
+REV45-BLIND-014,385,385,github,https://github.com/hrodrig/kzero/issues/14,critical,70,rce|cve-|security,high,45,cve-|security,sí,correcto,si,"security(deps): bump google.golang.org/grpc for CVE-2026-84304 (OOM via HTTP/2 DATA fragmentation)
+
+## Dependabot
+
+- Alert: https://github.com/hrodrig/kzero/security/dependabot/9
+- Advisory: [GHSA-vp52-pcj8-j9qc](https://github.com/advisories/GHSA-vp52-pcj8-j9qc) / **CVE-2026-84304**
+- Severity: **high** (CWE-400)
+- Package: `google.golang.org/grpc` (indirect via `go.mod`)
+- Vulnerable: `<= 1.83.0`
+- Patched: **`1.83.1`**
+
+## Current pin
+
+`go.mod` has `google.golang.org/grpc v1.82.1 // indirect`.
+
+## Summary
+
+gRPC-Go: heap memory exhaustion (OOM) via HTTP/2 DATA frame fragmentation.
+
+## Remediation
+
+```bash
+go get google.golang.org/grpc@v1.83.1
+go mod tidy
+go test ./...
+```
+
+Same bump closes sibling Dependabot alerts **#10** and **#11** (see related issues). Prefer a single `security/grpc-1.83.1` PR.
+
+## Related
+
+- Dependabot open set: [#9](https://github.com/hrodrig/kzero/security/dependabot/9), [#10](https://github.com/hrodrig/kzero/security/dependabot/10), [#11](https://github.com/hrodrig/kzero/security/dependabot/11)
+- Source: https://github.com/hrodrig/kzero/security/dependabot"
+REV45-BLIND-015,401,401,github,https://github.com/gioxx/MarvellousSuspender/issues/532,critical,65,rce|malware,high,40,malware,sí,correcto,si,"[Bug]: all suspended tab titles replaced with ""Replaced""
+
+### Before you start
+
+- [x] I searched the open and closed issues and did not find a duplicate.
+- [x] I am on the latest version available from the Chrome Web Store (or a build newer than that).
+
+### TMS version
+
+9.0.3
+
+### Browser
+
+Chrome
+
+### Browser version
+
+130.0.6723.91
+
+### Operating system
+
+Linux
+
+### How did you install TMS?
+
+Chrome Web Store
+
+### What happened
+
+All suspended tabs have had their tab titles replaced with the word ""Replaced"" after restarting Chromium
+
+This makes it impossible to choose a particular tab from the tab bar or menu, they all have the same title.
+
+I don't know exactly when this started happening, I noticed it after I rebooted to upgrade my kernel yesterday.  TMS upgraded recently (within the last week, IIRC) but I hadn't rebooted or re-started the browser for over a month.
+
+### What you expected
+
+Tabs should keep their titles when suspended, even after restarting.
+
+### Steps to reproduce
+
+1. Open some tabs and either wait for them to suspend or suspend them from the menu
+2. Restart the browser
+3. look at the tab titles, see that they are all called ""Replaced""
+
+### Relevant settings
+
+Please don't suggest upgrading Chromium (the open source version of Chrome).  I am using an old version of Chromium deliberately and will not ever ever upgrade it because Manifest V3 is user-hostile malware.  I need uMatrix and uBlock Origin and several other plugins to make the web tolerable  -  I would rather stop using Chromium entirely than lose them.
+
+### Diagnostic report
+
+```text
+
+```
+
+### Screenshots / extra context
+
+_No response_"
+REV45-BLIND-016,463,463,github,https://github.com/stSoftwareAU/NEAT-AI-Discovery/issues/2256,critical,80,rce|exploit|attack|security,high,45,exploit|security,sí,correcto,si,"Orphan sweep liveness keys on discovery.lock, which nothing in-tree writes and NEAT-AI spells .discovery.lock (src/discovery_cleanup.rs::is_directory_orphaned)
+
+<!-- finding-id: SEC-bbe3f392d7aa -->
+<!-- cwe: CWE-706 -->
+
+The orphan sweep's only liveness signal is a file named `discovery.lock`
+(`discovery_cleanup.rs::LOCK_FILE_NAME`), but **no production code in this
+crate writes it**, and the one known host — NEAT-AI — writes
+**`.discovery.lock`** (leading dot) into each session directory. A host that
+calls the FFI `clean_orphaned_discovery_dirs` on NEAT-AI's `.discovery/`
+root therefore reads every live session as orphaned and deletes it with its
+in-flight data. Severity low (NEAT-AI does not bind the FFI sweep today, so no
+live path), confidence high (both names verified, deletion reproduced).
+
+Found by the chunk 11 security sweep, Issue #2234 (tracker #2095).
+
+## Why this matters
+
+- `discovery_cleanup.rs::is_directory_orphaned` treats a directory as
+  abandoned exactly when `<dir>/discovery.lock` is absent;
+  `clean_orphaned_discovery_dirs_since` then removes every such directory
+  older than the scan start.
+- `LOCK_FILE_NAME` has no in-tree production writer — only tests create it.
+  The contract lives in the caller: `docs/FFI_API.md` § ""Orphaned Directory
+  Sweep"" and the doc comment on `ffi/utilities.rs::clean_orphaned_discovery_dirs`
+  say a subdirectory ""is considered orphaned when it has no
+  `discovery.lock` file"".
+- NEAT-AI `src/discovery/DiscoveryCleanup.ts` declares
+  `const LOCK_FILE_NAME = "".discovery.lock""` and writes it from
+  `createDiscoveryLockFile`. The two names never match, so the ownership
+  signal the sweep relies on is unenforced: nothing in either repo checks
+  that the writer and the reader agree.
+- The #1903 age floor only protects directories touched *after* the scan
+  starts; a long-running session whose directory was last modified earlier
+  gets no protection.
+
+Reproduced against the current tree: a `.discovery/<uuid>/` holding only
+`.discovery.lock` is swept with `removed: 1` and the directory is gone.
+
+## Attacker model
+
+No attacker needed — this is an integrity/availability defect triggered by
+ordinary host behaviour. The trigger is a host (today's NEAT-AI, or a future
+refactor that adopts the Rust sweep in place of its TypeScript one) invoking
+the FFI sweep on a root its own sessions populate.
+
+## Trigger
+
+`clean_orphaned_discovery_dirs({""baseDir"": "".discovery""})` while NEAT-AI
+sessions are running under `.discovery/<creature-uuid>/`.
+
+## Exploit sketch
+
+1. NEAT-AI starts a discovery session: `.discovery/<uuid>/` with
+   `.discovery.lock` inside, data being written.
+2. Any caller runs the FFI sweep on `.discovery`.
+3. `is_directory_orphaned` probes `discovery.lock` → `NotFound` → orphaned;
+   the directory predates the scan, so the age floor passes it; the #1903
+   re-check probes the same wrong name and passes it too.
+4. `fs::remove_dir_all` deletes the live session's recording.
+
+## Suggested fix
+
+Make the sweep fail closed on either spelling: treat a directory as in use
+when `discovery.lock` **or** `.discovery.lock` is present (in
+`is_directory_orphaned`, and in the `assert_is_discovery_dir` contents
+check), document both in `docs/FFI_API.md`, and note the host's spelling
+beside `LOCK_FILE_NAME`. The fix ships
+`tests/issue_2256_orphan_sweep_host_lock_name.rs`, which **fails before the
+fix**: a `.discovery/<uuid>/` holding only `.discovery.lock` must survive
+`clean_orphaned_discovery_dirs` (the session directory is the canary) with
+`removed == 0`."
+REV45-BLIND-017,471,471,github,https://github.com/ghc-cloneRepoStaging-scaAndRenovate3/3934_Scott-Berry_0927_114225_ghc_gw2_failed/issues/7,critical,90,exploit|cve-|threat|vulnerability|denial of service,critical,90,exploit|cve-|threat|vulnerability|denial of service,no,correcto,si,"express-4.13.4.tgz: 11 vulnerabilities (highest severity is: 7.5) [main]
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>express-4.13.4.tgz</strong></summary>
+
+Fast, unopinionated, minimalist web framework
+
+
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+</details>
+
+
+# Findings
+| Finding | Severity | 🎯 CVSS | Exploit Maturity | EPSS | Library | Type | Fixed in | Remediation Available |
+| ------------- | ------------- | ---- | --- | ----- | ----- | ----- | --- | --- |
+| [ CVE-2016-10539 ](https://www.mend.io/vulnerability-database/CVE-2016-10539) | 🔴 High | 7.5 | Not Defined | 1.399% | negotiator-0.5.3.tgz | Transitive | N/A | ❌ |
+| [ CVE-2017-1000048 ](https://www.mend.io/vulnerability-database/CVE-2017-1000048) | 🔴 High | 7.5 | Not Defined | 2.395% | qs-4.0.0.tgz | Transitive | N/A | ❌ |
+| [ CVE-2022-24999 ](https://www.mend.io/vulnerability-database/CVE-2022-24999) | 🔴 High | 7.5 | Not Defined | 14.663% | qs-4.0.0.tgz | Transitive | N/A | ❌ |
+| [ CVE-2024-45296 ](https://www.mend.io/vulnerability-database/CVE-2024-45296) | 🔴 High | 7.5 | Not Defined | < 1% | path-to-regexp-0.1.7.tgz | Transitive | N/A | ❌ |
+| [ CVE-2024-52798 ](https://www.mend.io/vulnerability-database/CVE-2024-52798) | 🔴 High | 7.5 | Not Defined | < 1% | path-to-regexp-0.1.7.tgz | Transitive | N/A | ❌ |
+| [ CVE-2026-4867 ](https://www.mend.io/vulnerability-database/CVE-2026-4867) | 🔴 High | 7.5 | Not Defined | < 1% | path-to-regexp-0.1.7.tgz | Transitive | N/A | ❌ |
+| [ CVE-2024-47764 ](https://www.mend.io/vulnerability-database/CVE-2024-47764) | 🟠 Medium | 5.3 | Not Defined | < 1% | cookie-0.1.5.tgz | Transitive | N/A | ❌ |
+| [ CVE-2024-43796 ](https://www.mend.io/vulnerability-database/CVE-2024-43796) | 🟠 Medium | 5.0 | Not Defined | < 1% | express-4.13.4.tgz | Direct | N/A | ❌ |
+| [ CVE-2024-43800 ](https://www.mend.io/vulnerability-database/CVE-2024-43800) | 🟠 Medium | 5.0 | Not Defined | < 1% | serve-static-1.10.3.tgz | Transitive | N/A | ❌ |
+| [ CVE-2025-15284 ](https://www.mend.io/vulnerability-database/CVE-2025-15284) | 🟡 Low | 3.7 | Not Defined | < 1% | qs-4.0.0.tgz | Transitive | N/A | ❌ |
+| [ CVE-2026-2391 ](https://www.mend.io/vulnerability-database/CVE-2026-2391) | 🟡 Low | 3.7 | Not Defined | < 1% | qs-4.0.0.tgz | Transitive | N/A | ❌ |
+
+
+# Details
+
+
+<details>
+  <summary>
+ 🔴CVE-2016-10539
+  </summary>
+
+### Vulnerable Library - **negotiator-0.5.3.tgz**
+
+HTTP content negotiation
+
+**Library home page:** [ https://registry.npmjs.org/negotiator/-/negotiator-0.5.3.tgz ](https://registry.npmjs.org/negotiator/-/negotiator-0.5.3.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+
+**Dependency Hierarchy:**
+
+
+- express-4.13.4.tgz (Root Library)
+    - accepts-1.2.13.tgz
+        - ❌  **negotiator-0.5.3.tgz** (Vulnerable Library)
+
+
+
+
+***
+
+### Vulnerability Details
+
+negotiator is an HTTP content negotiator for Node.js and is used by many modules and frameworks including Express and Koa. The header for ""Accept-Language"", when parsed by negotiator 0.6.0 and earlier is vulnerable to Regular Expression Denial of Service via a specially crafted string.
+
+**Publish Date:** May 31, 2018 08:00 PM
+
+**URL:** [ CVE-2016-10539 ](https://www.mend.io/vulnerability-database/CVE-2016-10539)
+
+**Threat Assessment**
+
+Exploit Maturity:Not Defined
+
+EPSS:1.399%
+
+**Score:** 7.5
+
+
+***
+### Suggested Fix
+
+**Type:** Upgrade version
+
+**Origin:** 
+
+**Release Date:** 
+
+**Fix Resolution :** 
+
+
+</details>
+
+<details>
+  <summary>
+ 🔴CVE-2017-1000048
+  </summary>
+
+### Vulnerable Library - **qs-4.0.0.tgz**
+
+A querystring parser that supports nesting and arrays, with a depth limit
+
+**Library home page:** [ https://registry.npmjs.org/qs/-/qs-4.0.0.tgz ](https://registry.npmjs.org/qs/-/qs-4.0.0.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+
+**Dependency Hierarchy:**
+
+
+- express-4.13.4.tgz (Root Library)
+    - ❌  **qs-4.0.0.tgz** (Vulner"
+REV45-BLIND-018,476,476,github,https://github.com/ghc-cloneRepoStaging-scaAndRenovate3/3934_Scott-Berry_0927_114225_ghc_gw2_failed/issues/5,critical,80,exploit|cve-|threat|vulnerability,critical,80,exploit|cve-|threat|vulnerability,no,correcto,si,"ejs-2.7.4.tgz: 3 vulnerabilities (highest severity is: 9.8) [main]
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>ejs-2.7.4.tgz</strong></summary>
+
+Embedded JavaScript templates
+
+**Library home page:** [ https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz ](https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+</details>
+
+
+# Findings
+| Finding | Severity | 🎯 CVSS | Exploit Maturity | EPSS | Library | Type | Fixed in | Remediation Available |
+| ------------- | ------------- | ---- | --- | ----- | ----- | ----- | --- | --- |
+| [ CVE-2022-29078 ](https://www.mend.io/vulnerability-database/CVE-2022-29078) | 🟣 Critical | 9.8 | Not Defined | 32.808% | ejs-2.7.4.tgz | Direct | N/A | ❌ |
+| [ WS-2021-0153 ](https://www.mend.io/vulnerability-database/WS-2021-0153) | 🟣 Critical | 9.8 | N/A | N/A | ejs-2.7.4.tgz | Direct | N/A | ❌ |
+| [ CVE-2024-33883 ](https://www.mend.io/vulnerability-database/CVE-2024-33883) | 🟠 Medium | 4.0 | Not Defined | < 1% | ejs-2.7.4.tgz | Direct | N/A | ❌ |
+
+
+# Details
+
+
+<details>
+  <summary>
+ 🟣CVE-2022-29078
+  </summary>
+
+### Vulnerable Library - **ejs-2.7.4.tgz**
+
+Embedded JavaScript templates
+
+**Library home page:** [ https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz ](https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+
+**Dependency Hierarchy:**
+
+
+- ❌  **ejs-2.7.4.tgz** (Vulnerable Library)
+
+
+
+
+***
+
+### Vulnerability Details
+
+The ejs (aka Embedded JavaScript templates) package 3.1.6 for Node.js allows server-side template injection in settings[view options][outputFunctionName]. This is parsed as an internal option, and overwrites the outputFunctionName option with an arbitrary OS command (which is executed upon template compilation).
+
+**Publish Date:** Apr 25, 2022 02:13 PM
+
+**URL:** [ CVE-2022-29078 ](https://www.mend.io/vulnerability-database/CVE-2022-29078)
+
+**Threat Assessment**
+
+Exploit Maturity:Not Defined
+
+EPSS:32.808%
+
+**Score:** 9.8
+
+
+***
+### Suggested Fix
+
+**Type:** Upgrade version
+
+**Origin:** 
+
+**Release Date:** 
+
+**Fix Resolution :** 
+
+
+</details>
+
+<details>
+  <summary>
+ 🟣WS-2021-0153
+  </summary>
+
+### Vulnerable Library - **ejs-2.7.4.tgz**
+
+Embedded JavaScript templates
+
+**Library home page:** [ https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz ](https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+
+**Dependency Hierarchy:**
+
+
+- ❌  **ejs-2.7.4.tgz** (Vulnerable Library)
+
+
+
+
+***
+
+### Vulnerability Details
+
+Arbitrary Code Injection vulnerability was found in ejs before 3.1.6. Caused by filename which isn't sanitized for display.
+
+**Publish Date:** May 20, 2026 01:02 AM
+
+**URL:** [ WS-2021-0153 ](https://www.mend.io/vulnerability-database/WS-2021-0153)
+
+**Threat Assessment**
+
+Exploit Maturity:N/A
+
+EPSS:N/A
+
+**Score:** 9.8
+
+
+***
+### Suggested Fix
+
+**Type:** Upgrade version
+
+**Origin:** 
+
+**Release Date:** 
+
+**Fix Resolution :** 
+
+
+</details>
+
+<details>
+  <summary>
+ 🟠CVE-2024-33883
+  </summary>
+
+### Vulnerable Library - **ejs-2.7.4.tgz**
+
+Embedded JavaScript templates
+
+**Library home page:** [ https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz ](https://registry.npmjs.org/ejs/-/ejs-2.7.4.tgz)
+
+**Path to dependency file:** /package.json
+
+**Path to vulnerable library:** /package.json
+
+
+
+**Dependency Hierarchy:**
+
+
+- ❌  **ejs-2.7.4.tgz** (Vulnerable Library)
+
+
+
+
+***
+
+### Vulnerability Details
+
+The ejs (aka Embedded JavaScript templates) package before 3.1.10 for Node.js lacks certain pollution protection.
+
+**Publish Date:** Apr 28, 2024 12:00 AM
+
+**URL:** [ CVE-2024-33883 ](https://www.mend.io/vulnerability-database/CVE-2024-33883)
+
+**Threat Assessment**
+
+Exploit Maturity:Not Defined
+
+EPSS:< 1%
+
+**Score:** 4.0
+
+
+***
+### Suggested Fix
+
+**Type:** Upgrade version
+
+**Origin:** 
+
+**Release Date:** 
+
+**Fix Resolution :** 
+
+
+</details>
+
+[comment]: <>"
+REV45-BLIND-019,534,534,github,https://github.com/nullabletype/dot-orbit/issues/32,high,45,rce|security|vulnerability,medium,20,security|vulnerability,sí,correcto,si,"Harden package provenance and continuous security checks
+
+## What to build
+
+Make dependency provenance, vulnerability status, and code-security checks reproducible and continuously monitored without weakening the repository's support or artifact policies.
+
+## Acceptance criteria
+
+- [ ] A checked-in `NuGet.Config` clears inherited sources, declares only approved sources, and applies package-source mapping.
+- [ ] Locked restore succeeds through that configuration on every supported CI operating system.
+- [ ] Pull-request and push validation audit direct and transitive packages for known vulnerabilities and deprecated packages.
+- [ ] A scheduled check detects dependency, SDK, runtime, GitHub Action, runner-image, and packaging-tool support or security drift without silently changing versions.
+- [ ] CodeQL analysis covers the supported C# code paths using current, supported, SHA-pinned actions.
+- [ ] Secret scanning and push protection are enabled where the repository plan supports them, and their effective state is verified.
+- [ ] Workflows retain least-privilege permissions, bounded timeouts, and no prohibited artifact uploads.
+- [ ] Dependency-baseline guidance describes remediation and how dated upstream support evidence is recorded.
+
+## Non-goals
+
+- Automatic dependency upgrades or automatic merging
+- Introducing another package feed
+- Treating a green vulnerability query as proof that a dependency remains maintained
+- Release signing, SBOM, or provenance work belonging to #22
+
+## Verification
+
+- Restore the locked graph on the full supported CI matrix using only the checked-in sources.
+- Demonstrate that an unapproved package source or mapping fails closed.
+- Exercise vulnerability, deprecation, CodeQL, and scheduled drift workflows without uploading prohibited artifacts.
+- Verify the effective GitHub secret-scanning settings through a read-only check.
+
+## References
+
+- `Directory.Build.props`
+- `Directory.Packages.props`
+- `docs/development/dependency-baseline.md`
+- `docs/development/github-artifact-policy.md`
+- `.github/workflows/build.yml`"
+REV45-BLIND-020,562,562,github,https://github.com/Kaycee276/Chesster/issues/144,high,40,exploit|security|vulnerability,high,40,exploit|security|vulnerability,no,parcial,si,"[SECURITY] security(backend): Prevent Socket Injection and Client-Side Move Spoofing with Server Authority
+
+# [SECURITY] security(backend): Prevent Socket Injection and Client-Side Move Spoofing with Server Authority
+
+## Metadata
+| Field | Value |
+|---|---|
+| **Domain** | Security |
+| **Difficulty** | Medium (3–5 Days) |
+| **Effort Estimate** | `effort: 8h` |
+| **Priority** | P1-High |
+| **Labels** | `security`, `enhancement` |
+| **Target Branch** | `master` |
+| **Depends On** | None |
+
+## 🎯 Context & Goal
+Financial gaming platforms handling decentralized cryptocurrency escrows demand top-tier security standards. In the security and performance domain, authenticates socket connections to player colors, rejecting moves emitted out of turn or by spectators. Implementing this security safeguard prevents unauthorized balance transfers, exploit vectors, and client-side tampering. This issue provides full remediation steps, target file paths, and test requirements targeting the `master` branch.
+
+## 📂 Target Files
+- `backend/server.js`
+- `backend/services/chessEngine.js`
+
+## 📋 Implementation Tasks
+- [ ] **Task**: Implement security safeguard for security(backend): Prevent Socket Injection and Client-Side Move Spoofing with Server Authority in `backend/server.js`.
+- [ ] **Task**: Write exploit simulation test asserting vulnerability is blocked.
+- [ ] **Task**: Verify zero regressions across existing functionality.
+
+## 🛠️ Technical Guidance
+Apply defense-in-depth principles and never trust client-supplied input without server verification.
+
+## 🔗 References & Related
+- Reference file: `backend/server.js`
+- Reference file: `backend/services/chessEngine.js`
+
+## ⏳ Delivery Window
+This issue should be completed within **3 day(s)** of assignment.
+
+### Contribution Workflow
+1. Branch off `master`: `git checkout -b feature/descriptive-name master`
+2. Implement all tasks in the checklist above.
+3. Run all CI checks locally (see DEVELOPMENT.md).
+4. Open a Pull Request targeting **`master`**.
+5. Link this issue in your PR description: `Closes #138`.
+
+## ✅ Acceptance Criteria
+- [ ] All implementation tasks listed above are fully completed.
+- [ ] Code compiles and passes all local CI checks.
+- [ ] PR targets `master` branch.
+- [ ] PR description references this issue."
+REV45-BLIND-021,566,566,github,https://github.com/openclaw/openclaw/issues/159230,high,45,rce,medium,20,,sí,correcto,si,"message_tool_only: stranded-reply recovery re-prompts the model to publish its private final and force-sends an English error notice to the DM (no config to disable)
+
+## Summary
+
+In `message_tool_only` mode (`messages.visibleReplies: ""message_tool""`), a turn that ends with a **private** final text and no `message(action=send)` is classified as a ""stranded reply"". The recovery then:
+
+1. **re-prompts the model with the private text verbatim** and tells it to deliver it: *""Your previous reply was not delivered … Your reply text was: ""<finalText>"" … Please deliver this reply now by calling message(action=send). Do not add any extra commentary; just deliver the original reply.""*
+2. if the retry sends nothing, **delivers a runtime notice** to the chat — `I generated a reply but could not deliver it to this chat. Please try again.` — marked `isError` + `deliverDespiteSourceReplySuppression`, so no reply mode can hold it back.
+
+This defeats the main reason to pick `message_tool` in a customer-facing DM: keeping the model's final text private. The code says `message_tool_only` ""keeps normal final text private by design"" (comment on `warnPrivateMessageToolFinal`), but recovery actively tries to publish that text, and there's no config key to turn it off.
+
+## Environment
+
+- OpenClaw **2026.9.6**, Linux, Telegram DM
+- `messages.visibleReplies: ""message_tool""`, `messages.groupChat.visibleReplies: ""automatic""`
+- Support agent answering end customers. Private finals are internal notes (""handled, nothing else to do; context: …""), and they can mention other conversations.
+
+## Why we use `message_tool`
+
+With the default `automatic` mode, the agent answered the customer via `message(action=send)` and then wrote an internal note as its final text. That note went out as a second Telegram message about 3 s later. We saw 8 such leaks in about 10 turns. Switching to `message_tool` fixed that: `final reply suppressed by sourceReplyDeliveryMode: message_tool_only … deliverDespiteSuppression=false` shows up in the debug log exactly as expected.
+
+## Reproduction (live, Telegram DM)
+
+1. Send a DM that makes the model end a turn with a long (≥280 chars) final text and no `message` call. In our case this was a duplicate of an already-answered request, and the model wrote itself a 937-char note summarising what it had done.
+2. Gateway log: `final reply suppressed by sourceReplyDeliveryMode: message_tool_only … textChars=937 deliverDespiteSuppression=false`. This part is correct.
+3. Right after that, `resolveStrandedReplyRecovery` returns `kind: ""retry""`. A follow-up run is injected with the prompt above, which contains the full private note, and with `toolsAllow: [""message""]`.
+4. Our model **refused**, because the note referenced other customers' cases. A more compliant model would have sent the internal note to the customer. That is the leak `message_tool` is supposed to prevent.
+5. The retry sent nothing, so `kind: ""diagnostic""` delivered `I generated a reply but could not deliver it to this chat. Please try again.` to the customer DM, in English, although the conversation was in Polish.
+
+Source: `src/auto-reply/reply/stranded-reply-recovery.ts` (`resolveStrandedReplyRecovery`, `buildStrandedReplyRetryPrompt`, `buildStrandedReplyDeliveryFailurePayload`). The classifier only uses length and sentence count (`LONG_PRIVATE_FINAL_MIN_CHARS` / `MULTI_SENTENCE_PRIVATE_FINAL_MIN_CHARS`), so it can't tell a forgotten answer from a note to self.
+
+Our current workaround is prompt discipline: ""if you did not send, end the turn with exactly `NO_REPLY`"". Because `isSilentReplyText` makes the classifier return `none`, this avoids both the retry and the notice. But in direct chats the Silent Replies section is omitted from the system prompt, so agents never learn about `NO_REPLY` unless the operator adds it to their instructions. And it is discipline, not a channel guarantee.
+
+## Proposal
+
+Any one of these would solve it for us, listed from most to least preferred:
+
+1. **"
+REV45-BLIND-022,567,567,github,https://github.com/alperien/chy/issues/2788,high,45,cve-,high,45,cve-,no,correcto,si,"repo-sync: build failed: sharutils
+
+The build gate held sharutils: it failed to build.
+
+package: sharutils
+void commit: cf0c605184
+blamed by the log: sharutils
+
+last 30 lines:
+
+```
+-> order sharutils
+-> sharutils fetch sharutils-4.15.2.tar.xz
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0100  1.07M 100  1.07M   0      0  1.15M      0                              0100  1.07M 100  1.07M   0      0  1.15M      0                              0100  1.07M 100  1.07M   0      0  1.15M      0                              0
+-> sharutils apply CVE-2018-1000097.patch
+patching file src/unshar.c
+-> sharutils build sharutils-4.15.2
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /usr/bin/mkdir -p
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking for style of include used by make... GNU
+checking for gcc... cc
+checking whether the C compiler works... yes
+checking for C compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... configure: error: in `/w/gate-root/build/work':
+configure: error: cannot run C compiled programs.
+If you meant to cross compile, use `--host'.
+See `config.log' for more details
+make: *** No targets specified and no makefile found.  Stop.
+make: *** No rule to make target 'install'.  Stop.
+chy: sharutils: error: build failed (log: /w/gate-root/log/sharutils-4.15.2-20260927T115442Z.log)
+```
+
+The package is held at its last published recipe (or absent
+when it never had one); the rest of the day shipped.
+Translated output is regenerated wholesale, so fix the
+translator or its inputs, never the recipe; this issue
+closes on the next push that carries sharutils.
+
+run: https://github.com/alperien/chy/actions/runs/36308884577
+
+reason-hash: fa6c05752682ee94dccc85d9b315ab58b50c148d1bff00564d27e5ed1dc6e446"
+REV45-BLIND-023,606,606,github,https://github.com/CanastaWiki/Canasta-CLI/issues/1595,critical,65,rce|cve-,critical,65,rce|cve-,no,correcto,si,"Compose: config set MYSQL_PASSWORD breaks the instance; no way to rotate the database password
+
+On Compose, there is no supported way to rotate the bundled database's root password, and the obvious attempt breaks the wiki.
+
+`canasta config set MYSQL_PASSWORD=<new>` updates `.env` (and `vars.yaml` on gitops instances), then restarts. But the `db` service only reads `MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}` when it initializes an empty data directory. On an existing volume, the account in MariaDB keeps the old password, so after the restart:
+
+- the web container can no longer connect to the database
+- the `db` healthcheck (`mariadb-admin ping -u root -p$MYSQL_ROOT_PASSWORD`) fails
+
+K8s already blocks this key in `config set` and prints a rotation procedure (`roles/config/tasks/_validate_key.yml`). Compose accepts it and silently produces a broken instance.
+
+Rotating this credential is routine after any suspected exposure. For example, an RCE in a bundled extension (such as CVE-2026-100382 in ExternalData) exposes the web container's environment, which includes `MYSQL_PASSWORD`.
+
+## Expected
+
+On Compose with the bundled database (`USE_EXTERNAL_DB=false`), `config set MYSQL_PASSWORD=<new>` should:
+
+1. Run `ALTER USER` for `root@'%'` and `root@'localhost'` in the running `db` container, authenticating with the current password and passing the new one outside argv and logs.
+2. Only then write `.env` and `vars.yaml` and restart.
+
+Alternatively, a dedicated command could do the same. Either way, `WIKI_DB_PASSWORD` needs the same handling when `--wikidbuser` is not root.
+
+With an external database, `config set` should refuse, or warn that the password must be changed on the database server first."
+REV45-BLIND-024,652,652,github,https://github.com/ARSH871-bot/Netwise/issues/306,high,45,rce,medium,20,,sí,correcto,si,"Carry pfSense conversion skips into F-1 findings, not just a report parameter
+
+Filed from #302's review (@SamikaPerera). Not started -- this is the scope stub, deliberately kept out of #302 itself.
+
+## The gap #302 does not close
+
+#302 fixed the *disclosure* half of a real problem: a skip note from `pfsense_convert.py` (a rule it could not model) used to reach the user exactly once, at upload, and be gone by the time a report was downloaded later. That's fixed -- the downloaded report now carries the skip list and its coverage statement stops claiming ""nothing was skipped"" when something was.
+
+It does not fix the *modelling* half. Skipping a `pass` rule makes the emitted Cisco ACL stricter than the real device. A policy rule asserting ""this traffic must be denied"" can then report `status=""none""` (clean) against the emitted ACL, while the real firewall actually permits that traffic -- a genuine policy violation, reported as a pass. See `CLAUDE.md` section 7's ""UPDATE, 6 September"" entry for the full direction analysis (skipping a `block` rule is the safe, noisy direction; skipping a `pass` rule is the dangerous, silent one).
+
+## The more complete fix
+
+Carry each conversion skip into the F-1 findings list itself, as a `status=""error""` card -- which is what it actually is: ""part of this config could not be checked."" That would:
+
+- Show up on the dashboard directly, not only in a downloaded report.
+- Be counted by `analysis/coverage.py` the same way any other blind spot is, rather than needing a second, parallel `conversion_gaps` parameter (which #302 added as the smaller, faster fix).
+- Let a reader connect a specific skip to the specific policy rule it might be silently affecting, if the finding names the interface/rule clearly enough.
+
+## Why this needs its own scoping, not a bolt-on to #302
+
+- **Which check owns it?** A conversion skip isn't produced by `access_control`, `policy_compliance`, or `routing` -- it's a property of the source file, discovered before the pipeline ever runs a check. Needs an id prefix decision (not `PC-`/`AC-`/`RT-`/`CH-`/`CV-` -- another collision the team has cared about avoiding, most recently for #239's `cve_mapping`).
+- **Where does it enter the pipeline?** `analysis/pfsense_convert.py`'s skip list is produced by `web/main.py`'s upload handler, before `analysis.pipeline.analyse()` is ever called. Getting it into the findings list means either widening `analyse()`'s signature (an F-3 shared-contract question) or injecting it after the fact in `web/main.py` the way `_attach_explanations()` already injects a key -- but a NEW finding is a bigger change than a new key on an existing one.
+- **Does it apply beyond pfSense?** Today only `pfsense_convert.py` produces a skip list. If Cisco IOS parsing (via Batfish) can also silently drop something, the same mechanism should probably cover it too, which needs checking rather than assuming.
+
+## Acceptance criteria (draft, not final -- needs a design pass first)
+
+- [ ] Decide the id prefix and which module owns emitting these findings.
+- [ ] Decide how the skip list reaches `analyse()`/the pipeline without widening `run(bf)`'s signature for every other check.
+- [ ] A skipped rule appears as a `status=""error""` finding on the dashboard, not only in a downloaded report.
+- [ ] `analysis/coverage.py`'s `conversion_gaps` parameter (added in #302) is retired once this lands, since the findings list itself would carry the same information.
+- [ ] Full suite green, mutation-tested the same as #302's own two guards."
+REV45-BLIND-025,694,694,github,https://github.com/iAverages/machina/issues/4,critical,60,rce|security|vulnerability,medium,35,security|vulnerability,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/iAverages/machina).
+
+## Config Migration Needed
+
+ - [ ] <!-- create-config-migration-pr --> Select this checkbox to let Renovate create an automated Config Migration PR.
+
+## Repository Problems
+
+These problems occurred while renovating this repository. [View logs](https://developer.mend.io//github/iAverages/machina).
+
+ - ⚠️ WARN: Detected empty commit - aborting git push
+ - ⚠️ WARN: Missing locked version for dependency
+
+## Deprecations / Replacements
+> [!WARNING]
+The following dependencies are either deprecated or have replacements available.
+
+| Datasource | Package | Replacement PR? |
+|------------|------|--------------|
+| npm | [@hey-api/client-fetch](https://redirect.github.com/hey-api/openapi-ts) | ![Unavailable](https://img.shields.io/badge/unavailable-orange?style=flat-square) |
+
+## Awaiting Schedule
+
+The following updates are awaiting their schedule. To get an update now, click on a checkbox below.
+
+ - [ ] <!-- unschedule-branch=renovate/prisma-7.x -->Update dependency prisma to v7
+ - [ ] <!-- unschedule-branch=renovate/typescript-7.x -->Update dependency typescript to v7
+ - [ ] <!-- unschedule-branch=renovate/unplugin-icons-24.x -->Update dependency unplugin-icons to v24
+ - [ ] <!-- unschedule-branch=renovate/vite-plugin-dts-5.x -->Update dependency vite-plugin-dts to v5
+ - [ ] <!-- unschedule-branch=renovate/zod-4.x -->Update dependency zod to v4
+ - [ ] <!-- unschedule-branch=renovate/docker-build-push-action-7.x -->Update docker/build-push-action action to v7
+ - [ ] <!-- unschedule-branch=renovate/docker-login-action-4.x -->Update docker/login-action action to v4
+ - [ ] <!-- unschedule-branch=renovate/docker-setup-buildx-action-4.x -->Update docker/setup-buildx-action action to v4
+ - [ ] <!-- unschedule-branch=renovate/pnpm-12.x -->Update pnpm to v12
+ - [ ] <!-- unschedule-branch=renovate/pnpm-action-setup-6.x -->Update pnpm/action-setup action to v6
+ - [ ] <!-- unschedule-branch=renovate/cuid-2.x -->Update Rust crate cuid to v2
+ - [ ] <!-- unschedule-branch=renovate/sea-query-1.x -->Update Rust crate sea-query to v1
+ - [ ] <!-- unschedule-branch=renovate/major-utoipa-monorepo -->Update Rust crate utoipa to v6
+ - [ ] <!-- create-all-awaiting-schedule-prs -->🔐 **Create all awaiting schedule PRs at once** 🔐
+
+## Other Branches
+
+The following updates are pending. To force the creation of a PR, click on a checkbox below.
+
+ - [ ] <!-- other-branch=renovate/crate-tracing-subscriber-vulnerability -->Update Rust crate tracing-subscriber to v0.3.20 [SECURITY]
+ - [ ] <!-- other-branch=renovate/crate-bytes-vulnerability -->Update Rust crate bytes to v1.11.1 [SECURITY]
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/npm-postcss-vulnerability -->[Update dependency postcss to v8.5.23 [SECURITY]](../pull/88)
+ - [ ] <!-- rebase-branch=renovate/npm-hey-api-openapi-ts-vulnerability -->[Update dependency @hey-api/openapi-ts to ^0.97.0 [SECURITY]](../pull/89)
+ - [ ] <!-- rebase-branch=renovate/npm-better-auth-vulnerability -->[Update dependency better-auth to v1.6.22 [SECURITY]](../pull/81)
+ - [ ] <!-- rebase-branch=renovate/npm-hono-vulnerability -->[Update dependency hono to v4.13.5 [SECURITY]](../pull/79)
+ - [ ] <!-- rebase-branch=renovate/npm-mysql2-vulnerability -->[Update dependency mysql2 to v3.23.1 [SECURITY]](../pull/92)
+ - [ ] <!-- rebase-branch=renovate/npm-turbo-vulnerability -->[Update dependency turbo to v2.9.14 [SECURITY]](../pull/90)
+ - [ ] <!-- rebase-branch=renovate/npm-vite-vulnerability -->[Update dependency vite to v6.4.3 [SECURITY]](../pull/86)
+ - [ ] <!-- rebase-branch=renovate/crate-serde_with-vulnerability -->[Update Rust crate serde_with to"
+REV45-BLIND-026,700,700,github,https://github.com/grafana/openapi-to-k6/issues/33,high,45,rce|security|vulnerability,medium,20,security|vulnerability,sí,ambiguo,no_aplica,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Deprecations / Replacements
+> [!WARNING]
+The following dependencies are either deprecated or have replacements available.
+
+| Datasource | Package | Replacement PR? |
+|------------|------|--------------|
+| npm | `@types/uuid` | ![Unavailable](https://img.shields.io/badge/unavailable-orange?style=flat-square) |
+
+## Awaiting Schedule
+
+The following updates are awaiting their schedule. To get an update now, click on a checkbox below.
+
+ - [ ] <!-- unschedule-branch=renovate/lock-file-maintenance -->chore(deps): lock file maintenance
+
+## Pending Status Checks
+
+The following updates await pending status checks. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unpend-branch=renovate/jsonpath-plus-11.x -->chore(deps): update dependency jsonpath-plus to v11
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/major-security-orval -->[fix(security/critical/): update dependency orval to v8 [security]](../pull/153)
+ - [ ] <!-- rebase-branch=renovate/grafana-run-k6-action-digest -->[chore(deps): update grafana/run-k6-action digest to 4082a08](../pull/132)
+ - [ ] <!-- rebase-branch=renovate/grafana-setup-k6-action-digest -->[chore(deps): update grafana/setup-k6-action digest to 43b9fc2](../pull/167)
+ - [ ] <!-- rebase-branch=renovate/all-minor-patch -->[fix(deps): update all non-major dependencies](../pull/135) (`@types/k6`, `@typescript-eslint/eslint-plugin`, `@vitest/coverage-v8`, `axios`, `brace-expansion`, `eslint-import-resolver-typescript`, `eslint-plugin-prettier`, `eslint-plugin-unused-imports`, `lint-staged`, `npm`, `openapi-typescript`, `postcss`, `prettier`, `vite`, `vite-tsconfig-paths`, `vitest`)
+ - [ ] <!-- rebase-branch=renovate/major-vitest-monorepo -->[chore(deps): update dependency @vitest/coverage-v8 to v5](../pull/155)
+ - [ ] <!-- rebase-branch=renovate/major-eslint-monorepo -->[chore(deps): update dependency eslint to v10](../pull/137)
+ - [ ] <!-- rebase-branch=renovate/typescript-7.x -->[chore(deps): update dependency typescript to v7](../pull/159)
+ - [ ] <!-- rebase-branch=renovate/get-vault-secrets-grafana-shared-workflows-2.x -->[chore(deps): update grafana/shared-workflows/get-vault-secrets action to v2.1](../pull/160)
+ - [ ] <!-- rebase-branch=renovate/npm-12.x -->[chore(deps): update npm to v12](../pull/161)
+ - [ ] <!-- rebase-branch=renovate/chalk-6.x -->[fix(deps): update dependency chalk to v6](../pull/162)
+ - [ ] <!-- rebase-all-open-prs -->**Click on this checkbox to rebase all open PRs at once**
+
+## PR Closed (Blocked)
+
+The following updates are blocked by an existing closed PR. To recreate the PR, click on a checkbox below.
+
+ - [ ] <!-- recreate-branch=renovate/uuid-11.x -->[chore(deps): update dependency @types/uuid to v11](../pull/136)
+ - [ ] <!-- recreate-branch=renovate/uuid-14.x -->[fix(deps): update dependency uuid to v14](../pull/126)
+
+## Vulnerabilities
+
+> [!IMPORTANT]
+> `13`/`13` CVEs have Renovate fixes.
+
+<details><summary>npm</summary>
+<blockquote>
+
+<details><summary>package.json</summary>
+<blockquote>
+
+<details><summary>orval</summary>
+<blockquote>
+
+- [GHSA-2h9g-j24r-h63g](https://osv.dev/vulnerability/GHSA-2h9g-j24r-h63g) (fixed in >= 8.21.0)
+- [GHSA-2w86-xfrc-g85r](https://osv.dev/vulnerability/GHSA-2w86-xfrc-g85r) (fixed in >= 8.21.0)
+- [GHSA-3575-w9fc-c2j6](https://osv.dev/vulnerability/GHSA-3575-w9fc-c2j6) (fixed in >= 8.21.0)
+- [GHSA-6437-gxhq-pqv8](https://osv.dev/vulnerability/GHSA-6437-gxhq-pqv8) (fixed in >= 8.21.0)
+- [GHSA-653q-5476-x79g](https://osv.dev/vulnerability/GHSA-653q-5476-x79g) (fixed in >= 8.21.0)
+- [GHSA-6mr6-jvcr-2f25](https://osv.dev/vulnerability/GHSA-6mr6-jvcr-2f25) (fixed in >= 8.21.0)
+- [GHSA-88f2-fpv8-89q2](https://osv.dev/vulnerability/GHSA-88f2-fpv8-89q2) (fi"
+REV45-BLIND-027,720,720,github,https://github.com/whenwhenwhenwhenwhen/when/issues/11,critical,65,rce|cve-,high,40,cve-,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Abandoned Dependencies
+
+The following dependencies have not received updates for an extended period and may be unmaintained.
+
+<details>
+<summary>View abandoned dependencies (1)</summary>
+
+> [!NOTE]
+Packages are marked as abandoned when they exceed the [`abandonmentThreshold`](https://docs.renovatebot.com/configuration-options/#abandonmentthreshold) since their last release. Unlike deprecated packages with official notices, abandonment is detected by release inactivity.
+> 
+| Datasource | Package | Last Updated |
+|------------|------|-------------|
+| npm | [@edge-runtime/vm](https://redirect.github.com/vercel/edge-runtime) | `2024-12-02` |
+
+</details>
+
+
+## Pending Status Checks
+
+The following updates await pending status checks. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- approvePr-branch=renovate/convex-test-0.x -->Update dependency convex-test to v0.0.60
+ - [ ] <!-- approvePr-branch=renovate/vitest-monorepo -->Update dependency vitest to v5.0.2
+ - [ ] <!-- approvePr-branch=renovate/node-runtime -->Update Node runtime (`@types/node`, `node`)
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/vite-8.x -->[Update dependency vite to v8.3.1](../pull/82)
+ - [ ] <!-- rebase-branch=renovate/lock-file-maintenance -->[Lock file maintenance](../pull/83)
+ - [ ] <!-- rebase-all-open-prs -->**Click on this checkbox to rebase all open PRs at once**
+
+## Detected Dependencies
+
+<details><summary>dockerfile (1)</summary>
+<blockquote>
+
+<details><summary>Dockerfile (1)</summary>
+
+ - `node 24.19.0-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43` → [Updates: `24.21.0-alpine`]
+
+</details>
+
+</blockquote>
+</details>
+
+<details><summary>github-actions (7)</summary>
+<blockquote>
+
+<details><summary>.github/workflows/ci.yml (6)</summary>
+
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `pnpm/action-setup v6.1.0@ea17c68df8912ef543352723c149a84f56e3d413`
+ - `actions/setup-node v7.0.0@820762786026740c76f36085b0efc47a31fe5020`
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `docker/setup-buildx-action v4.4.1@f87e5991a6d7451dcb8d9637bfbc97413f497069`
+ - `docker/build-push-action v7.4.0@c3c9e263c25d99ce0380d002d59b67737d91b0dc`
+
+</details>
+
+<details><summary>.github/workflows/cve-scan.yml (1)</summary>
+
+ - `yuzuyuzuyu/repo-automation v1.0.0@c691d5f2b7a126cdbbbe62811329ca24f8b643a9`
+
+</details>
+
+<details><summary>.github/workflows/deploy.yml (5)</summary>
+
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `yuzuyuzuyu/repo-automation v1.0.0@c691d5f2b7a126cdbbbe62811329ca24f8b643a9`
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `pnpm/action-setup v6.1.0@ea17c68df8912ef543352723c149a84f56e3d413`
+ - `actions/setup-node v7.0.0@820762786026740c76f36085b0efc47a31fe5020`
+
+</details>
+
+<details><summary>.github/workflows/maintenance.yml (1)</summary>
+
+ - `yuzuyuzuyu/repo-automation v1.0.0@c691d5f2b7a126cdbbbe62811329ca24f8b643a9`
+
+</details>
+
+<details><summary>.github/workflows/publish-image.yml (6)</summary>
+
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `yuzuyuzuyu/repo-automation v1.0.0@c691d5f2b7a126cdbbbe62811329ca24f8b643a9`
+ - `actions/checkout v7.0.1@3d3c42e5aac5ba805825da76410c181273ba90b1`
+ - `docker/setup-buildx-action v4.4.1@f87e5991a6d7451dcb8d9637bfbc97413f497069`
+ - `docker/login-action v4.6.0@dbcb813823bdd20940b903addbd779551569679f`
+ - `docker/build-push-action v7.4.0@c3c9e263c25d99ce0380d002d59b67737d91b0dc`
+
+</details>
+
+<details><summary>.github/workflows/renovate-readiness.yml (1)</summary>
+
+ - `yuzuyuzuyu/repo-automation v1.0.0@c691d5f2b7a126cdbbbe62811329ca24f8b643a9`
+
+</details>
+
+<deta"
+REV45-BLIND-028,743,743,github,https://github.com/Uncle-Mitch/uqmarks/issues/97,critical,60,rce|security|vulnerability,medium,35,security|vulnerability,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/Uncle-Mitch/uqmarks).
+
+## Repository Problems
+
+These problems occurred while renovating this repository. [View logs](https://developer.mend.io//github/Uncle-Mitch/uqmarks).
+
+ - ⚠️ WARN: Package lookup failures
+
+## Rate-Limited
+
+The following updates are currently rate-limited. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unlimit-branch=renovate/dash-3.x -->fix(deps): update dependency dash to >=3.4.0
+ - [ ] <!-- unlimit-branch=renovate/flask-3.x -->fix(deps): update dependency flask to >=3.1.3
+ - [ ] <!-- unlimit-branch=renovate/flask-caching-2.x -->fix(deps): update dependency flask-caching to >=2.5.0
+ - [ ] <!-- unlimit-branch=renovate/pandas-2.x -->fix(deps): update dependency pandas to >=2.3.3
+ - [ ] <!-- unlimit-branch=renovate/python-dateutil-2.x -->fix(deps): update dependency python-dateutil to >=2.9.0.post0
+ - [ ] <!-- unlimit-branch=renovate/python-dotenv-1.x -->fix(deps): update dependency python-dotenv to >=1.2.3
+ - [ ] <!-- unlimit-branch=renovate/requests-2.x -->fix(deps): update dependency requests to >=2.34.2
+ - [ ] <!-- unlimit-branch=renovate/dash-4.x -->fix(deps): update dependency dash to v4
+ - [ ] <!-- unlimit-branch=renovate/flask-cors-6.x -->fix(deps): update dependency flask-cors to v6
+ - [ ] <!-- unlimit-branch=renovate/flask-limiter-4.x -->fix(deps): update dependency flask-limiter to v4
+ - [ ] <!-- unlimit-branch=renovate/gunicorn-26.x -->fix(deps): update dependency gunicorn to v26
+ - [ ] <!-- unlimit-branch=renovate/pandas-3.x -->fix(deps): update dependency pandas to v3
+ - [ ] <!-- unlimit-branch=renovate/plotly-7.x -->fix(deps): update dependency plotly to v7
+ - [ ] <!-- unlimit-branch=renovate/major-npm-major-dependencies -->fix(deps): update npm major dependencies (major) (`@eslint/js`, `eslint`, `sass-loader`, `typescript`, `vue-router`, `vuetify`)
+ - [ ] <!-- create-all-rate-limited-prs -->🔐 **Create all rate-limited PRs at once** 🔐
+
+## Pending Status Checks
+
+The following updates await pending status checks. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unpend-branch=renovate/postgres-18.x -->[chore(deps): update postgres docker tag to v18](../pull/110)
+
+
+---
+
+> [!WARNING]
+> Renovate failed to look up the following dependencies: `Failed to look up pypi package lxml: no-result`.
+> 
+> Files affected: `pyproject.toml`
+
+---
+
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/npm-vite-vulnerability -->[chore(deps): update dependency vite to v7.3.5 [security]](../pull/154)
+ - [ ] <!-- rebase-branch=renovate/psycopg2-binary-2.x -->[fix(deps): update dependency psycopg2-binary to >=2.9.12](../pull/175)
+ - [ ] <!-- rebase-branch=renovate/sqlalchemy-2.x -->[fix(deps): update dependency sqlalchemy to >=2.0.52](../pull/183)
+ - [ ] <!-- rebase-branch=renovate/npm-non-major-dependencies -->[fix(deps): update npm non-major dependencies](../pull/118) (`@eslint/js`, `@fortawesome/fontawesome-free`, `@types/node`, `@vitejs/plugin-vue`, `@vueuse/core`, `eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `globals`, `prettier`, `sass`, `sass-loader`, `typescript-eslint`, `vue`, `vue-tsc`, `vuetify`)
+ - [ ] <!-- rebase-branch=renovate/pytest-9.x -->[chore(deps): update dependency pytest to >=9.1.1](../pull/141)
+ - [ ] <!-- rebase-branch=renovate/node-24.x -->[chore(deps): update node.js to v24.20.0](../pull/119)
+ - [ ] <!-- rebase-branch=renovate/python-3.x -->[chore(deps): update python to >=3.14.7](../pull/137)
+ - [ ] <!-- rebase-branch=renovate/beautifulsoup4-4.x -->[fix(deps): update dependency beautifulsoup4 to >=4.15.0](../pull/120)
+ - [ ] <!-- rebase-branch=renovate/plotly-6"
+REV45-BLIND-029,768,768,github,https://github.com/StellarDevHub/Web3-Student-Lab/issues/1353,medium,25,exploit,low,5,,sí,correcto,si,"[SC-HARD-07] Continuous Bonding Curve with Invariant Math & Slippage Protection
+
+## 📋 Hard & Advanced Production Epic
+**Identifier**: `SC-HARD-07` | **Complexity**: `Hard / Advanced`
+
+### ⚙️ Specifications & Architectural Breakdown
+- **Compounded Sub-Tasks**: [Easy: Linear curve formula] + [Medium: Buy/sell function entry points] + [Advanced: Test suite and implementation for polynomial bonding curves with reserve ratio invariants, dead-shares burning, and maximum slippage bounds].
+    - **Target Files**: `contracts/continuous_bonding_curve/src/lib.rs`, `contracts/continuous_bonding_curve/src/test.rs`
+    - **Overview**: Implement safe bonding curve math preventing rounding drain exploits and enforcing minimum tokens out.
+    - **Acceptance Criteria**: `cargo test -p continuous-bonding-curve` passes; verifies price increases monotonically on buy and decreases on sell.
+
+---
+*Generated for Web3 Student Lab Production & MVP Transition.*"
+REV45-BLIND-030,884,884,github,https://github.com/SphericalKat/katbin/issues/17,high,45,rce|security|vulnerability,medium,20,security|vulnerability,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/SphericalKat/katbin).
+
+## Config Migration Needed
+
+ - [ ] <!-- create-config-migration-pr --> Select this checkbox to let Renovate create an automated Config Migration PR.
+
+## Rate-Limited
+
+The following updates are currently rate-limited. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unlimit-branch=renovate/sanitize-html-2.x-lockfile -->chore(deps): update dependency @types/sanitize-html to v2.16.2
+ - [ ] <!-- unlimit-branch=renovate/drizzle-orm-0.x-lockfile -->chore(deps): update dependency drizzle-orm to v0.45.3
+ - [ ] <!-- unlimit-branch=renovate/marked-18.x-lockfile -->chore(deps): update dependency marked to v18.0.14
+ - [ ] <!-- unlimit-branch=renovate/vite-plus-monorepo -->chore(deps): update vite-plus monorepo to v0.3.3 (`vite`, `vite-plus`)
+ - [ ] <!-- unlimit-branch=renovate/alpinejs-csp-3.x -->fix(deps): update dependency @alpinejs/csp to v3.17.4
+ - [ ] <!-- unlimit-branch=renovate/node-24.x -->chore(deps): update dependency @types/node to v24.19.0
+ - [ ] <!-- unlimit-branch=renovate/zod-4.x-lockfile -->chore(deps): update dependency zod to v4.6.5
+ - [ ] <!-- unlimit-branch=renovate/major-vitest-monorepo -->chore(deps): update dependency vitest to v5
+ - [ ] <!-- unlimit-branch=renovate/pnpm-12.x -->chore(deps): update pnpm to v12
+ - [ ] <!-- unlimit-branch=renovate/major-vite-plus-monorepo -->chore(deps): update vite-plus monorepo to v1 (`vite`, `vite-plus`)
+ - [ ] <!-- create-all-rate-limited-prs -->🔐 **Create all rate-limited PRs at once** 🔐
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/npm-postcss-vulnerability -->[chore(deps): update dependency postcss to v8.5.23 [security]](../pull/33)
+ - [ ] <!-- rebase-branch=renovate/bcryptjs-3.x -->[fix(deps): update dependency bcryptjs to v3.0.3](../pull/77)
+ - [ ] <!-- rebase-branch=renovate/hono-4.x -->[fix(deps): update dependency hono to v4.13.10](../pull/90)
+ - [ ] <!-- rebase-branch=renovate/cloudflare-vite-plugin-1.x -->[chore(deps): update dependency @cloudflare/vite-plugin to v1.62.0](../pull/70)
+ - [ ] <!-- rebase-branch=renovate/cloudflare-workers-types-5.x -->[chore(deps): update dependency @cloudflare/workers-types to v5.20260928.1](../pull/80)
+ - [ ] <!-- rebase-branch=renovate/autoprefixer-10.x -->[chore(deps): update dependency autoprefixer to v10.6.1](../pull/78)
+ - [ ] <!-- rebase-branch=renovate/wrangler-4.x -->[chore(deps): update dependency wrangler to v4.143.0](../pull/81)
+ - [ ] <!-- rebase-branch=renovate/pnpm-10.x -->[chore(deps): update pnpm to v10.34.6](../pull/82)
+ - [ ] <!-- rebase-branch=renovate/voidzero-dev-setup-vp-1.x -->[chore(deps): update voidzero-dev/setup-vp action to v1.21.1](../pull/84)
+ - [ ] <!-- rebase-branch=renovate/major-tailwindcss-monorepo -->[chore(deps): update dependency tailwindcss to v4](../pull/65)
+ - [ ] <!-- rebase-branch=renovate/typescript-7.x -->[chore(deps): update dependency typescript to v7](../pull/85)
+ - [ ] <!-- rebase-all-open-prs -->**Click on this checkbox to rebase all open PRs at once**
+
+## Detected Dependencies
+
+<details><summary>github-actions (2)</summary>
+<blockquote>
+
+<details><summary>.github/workflows/production.yml (2)</summary>
+
+ - `actions/checkout v7`
+ - `voidzero-dev/setup-vp v1.16.1` → [Updates: `v1.21.1`]
+
+</details>
+
+<details><summary>.github/workflows/staging.yml (2)</summary>
+
+ - `actions/checkout v7`
+ - `voidzero-dev/setup-vp v1.16.1` → [Updates: `v1.21.1`]
+
+</details>
+
+</blockquote>
+</details>
+
+<details><summary>npm (1)</summary>
+<blockquote>
+
+<details><summary>package.json (23)</summary>
+
+ - `@alpinejs/csp 3.17.1` → [Updates: `3.17.4`]
+ - `bcryptjs 3.0.2` → [Updates: `3.0.3`]
+ - `drizzle-"
+REV45-BLIND-031,942,942,github,https://github.com/vz-risk/VCDB/issues/24386,critical,100,ransomware|rce|exploit|attack|security|incident,critical,75,ransomware|attack|security|incident,no,correcto,si,"Agentic Ransomware Took Down Enterprise in Ten Hours: AI Left 80-Page Audit
+
+""Palo Alto Networks Unit 42 documented a multi-agent AI ransomware attack that occurred on September 2, 2026, in which an attacker used coordinated frontier AI agents to compromise an unnamed enterprise victim within ten hours. The attack exploited an initial API endpoint breach and then leveraged automated agents to conduct reconnaissance, harvest hardcoded credentials from code repositories, infiltrate secrets management systems, hijack CI/CD pipelines, and exfiltrate cloud access keys across cloud, identity, DevOps, and SaaS environments simultaneously. The attacker left behind an 80-page technical security audit documenting their work, and disclosed during ransom negotiations that they had used frontier AI models and purpose-built agentic attack frameworks. Unit 42 confirmed the incident through technical indicators including parallel LLM calls, structured Markdown files passing state between agent sessions, and custom scripts bearing AI-generated signatures.""
+
+**Source:** https://www.techtimes.com/articles/326409/20260903/agentic-ransomware-took-down-enterprise-ten-hours-ai-left-80-page-audit.htm
+**Headline:** Agentic Ransomware Took Down Enterprise in Ten Hours: AI Left 80-Page Audit
+**Actor:** External
+**Approximate date:** 2026-09
+**Data types:** Credentials, Corporate
+
+*Confidence: 85% | Drafted by vcdb-pipeline — please review and complete VERIS fields.*"
+REV45-BLIND-032,943,943,github,https://github.com/rshade/mcp-devtools-server/issues/11,medium,30,rce,low,5,,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/rshade/mcp-devtools-server).
+
+## Rate-Limited
+
+The following updates are currently rate-limited. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unlimit-branch=renovate/eslint-monorepo -->chore(deps): update dependency eslint to v9.39.5
+ - [ ] <!-- unlimit-branch=renovate/typedoc-0.x-lockfile -->chore(deps): update dependency typedoc to v0.28.20
+ - [ ] <!-- unlimit-branch=renovate/googleapis-release-please-action-4.x -->chore(deps): update googleapis/release-please-action action to v4.4.1
+ - [ ] <!-- unlimit-branch=renovate/dotenv-17.x-lockfile -->chore(deps): update dependency dotenv to v17.4.2
+ - [ ] <!-- unlimit-branch=renovate/go-1.x -->chore(deps): update dependency go to 1.27
+ - [ ] <!-- unlimit-branch=renovate/markdownlint-cli-0.x -->chore(deps): update dependency markdownlint-cli to ^0.49.0
+ - [ ] <!-- unlimit-branch=renovate/winston-3.x-lockfile -->chore(deps): update dependency winston to v3.19.0
+ - [ ] <!-- unlimit-branch=renovate/zod-4.x-lockfile -->chore(deps): update dependency zod to v4.6.5
+ - [ ] <!-- unlimit-branch=renovate/jest-monorepo -->chore(deps): update jest monorepo to v30.5.2 (`@jest/transform`, `jest`)
+ - [ ] <!-- unlimit-branch=renovate/actions-checkout-7.x -->chore(deps): update actions/checkout action to v7
+ - [ ] <!-- unlimit-branch=renovate/actions-configure-pages-6.x -->chore(deps): update actions/configure-pages action to v6
+ - [ ] <!-- unlimit-branch=renovate/actions-deploy-pages-5.x -->chore(deps): update actions/deploy-pages action to v5
+ - [ ] <!-- unlimit-branch=renovate/actions-setup-go-7.x -->chore(deps): update actions/setup-go action to v7
+ - [ ] <!-- unlimit-branch=renovate/actions-setup-node-7.x -->chore(deps): update actions/setup-node action to v7
+ - [ ] <!-- unlimit-branch=renovate/major-github-artifact-actions -->chore(deps): update actions/upload-artifact action to v7
+ - [ ] <!-- unlimit-branch=renovate/actions-upload-pages-artifact-5.x -->chore(deps): update actions/upload-pages-artifact action to v5
+ - [ ] <!-- unlimit-branch=renovate/codecov-codecov-action-7.x -->chore(deps): update codecov/codecov-action action to v7
+ - [ ] <!-- unlimit-branch=renovate/major-commitlint-monorepo -->chore(deps): update commitlint monorepo to v21 (`@commitlint/cli`, `@commitlint/config-conventional`)
+ - [ ] <!-- unlimit-branch=renovate/metamask-auto-changelog-6.x -->chore(deps): update dependency @metamask/auto-changelog to v6
+ - [ ] <!-- unlimit-branch=renovate/major-eslint-monorepo -->chore(deps): update dependency eslint to v10
+ - [ ] <!-- unlimit-branch=renovate/typescript-7.x -->chore(deps): update dependency typescript to v7
+ - [ ] <!-- unlimit-branch=renovate/docker-build-push-action-7.x -->chore(deps): update docker/build-push-action action to v7
+ - [ ] <!-- unlimit-branch=renovate/docker-login-action-4.x -->chore(deps): update docker/login-action action to v4
+ - [ ] <!-- unlimit-branch=renovate/docker-metadata-action-6.x -->chore(deps): update docker/metadata-action action to v6
+ - [ ] <!-- unlimit-branch=renovate/docker-setup-buildx-action-4.x -->chore(deps): update docker/setup-buildx-action action to v4
+ - [ ] <!-- unlimit-branch=renovate/googleapis-release-please-action-5.x -->chore(deps): update googleapis/release-please-action action to v5
+ - [ ] <!-- unlimit-branch=renovate/dotenv-18.x -->fix(deps): update dependency dotenv to v18
+ - [ ] <!-- unlimit-branch=renovate/execa-10.x -->fix(deps): update dependency execa to v10
+ - [ ] <!-- unlimit-branch=renovate/major-shiki-monorepo -->fix(deps): update dependency shiki to v4
+ - [ ] <!-- create-all-rate-limited-prs -->🔐 **Create all rate-limited PRs at once** 🔐
+
+## Other Branches
+
+The following updates are pending. To force the creation of a "
+REV45-BLIND-033,956,956,github,https://github.com/astruzocyber/CVE/issues/791,critical,95,rce|exploit|cve-|attack,high,40,cve-,sí,correcto,si,"[VULN ALERT] CVE-2026-102335 (risk 41.4) - nginx/nginx
+
+**CVE:** CVE-2026-102335
+**Composite risk score:** 41.4/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for methodology)
+**Source:** nvd
+**CVSS score:** 7.1 (CVSS V31)
+**EPSS score:** unknown
+**In CISA KEV:** No
+**Affected vendor/product:** nginx/nginx
+**Matched keywords:** n/a
+**Published:** 2026-09-28T23:17:02.007
+
+**Description:**
+Nginx Proxy Manager through 2.16.0 fails to restrict the advanced_config field to administrators, allowing non-admin users with manage permissions to inject arbitrary nginx directives. Attackers can inject malicious nginx configuration such as alias directives to serve arbitrary files or control routing for their assigned hosts.
+
+---
+### Triage checklist
+- [ ] Confirm this affects our actual deployed stack/version
+- [ ] Check for available patch / upgrade path
+- [ ] Assess exploitability in our environment (network exposure, auth required, etc.)
+- [ ] Patch or mitigate
+- [ ] If not applicable, add to config/suppressions.yaml with a reason + expiry rather than just closing this issue, so it does not silently resurface as a false ""new"" alert
+- [ ] Close this issue once resolved"
+REV45-BLIND-034,959,959,github,https://github.com/astruzocyber/CVE/issues/787,critical,100,rce|exploit|cve-|attack|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"[VULN ALERT] CVE-2026-87741 (risk 51.3) - wordpress/wordpress, php/php
+
+**CVE:** CVE-2026-87741
+**Composite risk score:** 51.3/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for methodology)
+**Source:** nvd
+**CVSS score:** 8.8 (CVSS V31)
+**EPSS score:** unknown
+**In CISA KEV:** No
+**Affected vendor/product:** wordpress/wordpress, php/php
+**Matched keywords:** wordpress
+**Published:** 2026-09-28T20:17:11.377
+
+**Description:**
+The ConvertPlus plugin for WordPress is vulnerable to Deserialization of Untrusted Data in all versions up to, and including, 3.6.3 via the style parameter of the cp_display_preview_modal AJAX action. The vulnerability exists because the action's nonce guard is gated behind an isset() check and fails open when the cp_admin_page_nonce parameter is omitted entirely, no capability check is performed on the callback, and sanitize_text_field() — applied to the $style value before it is concatenated directly into a shortcode string evaluated by do_shortcode() — does not strip shortcode delimiters, allowing an attacker to inject a second, fully attacker-controlled [smile_modal] invocation that causes smile_modal_popup() to pass attacker-supplied base64-decoded bytes to maybe_unserialize() with no allowed_classes restriction. This makes it possible for authenticated attackers, with Subscriber-level access and above, to inject a PHP object. No known POP chain is present in the vulnerable software, which means this vulnerability has no impact unless another plugin or theme containing a POP chain is installed on the site. If a POP chain is present via an additional plugin or theme installed on the target system, it may allow the attacker to perform actions like delete arbitrary files, retrieve sensitive data, or execute code depending on the POP chain present.
+
+---
+### Triage checklist
+- [ ] Confirm this affects our actual deployed stack/version
+- [ ] Check for available patch / upgrade path
+- [ ] Assess exploitability in our environment (network exposure, auth required, etc.)
+- [ ] Patch or mitigate
+- [ ] If not applicable, add to config/suppressions.yaml with a reason + expiry rather than just closing this issue, so it does not silently resurface as a false ""new"" alert
+- [ ] Close this issue once resolved"
+REV45-BLIND-035,962,962,github,https://github.com/astruzocyber/CVE/issues/786,critical,100,rce|remote code execution|exploit|cve-|sql injection|attack,critical,75,remote code execution|cve-|sql injection,no,correcto,si,"[VULN ALERT] CVE-2026-19949 (risk 51.3) - wordpress/wordpress
+
+**CVE:** CVE-2026-19949
+**Composite risk score:** 51.3/100 (35% CVSS + 40% EPSS + 25% KEV bonus -- see dashboard footer for methodology)
+**Source:** nvd
+**CVSS score:** 8.8 (CVSS V31)
+**EPSS score:** unknown
+**In CISA KEV:** No
+**Affected vendor/product:** wordpress/wordpress
+**Matched keywords:** wordpress, wp plugin
+**Published:** 2026-08-25T12:16:23.783
+
+**Description:**
+The All-in-One WP Migration and Backup plugin for WordPress is vulnerable to SQL Injection via archive restore functionality in all versions up to, and including, 7.109 due to insufficient escaping on the user supplied parameter and lack of sufficient preparation on the existing SQL query. This makes it possible for unauthenticated attackers to append additional SQL queries into already existing queries that can be used to extract sensitive information from the database. This can be leveraged to obtain the ai1wm_secret_key when a site administrator performs an archive restore and achieve remote code execution once able to leverage the ai1wm_secret_key value.
+
+---
+### Triage checklist
+- [ ] Confirm this affects our actual deployed stack/version
+- [ ] Check for available patch / upgrade path
+- [ ] Assess exploitability in our environment (network exposure, auth required, etc.)
+- [ ] Patch or mitigate
+- [ ] If not applicable, add to config/suppressions.yaml with a reason + expiry rather than just closing this issue, so it does not silently resurface as a false ""new"" alert
+- [ ] Close this issue once resolved"
+REV45-BLIND-036,985,985,github,https://github.com/tenedev/js-utils-kit/issues/70,critical,60,rce|security|vulnerability,medium,35,security|vulnerability,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/tenedev/js-utils-kit).
+
+## Abandoned Dependencies
+
+The following dependencies have not received updates for an extended period and may be unmaintained.
+
+> [!NOTE]
+Packages are marked as abandoned when they exceed the [`abandonmentThreshold`](https://docs.renovatebot.com/configuration-options/#abandonmentthreshold) since their last release. Unlike deprecated packages with official notices, abandonment is detected by release inactivity.
+> 
+<details>
+<summary>View abandoned dependencies (3)</summary>
+
+| Datasource | Package | Last Updated |
+|------------|------|-------------|
+| npm | [@manypkg/get-packages](https://redirect.github.com/Thinkmill/manypkg) | `2025-07-25` |
+| npm | [gray-matter](https://redirect.github.com/jonschlinkert/gray-matter) | `2021-04-24` |
+| npm | [husky](https://redirect.github.com/typicode/husky) | `2024-11-18` |
+
+</details>
+
+
+## Rate-Limited
+
+The following updates are currently rate-limited. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unlimit-branch=renovate/turbo-monorepo -->chore(deps): update dependency turbo to ^2.11.4
+ - [ ] <!-- unlimit-branch=renovate/pnpm-packages -->chore(deps): update pnpm to v11.28.0
+ - [ ] <!-- unlimit-branch=renovate/changesets-action-2.x -->chore(deps): update changesets/action action to v2
+ - [ ] <!-- unlimit-branch=renovate/changesets-changelog-github-1.x -->chore(deps): update dependency @changesets/changelog-github to v1
+ - [ ] <!-- unlimit-branch=renovate/changesets-cli-3.x -->chore(deps): update dependency @changesets/cli to v3
+ - [ ] <!-- unlimit-branch=renovate/changesets-parse-1.x -->chore(deps): update dependency @changesets/parse to v1
+ - [ ] <!-- unlimit-branch=renovate/major-vitest-monorepo -->chore(deps): update dependency @vitest/coverage-v8 to v5
+ - [ ] <!-- unlimit-branch=renovate/major-pnpm-packages -->chore(deps): update pnpm to v12
+ - [ ] <!-- create-all-rate-limited-prs -->🔐 **Create all rate-limited PRs at once** 🔐
+
+## Pending Status Checks
+
+The following updates await pending status checks. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unpend-branch=renovate/figlet-1.x -->chore(deps): update dependency figlet to ^1.12.0
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=renovate/npm-vitest-vulnerability -->[chore(deps): update dependency vitest to v4.1.11 [security]](../pull/272)
+ - [ ] <!-- rebase-branch=renovate/github-actions -->[chore(deps): update github actions](../pull/267) (`actions/deploy-pages`, `codecov/codecov-action`, `pnpm/action-setup`)
+ - [ ] <!-- rebase-branch=renovate/ignore-7.x -->[chore(deps): update dependency ignore to ^7.0.10](../pull/279)
+ - [ ] <!-- rebase-branch=renovate/prettier -->[chore(deps): update dependency prettier to ^3.9.9](../pull/280)
+ - [ ] <!-- rebase-branch=renovate/clack-prompts-1.x -->[chore(deps): update dependency @clack/prompts to ^1.8.1](../pull/281)
+ - [ ] <!-- rebase-branch=renovate/happy-dom-monorepo -->[chore(deps): update dependency happy-dom to ^20.14.5](../pull/282)
+ - [ ] <!-- rebase-branch=renovate/lint-staged-17.x -->[chore(deps): update dependency lint-staged to ^17.5.1](../pull/283)
+ - [ ] <!-- rebase-branch=renovate/tsdown-0.x -->[chore(deps): update dependency tsdown to ^0.23.0](../pull/273)
+ - [ ] <!-- rebase-branch=renovate/major-definitelytyped -->[chore(deps): update dependency @types/archiver to v8](../pull/212)
+ - [ ] <!-- rebase-branch=renovate/archiver-8.x -->[chore(deps): update dependency archiver to v8](../pull/191)
+ - [ ] <!-- rebase-branch=renovate/typescript-7.x -->[chore(deps): update dependency typescript to v7](../pull/232)
+ - [ ] <!-- rebase-all-open-prs -->**Click on"
+REV45-BLIND-037,1013,1013,github,https://github.com/rhobs/konflux-coo/issues/3840,critical,60,rce|security|vulnerability,medium,35,security|vulnerability,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.
+
+## Repository Problems
+
+Renovate tried to run on this repository, but found these problems.
+
+ - ⚠️ WARN: Some release(s) did not have a releaseTimestamp, but as we're running with minimumReleaseAgeBehaviour=timestamp-optional, proceeding. See debug logs for more information
+ - ⚠️ WARN: Dependency name is unset, skipping
+ - ⚠️ WARN: Some upgrade(s) did not have a releaseTimestamp, but as we're running with minimumReleaseAgeBehaviour=timestamp-optional, proceeding. See debug logs for more information
+ - ⚠️ WARN: Package lookup failures
+ - ⚠️ WARN: No matching upgrades found, returning first upgrade
+ - ⚠️ WARN: No RPM packages could be parsed
+
+
+---
+
+> [!WARNING]
+> Renovate failed to look up the following dependencies: `Could not determine new digest for update (docker package quay.io/konflux-ci/buildah-task)`.
+> 
+> Files affected: `.tekton/tasks/get-submodule-commit-labels.yaml`
+
+---
+
+
+## Other Branches
+
+The following updates are pending. To force the creation of a PR, click on a checkbox below.
+
+ - [ ] <!-- other-branch=konflux/mintmaker/release-1.6/lock-file-maintenance-vulnerability -->Refresh RPM lockfiles [SECURITY]
+
+## Open
+
+The following updates have all been created. To force a retry/rebase of any, click on a checkbox below.
+
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/alertmanager-digest -->[Update alertmanager digest to 69cce30](../pull/4214)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/cluster-health-analyzer-digest -->[Update cluster-health-analyzer digest to 5752291](../pull/4176)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/korrel8r-digest -->[Update korrel8r digest to b3b6fcf](../pull/4206)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/obo-prometheus-operator-digest -->[Update obo-prometheus-operator digest to c85bd1d](../pull/4032)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/observability-operator-digest -->[Update observability-operator digest to bba39b5](../pull/4177)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/prometheus-digest -->[Update prometheus digest to 0880c83](../pull/4034)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/quay.io-konflux-ci-build-trusted-artifacts-latest -->[Update quay.io/konflux-ci/build-trusted-artifacts:latest Docker digest to 0e014b2](../pull/4307)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/registry.redhat.io-ubi9-ubi-minimal -->[Update registry.redhat.io/ubi9/ubi-minimal Docker digest to beeada7](../pull/4188)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/registry.redhat.io-ubi9-ubi-minimal-latest -->[Update registry.redhat.io/ubi9/ubi-minimal:latest Docker digest to beeada7](../pull/4190)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/ui-logging-digest -->[Update ui-logging digest to 6c25bba](../pull/4267)
+ - [ ] <!-- rebase-branch=konflux/mintmaker/release-1.6/ui-troubleshooting-panel-digest -->[Update ui-troubleshooting-panel digest to ad94083](../pull/4191)
+ - [ ] <!-- rebase-branch=konflux/references/release-1.6 -->[Update Konflux references](../pull/4126) (`quay.io/konflux-ci/tekton-catalog/task-apply-tags`, `quay.io/konflux-ci/tekton-catalog/task-build-image-index`, `quay.io/konflux-ci/tekton-catalog/task-buildah`, `quay.io/konflux-ci/tekton-catalog/task-buildah-remote-oci-ta`, `quay.io/konflux-ci/tekton-catalog/task-clair-scan`, `quay.io/konflux-ci/tekton-catalog/task-clamav-scan`, `quay.io/konflux-ci/tekton-catalog/task-coverity-availability-check`, `quay.io/konflux-ci/tekton-catalog/task-ecosystem-cert-preflight-checks`, `quay.io/konflux-ci/tekton-catalog/task-git-clone`, `quay.io/konflux-ci/tekton-catalog/task-git-clone-oci-ta`, `quay.io/konflux-ci/tekton-catalog/task-init`, `quay.io/konflux-ci/tekton-catalog/task-prefetch-dependencies`, `quay.io/konflux-ci/tekton-catalog/task-p"
+REV45-BLIND-038,1017,1017,github,https://github.com/opentok/opentok-rtc/issues/796,critical,95,rce|exploit|cve-|vulnerability,critical,70,exploit|cve-|vulnerability,no,correcto,si,"grunt-bower-task-0.5.0.tgz: 7 vulnerabilities (highest severity is: 8.1) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>grunt-bower-task-0.5.0.tgz</b></summary>
+
+<p></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/opentok/opentok-rtc/commit/7c898c0839317ea7989d15935972aa4dc520b907"">7c898c0839317ea7989d15935972aa4dc520b907</a></p></details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Exploit Maturity | EPSS | Dependency | Type | Fixed in (grunt-bower-task version) | Fix PR available | Reachability |
+| ------------- | ------------- | ----- | ----- | ----- | ----- | ----- | ------------- | --- | --- |
+| [CVE-2021-23337](https://www.mend.io/vulnerability-database/CVE-2021-23337) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.2 | Proof of concept | 21.333% | lodash-0.10.0.tgz | Transitive | 0.6.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2026-2950](https://www.mend.io/vulnerability-database/CVE-2026-2950) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 6.5 | Not Defined | 0.377% | lodash-0.10.0.tgz | Transitive | 0.6.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2018-3721](https://www.mend.io/vulnerability-database/CVE-2018-3721) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 6.5 | Not Defined | 2.384% | lodash-0.10.0.tgz | Transitive | 0.6.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2021-43138](https://www.mend.io/vulnerability-database/CVE-2021-43138) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.8 | Not Defined | 3.346% | async-2.6.3.tgz | Transitive | 0.6.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2026-4800](https://www.mend.io/vulnerability-database/CVE-2026-4800) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.1 | Not Defined | 2.618% | lodash-4.17.20.tgz | Transitive | 0.6.2 | &#9989;| |
+| [CVE-2025-13465](https://www.mend.io/vulnerability-database/CVE-2025-13465) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.2 | Not Defined | 1.85% | lodash-4.17.20.tgz | Transitive | 0.6.2 | &#9989;| |
+| [CVE-2020-28500](https://www.mend.io/vulnerability-database/CVE-2020-28500) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.3 | Proof of concept | 7.336% | lodash-4.17.20.tgz | Transitive | 0.6.2 | &#9989;| |
+<p>**In some cases, Remediation PR cannot be created automatically for a vulnerability despite the availability of remediation</p>
+
+## Details
+
+<details>
+
+<summary><img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> <img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> CVE-2021-23337</summary>
+
+
+###  Vulnerable Library - <b>lodash-0.10.0.tgz</b>
+
+<p>A utility library delivering consistency, customization, performance, and extras.</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/lodash/-/lodash-0.10.0.tgz"">https://registry.npmjs.org/lodash/-/lodas"
+REV45-BLIND-039,1020,1020,github,https://github.com/opentok/opentok-rtc/issues/792,critical,95,rce|exploit|cve-|vulnerability,critical,70,exploit|cve-|vulnerability,no,correcto,si,"grunt-contrib-compress-1.6.0.tgz: 9 vulnerabilities (highest severity is: 9.8) unreachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>grunt-contrib-compress-1.6.0.tgz</b></summary>
+
+<p></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/opentok/opentok-rtc/commit/7c898c0839317ea7989d15935972aa4dc520b907"">7c898c0839317ea7989d15935972aa4dc520b907</a></p></details>
+
+ ####  <img src='https://whitesource-resources.whitesourcesoftware.com/suggestedVersion.png' width=19 height=20> Mend has checked all newer package trees, and you are on the least vulnerable package!
+
+ ####  Please note: There might be a version that explicitly solves one or more of the vulnerabilities listed below, but we do not recommend it. For more info about the optional fixes, check the ""Details"" section below.
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Exploit Maturity | EPSS | Dependency | Type | Fixed in (grunt-contrib-compress version) | Fix PR available | Reachability |
+| ------------- | ------------- | ----- | ----- | ----- | ----- | ----- | ------------- | --- | --- |
+| [CVE-2021-44906](https://www.mend.io/vulnerability-database/CVE-2021-44906) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | Not Defined | 4.581% | minimist-1.2.5.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2022-0355](https://www.mend.io/vulnerability-database/CVE-2022-0355) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.8 | Not Defined | 2.024% | simple-get-3.1.0.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2021-43138](https://www.mend.io/vulnerability-database/CVE-2021-43138) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.8 | Not Defined | 3.346% | async-2.6.3.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2025-59343](https://www.mend.io/vulnerability-database/CVE-2025-59343) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 0.553% | tar-fs-2.1.1.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2025-48387](https://www.mend.io/vulnerability-database/CVE-2025-48387) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 0.576% | tar-fs-2.1.1.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2024-12905](https://www.mend.io/vulnerability-database/CVE-2024-12905) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 2.255% | tar-fs-2.1.1.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=19 height=20> Unreachable</p> |
+| [CVE-2020-7788](https://www.mend.io/vulnerability-database/CVE-2020-7788) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.3 | Proof of concept | 3.655% |"
+REV45-BLIND-040,1032,1032,github,https://github.com/Vonage-Community/tutorial-interactive_tutorials/issues/345,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"body-parser-1.20.4.tgz: 4 vulnerabilities (highest severity is: 5.3)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>body-parser-1.20.4.tgz</b></summary>
+
+<p>Node.js body parsing middleware</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/body-parser/-/body-parser-1.20.4.tgz"">https://registry.npmjs.org/body-parser/-/body-parser-1.20.4.tgz</a></p>
+<p>Sample Path to Dependency File: /tutorials/video-javascript-debugging/project/package.json</p>
+<p>Path to vulnerable library: /tutorials/video-javascript-debugging/project/package.json,/tutorials/vonage_video_react_app-theme-customization/project/package.json,/tutorials/video-javascript-signaling/project/package.json,/tutorials/vonage_video_android_app-feature-config/project/package.json,/tutorials/vonage_video_react_app-feature-config/project/package.json,/tutorials/video-javascript-multiparty_archiving/project/package.json,/tutorials/vonage_video_ios_app-feature-config/project/package.json,/tutorials/video-web-components-javascript-workshop/project/package.json,/tutorials/vonage_video_ios_app-theme-customization/project/package.json,/tutorials/video_learning_server-node-deploy/project/package.json,/tutorials/video-javascript-archive_layouts/project/package.json,/tutorials/vonage_video_android_app-theme-customization/project/package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/Vonage-Community/tutorial-interactive_tutorials/commit/4e2cf9adce70dc70d3b4bb66d02e43c4a1afa182"">4e2cf9adce70dc70d3b4bb66d02e43c4a1afa182</a></p></details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Dependency | Type | Fixed in (body-parser version) | Remediation Possible** |
+| ------------- | ------------- | ----- | ----- | ----- | ------------- | --- |
+| [CVE-2026-8723](https://www.mend.io/vulnerability-database/CVE-2026-8723) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.3 | qs-6.14.2.tgz | Transitive | 1.20.5 | &#9989; |
+| [CVE-2026-82417](https://www.mend.io/vulnerability-database/CVE-2026-82417) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.3 | qs-6.14.2.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-82562](https://www.mend.io/vulnerability-database/CVE-2026-82562) | <img src='https://whitesource-resources.whitesourcesoftware.com/low_vul.png?' width=19 height=20> Low | 3.7 | qs-6.14.2.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-12590](https://www.mend.io/vulnerability-database/CVE-2026-12590) | <img src='https://whitesource-resources.whitesourcesoftware.com/low_vul.png?' width=19 height=20> Low | 3.7 | body-parser-1.20.4.tgz | Direct | 1.20.6 | &#9989; |
+<p>*For some transitive vulnerabilities, there is no version of direct dependency with a fix. Check the ""Details"" section below to see if there is a version of transitive dependency where vulnerability is fixed.</p><p>**In some cases, Remediation PR cannot be created automatically for a vulnerability despite the availability of remediation</p>
+
+## Details
+
+<details>
+
+<summary><img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> CVE-2026-8723</summary>
+
+
+###  Vulnerable Library - <b>qs-6.14.2.tgz</b>
+
+<p>A querystring parser that supports nesting and arrays, with a depth limit</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/qs/-/qs-6.14.2.tgz"">https://registry.npmjs.org/qs/-/qs-6.14.2.tgz</a></p>
+<p>Sample Path to Dependency File: /tutorials/video-javascript-multiparty_archiving/project/package.json</p>
+<p>Path to vulnerable library: /tutorials/video-javascript-multiparty_archiving/project/package.json,/tutorials/vonage_video_ios_app-theme-customization/project/package.json,/tutorials/video-javascript-sign"
+REV45-BLIND-041,1041,1041,github,https://github.com/momo-tong/openapi-generator-5.4.0/issues/7,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"gatling-charts-highcharts-2.3.0.jar: 135 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>gatling-charts-highcharts-2.3.0.jar</b></summary>
+
+<p></p>
+<p>Sample Path to Dependency File: /scala-gatling/build.gradle</p>
+<p>Path to vulnerable library: /home/wss-scanner/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.9.0/14fb5f088cc0b0dc90a73ba745bcade4961a3ee3/jackson-databind-2.9.0.jar</p>
+<p>
+
+</details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Dependency | Type | Fixed in (gatling-charts-highcharts version) | Remediation Possible** |
+| ------------- | ------------- | ----- | ----- | ----- | ------------- | --- |
+| [CVE-2020-9548](https://www.mend.io/vulnerability-database/CVE-2020-9548) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2020-9547](https://www.mend.io/vulnerability-database/CVE-2020-9547) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2020-9546](https://www.mend.io/vulnerability-database/CVE-2020-9546) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2020-8840](https://www.mend.io/vulnerability-database/CVE-2020-8840) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2019-20330](https://www.mend.io/vulnerability-database/CVE-2019-20330) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2019-17267](https://www.mend.io/vulnerability-database/CVE-2019-17267) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2019-16943](https://www.mend.io/vulnerability-database/CVE-2019-16943) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2019-16942](https://www.mend.io/vulnerability-database/CVE-2019-16942) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2019-14540](https://www.mend.io/vulnerability-database/CVE-2019-14540) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.10.0 | &#10060; |
+| [CVE-2018-19360](https://www.mend.io/vulnerability-database/CVE-2018-19360) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | jackson-databind-2.9.0.jar | Transitive | 3.1.0 | &#10060; |
+| [CVE-2018-1000613](https://www.mend.io/vulnerability-database/CVE-2018-1000613) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | bcprov-jdk15on-1.58.jar | Transitive | 3.0.0 | &#10060; |
+| [CVE-2026-75595](https://www.mend.io/vulnerability-database/CVE-2026-75595) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.1 | netty-handler-4.0"
+REV45-BLIND-042,1096,1096,github,https://github.com/cds-snc/terraform-modules/issues/150,low,10,security,low,10,security,no,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/cds-snc/terraform-modules).
+
+## Pending Approval
+
+The following branches are pending approval. To create them, click on a checkbox below.
+
+ - [ ] <!-- approve-branch=renovate/actions-checkout-7.x -->chore(deps): update actions/checkout action to v7
+ - [ ] <!-- approve-branch=renovate/actions-setup-python-7.x -->chore(deps): update actions/setup-python action to v7
+ - [ ] <!-- approve-branch=renovate/cds-snc-terraform-plan-5.x -->chore(deps): update cds-snc/terraform-plan action to v5
+ - [ ] <!-- approve-branch=renovate/aws-encryption-sdk-4.x -->chore(deps): update dependency aws-encryption-sdk to v4
+ - [ ] <!-- approve-branch=renovate/dorny-paths-filter-4.x -->chore(deps): update dorny/paths-filter action to v4
+ - [ ] <!-- approve-branch=renovate/aws-6.x -->chore(deps): update terraform aws to v6
+ - [ ] <!-- approve-branch=renovate/azurerm-5.x -->chore(deps): update terraform azurerm to v5
+ - [ ] <!-- approve-branch=renovate/github.com-cds-snc-terraform-modules-12.x -->chore(deps): update terraform github.com/cds-snc/terraform-modules to v12
+ - [ ] <!-- approve-all-pending-prs -->🔐 **Create all pending approval PRs at once** 🔐
+
+## Awaiting Schedule
+
+The following updates are awaiting their schedule. To get an update now, click on a checkbox below.
+
+ - [ ] <!-- unschedule-branch=renovate/all-patch -->chore(deps): update dependency boto3 to v1.43.99
+ - [ ] <!-- unschedule-branch=renovate/lock-file-maintenance -->chore(deps): lock file maintenance
+ - [ ] <!-- create-all-awaiting-schedule-prs -->🔐 **Create all awaiting schedule PRs at once** 🔐
+
+## Detected Dependencies
+
+<details><summary>devcontainer (1)</summary>
+<blockquote>
+
+<details><summary>.devcontainer/devcontainer.json (6)</summary>
+
+ - `mcr.microsoft.com/devcontainers/go bullseye@sha256:705e1b5db9fc460295d1d82f660174d061cfdd3c648080e999d0c4531e8fca46`
+ - `ghcr.io/devcontainers/features/python 1`
+ - `python 3.14`
+ - `ghcr.io/devcontainers/features/terraform 1`
+ - `ghcr.io/dhoeric/features/terraform-docs 1`
+ - `ghcr.io/devcontainers/features/aws-cli 1`
+
+</details>
+
+</blockquote>
+</details>
+
+<details><summary>github-actions (8)</summary>
+<blockquote>
+
+<details><summary>.github/workflows/ci.yml (11)</summary>
+
+ - `actions/checkout v6.1.0@d23441a48e516b6c34aea4fa41551a30e30af803` → [Updates: `v7.0.1`]
+ - `actions/setup-python v6.3.0@ece7cb06caefa5fff74198d8649806c4678c61a1` → [Updates: `v7.0.0`]
+ - `actions/checkout v6.1.0@d23441a48e516b6c34aea4fa41551a30e30af803` → [Updates: `v7.0.1`]
+ - `dorny/paths-filter v3.0.4@0e4a8c6effa4802afeda77dc8d303f8176d7dfad` → [Updates: `v4.0.3`]
+ - `actions/setup-python v6.3.0@ece7cb06caefa5fff74198d8649806c4678c61a1` → [Updates: `v7.0.0`]
+ - `actions/checkout v6.1.0@d23441a48e516b6c34aea4fa41551a30e30af803` → [Updates: `v7.0.1`]
+ - `dorny/paths-filter v3.0.4@0e4a8c6effa4802afeda77dc8d303f8176d7dfad` → [Updates: `v4.0.3`]
+ - `aws-actions/configure-aws-credentials v6.3.0@e1253824e5c10ff9df46874f81ed3ec929e19cfd`
+ - `cds-snc/terraform-tools-setup v1.3.0@36df0d7572a15921998170395475093c183d720a`
+ - `python 3.14`
+ - `python 3.14`
+
+</details>
+
+<details><summary>.github/workflows/docs.yml (1)</summary>
+
+ - `actions/checkout v6.1.0@d23441a48e516b6c34aea4fa41551a30e30af803` → [Updates: `v7.0.1`]
+
+</details>
+
+<details><summary>.github/workflows/labels.yml (1)</summary>
+
+ - `cds-snc/labels v1@8d95ffe4ae0bd4f148da0b5f082f1e5aa6cb72bf`
+
+</details>
+
+<details><summary>.github/workflows/lint.yml (2)</summary>
+
+ - `actions/checkout v6.1.0@d23441a48e516b6c34aea4fa41551a30e30af803` → [Updates: `v7.0.1`]
+ - `cds-snc/terraform-tools-setup v1.3.0@36df0d7572a15921998170395475093c183d720a`
+
+</details>
+
+<details><summary>.github/workflows/security-scan.yml (1)</summary>
+
+ - `actions/checkout v6."
+REV45-BLIND-043,1159,1160,github,https://github.com/c-3lab/oasismap/issues/436,high,50,cve-|vulnerability,high,50,cve-|vulnerability,no,correcto,si,"keycloak脆弱性対応(2026/09/28)
+
+9/24時点でCI上にてkeycloak(26.7.2)での脆弱性を確認
+
+keycloak公式では9/19に検知したもので、現時点で修正リリース版待ち
+https://github.com/keycloak/keycloak/issues/52971
+
+以下検出された脆弱性の詳細
+
+### 該当パッケージ
+- `org.bouncycastle:bcprov-jdk18on` 
+
+### 検出されたCVE
+- `CVE-2026-8763`
+https://avd.aquasec.com/nvd/cve-2026-8763
+
+### 実際のtrivy結果
+```
+Java (jar)
+==========
+Total: 2 (CRITICAL: 2)
+
+┌───────────────────────────────────────────────────────────┬───────────────┬──────────┬────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────┐
+│                          Library                          │ Vulnerability │ Severity │ Status │ Installed Version │ Fixed Version │                          Title                           │
+├───────────────────────────────────────────────────────────┼───────────────┼──────────┼────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────┤
+│ org.bouncycastle:bcprov-jdk18on (bcprov-jdk18on-1.84.jar) │ CVE-2026-8763 │ CRITICAL │ fixed  │ 1.84              │ 1.85          │ org.bouncycastle/bcprov-jdk15on:                         │
+│                                                           │               │          │        │                   │               │ org.bouncycastle/bcpkix-jdk15on: Bouncy Castle for Java: │
+│                                                           │               │          │        │                   │               │ Name Constraints bypass via trailing dot...              │
+│                                                           │               │          │        │                   │               │ https://avd.aquasec.com/nvd/cve-2026-8763                │
+├───────────────────────────────────────────────────────────┤               │          │        │                   │               │                                                          │
+│ org.bouncycastle:bcprov-jdk18on                           │               │          │        │                   │               │                                                          │
+│ (org.bouncycastle.bcprov-jdk18on-1.84.jar)                │               │          │        │                   │               │                                                          │
+│                                                           │               │          │        │                   │               │                                                          │
+│                                                           │               │          │        │                   │               │                                                          │
+└───────────────────────────────────────────────────────────┴───────────────┴──────────┴────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────┘
+```"
+REV45-BLIND-044,1178,1179,github,https://github.com/datarelay-labs/datarelay-link/issues/41,critical,65,rce,high,40,,sí,correcto,si,"[AI Work] v2.4.0 Release Closure
+
+PACKET_VERSION=2
+EVIDENCE_DIR=/home/aella/e2e-reports/full-user-e2e-20260928T135216Z
+ACTIVE_WORKTREE=/home/aella/datarelay-link-current
+FULL_USER_E2E_DISPOSITION=FAIL_IN_PROGRESS
+FULL_USER_E2E_RUN_ID=full-user-e2e-20260928T135216Z
+TARGET_REPO=datarelay-labs/datarelay-link
+WORKSTREAM=v2.4.0-release-closure
+STATUS=FULL_USER_E2E_FAIL_IN_PROGRESS_MULTIPLE_RELEASE_BLOCKERS
+BRANCH=feature/v2.4.0-final-product-closure
+LAST_VERIFIED_HEAD=36284f18b5043703dbb2d953ebeff984bd37f0e4
+TEST_CONTRACT_HEAD=36284f18b5043703dbb2d953ebeff984bd37f0e4
+CONTENT_HEAD=f6bcb362c11923b96e0a363ada14c68b90130fd0
+TASK_KIND=RELEASE_QUALIFICATION
+PR=32
+IMPLEMENTATION_OWNER=ChatGPT_DIRECT
+CURSOR=STOPPED_DO_NOT_USE
+NEXT_ACTION=CONTINUE_RUN_full-user-e2e-20260928T135216Z_FROM_ISSUE41_HANDOFF; PRESERVE_PRIMARY_RECOVERY_REQUIRED_EVIDENCE; FINISH_REMAINING_MANDATORY_SCENARIOS_ON_SECONDARY; REPRO_AND_TRIAGE_CONFIRMED_BLOCKERS_BEFORE_ANY_RELEASE
+HANDOFF_UPDATED_AT=2026-09-29T10:28:00+09:00
+DIRECT_EXECUTION_REQUIRED=YES
+
+## Goal
+Finish Data Relay Link v2.4.0 qualification on one immutable exact candidate. No merge, tag, or release until exact-head automated qualification, real ChatGPT owner/UI OAuth/tool acceptance, and Full Real E2E PASS1/PASS2 pass on the required unchanged lineage.
+
+## FULL_USER_E2E contract hardening — 2026-09-28
+
+Canonical `docs/FULL_USER_E2E_SCENARIOS.md` was hardened so an unqualified User E2E request executes immediately as a real human black-box operation rather than drifting into release audit/source review/harness debugging.
+
+- `df9d1b8` — enforce human black-box parallel execution.
+- `1b6d1f1` — record `TEST_CONTRACT_HEAD` separately from product/source HEAD.
+- `159cef7` — make discovery-led, use-case-driven coverage exhaustive: acting user starts from `drlink`/`?`/`help`/menu/Tab, every discovered/oracle command+variant is mapped into a real use case, Direct and AI mirrors are both required, and independent use-case lanes run in parallel.
+- `448b369` — complete overlapping-policy semantics and AI credential lifecycle use cases.
+- `540b032` — clarify that every embedded command example, not only section 14, is an auditor oracle and must not be treated as memorized user knowledge.
+- Automated harnesses are supplemental only: harness PASS != User E2E PASS; harness FAIL != product FAIL.
+- Active discovery forbids source/test/harness/internal-state inspection for failure diagnosis; record user-visible evidence and continue independent lanes.
+- Mandatory parallel-start gate now covers multi-host enrollment, guided/TTY, adversarial corner cases, real traffic, AI parity, and baseline load lanes.
+- Tooling failure is localized as `BLOCKED_TOOLING`; it must not stall unrelated lanes.
+- Disposable test credentials/tickets are used as a real operator would and redacted only from retained/shared evidence.
+- Canonical SSH direct-public-IP mapping: `221.139.249.96/27 -> 4022` (including `.113`, `.114`); all other public IPs -> `22` (including `54.116.47.145`, `129.225.184.60`).
+- Final contract validation on `540b032`: `tests/test-user-facing-branding.sh` PASS, `scripts/check-release-governance.sh` PASS, `git diff --check` PASS; local/origin branch heads match and worktree is clean.
+
+This test-contract HEAD is distinct from the currently stamped runtime artifact provenance/content identities below. Final qualification evidence must record both `TEST_CONTRACT_HEAD` and the tested product `SOURCE_HEAD`.
+
+## Exact candidate
+
+```text
+PROVENANCE_HEAD=82468be39aab2dba0762a39d21bb34a93037b218
+CONTENT_HEAD=f6bcb362c11923b96e0a363ada14c68b90130fd0
+SERVER_BOOTSTRAP_SHA256=31a6704bc5febebe9c9d6235e12a507cf77f2b8b6588d514b2d7f9a3d3519c02
+CLIENT_BOOTSTRAP_SHA256=96b5d1ce9a8d32f0c79ca08bedd8890a3de77c8e9651edc0cca17e3e29206dab
+SERVER_INSTALLED_BUNDLE_SHA256=74220ccb2cab942b241c44f1e399c2f31e5f8848dc3b5d03ec7d999738f82fad
+AGENT_INSTALLED_BUNDLE_SHA256=96b5d1ce9a8d32f0c79ca08bedd8890a3de77c8e9651edc0cca17e3e29206dab
+```
+
+PR #32 branch h"
+REV45-BLIND-045,1195,1196,github,https://github.com/agusclap/ml-network-intrusion-detection/issues/1,critical,85,exploit|backdoor|attack|ataque|security,high,55,backdoor|ataque|security,sí,severidad_incorrecta,si,"Project Charter: Detección de intrusiones en redes con ML
+
+# Project Charter: Detección de intrusiones en redes con Machine Learning
+
+Inteligencia Artificial - Ingeniería en Informática - UNDEF CRUC IUA
+
+- **Docente:** Ing. Hernando Alexis González
+- **Modalidad:** Grupal
+- **Integrantes:** Maximo Agustin Rodeyro y Lautaro Niccolini
+- **Categorías:** Machine Learning Predictivo y Data Engineering & IA
+- **Fecha:** 28/9/2026
+
+## 1. Resumen
+
+La idea del proyecto es armar un sistema de detección de intrusiones (NIDS) basado en Machine Learning. El sistema recibe los datos de un flujo de red (protocolo, servicio, duración, bytes y paquetes enviados en cada sentido, TTL, etc.) y decide si ese flujo es tráfico normal o un ataque. Como segunda tarea, también intentamos predecir de qué tipo de ataque se trata.
+
+Para esto usamos el dataset UNSW-NB15 con la división en train y test que publicaron sus autores. Vamos a comparar una regla simple sin IA y una regresión logística contra XGBoost, validar con cross-validation sobre el train y evaluar el modelo final una sola vez sobre el test. Al final queremos tener un pipeline reproducible y un script de consola que reciba un CSV con flujos y devuelva las predicciones.
+
+## 2. Definición del problema
+
+Los IDS tradicionales funcionan con firmas, es decir, reglas escritas a mano para ataques ya conocidos, y les cuesta detectar variantes nuevas. Nuestra propuesta es entrenar un modelo que aprenda cómo se comporta el tráfico malicioso a partir de ejemplos etiquetados, para que funcione como una capa más de detección.
+
+Planteamos dos tareas sobre los mismos datos:
+
+- **Binaria (tarea principal):** normal o ataque.
+- **Multiclase (tarea secundaria):** Normal o una de las 9 categorías de ataque del dataset (Analysis, Backdoor, DoS, Exploits, Fuzzers, Generic, Reconnaissance, Shellcode y Worms).
+
+### PEAS
+
+| | |
+|---|---|
+| Performance | Tarea binaria: recall de ataques y tasa de falsos positivos, además de F1 y PR-AUC. Tarea multiclase: Macro-F1 y F1 por clase. |
+| Environment | Registros de flujos de red del dataset UNSW-NB15. Es un entorno parcialmente observable porque solo tenemos los metadatos del flujo y no el contenido de los paquetes. Es estático, ya que trabajamos sobre archivos CSV. |
+| Actuators | Para cada flujo, el sistema devuelve una etiqueta (normal/ataque o categoría de ataque) junto con su probabilidad. |
+| Sensors | Las 42 variables que trae cada registro: protocolo, servicio, estado de la conexión, duración, bytes y paquetes por sentido, TTL, pérdidas, jitter, tiempos del handshake TCP, tamaño medio de los paquetes y contadores de conexiones recientes. |
+
+## 3. Datos
+
+Usamos UNSW-NB15, un dataset armado por el Australian Centre for Cyber Security de UNSW Canberra (Moustafa y Slay, 2015). Lo descargamos desde la página oficial (research.unsw.edu.au/projects/unsw-nb15-dataset). Trabajamos solamente con la partición en train y test que publicaron los autores:
+
+- `UNSW_NB15_training-set.csv`: 175.341 registros.
+- `UNSW_NB15_testing-set.csv`: 82.332 registros.
+
+Cada registro tiene 45 columnas. De esas, 42 son las variables que usamos como entrada (39 numéricas y 3 categóricas: `proto`, `service` y `state`). Las otras tres son `id`, que es un índice de fila y se descarta, y las dos etiquetas: `label` (0 = normal, 1 = ataque) y `attack_cat` (la categoría del ataque, o ""Normal"").
+
+También existe una copia del dataset en Kaggle, pero ahí los archivos de train y test tienen los nombres cambiados. Por eso usamos la versión oficial y verificamos los archivos con su hash MD5 antes de entrenar. Los hashes y los pasos para descargar los datos están en `data/README.md`.
+
+Cuando revisamos los datos encontramos varias cosas a tener en cuenta:
+
+- **No hay valores faltantes.** Algunos valores de `state` aparecen solo en el test, así que el encoding de las variables categóricas tiene que soportar categorías que no vio en el entrenamiento.
+- **Desbalance.** En el train el 68 % de los registros son ata"
+REV45-BLIND-046,1260,1261,github,https://github.com/amaybaum-prod/remediate-test/issues/28,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"logback-classic-1.1.3.jar: 12 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>logback-classic-1.1.3.jar</b></summary>
+
+<p>logback-classic module</p>
+<p>Library home page: <a href=""http://www.qos.ch"">http://www.qos.ch</a></p>
+<p>Sample Path to Dependency File: /pom.xml</p>
+<p>Path to vulnerable library: /home/wss-scanner/.m2/repository/ch/qos/logback/logback-classic/1.1.3/logback-classic-1.1.3.jar</p>
+<p>
+
+</details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Dependency | Type | Fixed in (logback-classic version) | Remediation Possible** |
+| ------------- | ------------- | ----- | ----- | ----- | ------------- | --- |
+| [CVE-2017-5929](https://www.mend.io/vulnerability-database/CVE-2017-5929) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | detected in multiple dependencies | Direct | 1.2.0 | &#9989; |
+| [CVE-2026-13006](https://www.mend.io/vulnerability-database/CVE-2026-13006) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.9 | logback-core-1.1.3.jar | Transitive | 1.5.35 | &#9989; |
+| [CVE-2025-11226](https://www.mend.io/vulnerability-database/CVE-2025-11226) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.9 | logback-core-1.1.3.jar | Transitive | 1.3.16 | &#9989; |
+| [CVE-2026-19880](https://www.mend.io/vulnerability-database/CVE-2026-19880) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.3 | logback-classic-1.1.3.jar | Direct | 1.6.3 | &#9989; |
+| [CVE-2024-12798](https://www.mend.io/vulnerability-database/CVE-2024-12798) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.3 | detected in multiple dependencies | Direct | 1.3.15 | &#9989; |
+| [CVE-2023-6481](https://www.mend.io/vulnerability-database/CVE-2023-6481) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.1 | logback-core-1.1.3.jar | Transitive | N/A* | &#10060; |
+| [CVE-2023-6378](https://www.mend.io/vulnerability-database/CVE-2023-6378) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.1 | detected in multiple dependencies | Direct | 1.2.13 | &#9989; |
+| [CVE-2021-42550](https://www.mend.io/vulnerability-database/CVE-2021-42550) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 6.6 | detected in multiple dependencies | Transitive | N/A* | &#10060; |
+| [CVE-2026-9828](https://www.mend.io/vulnerability-database/CVE-2026-9828) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.4 | logback-core-1.1.3.jar | Transitive | 1.5.33 | &#9989; |
+| [CVE-2026-10532](https://www.mend.io/vulnerability-database/CVE-2026-10532) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.4 | logback-core-1.1.3.jar | Transitive | N/A* | &#10060; |
+| [CVE-2026-1225](https://www.mend.io/vulnerability-database/CVE-2026-1225) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.0 | logback-core-1.1.3.jar | Transitive | N/A* | &#10060; |
+| [CVE-2024-12801](https://www.mend.io/vulnerability-database/CVE-2024-12801) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 4.6 | logback-core-1.1.3.jar | Transitive | 1.3.15 | &#9989; |
+<p>*For some transitive vulnerabilities, there is no version of direct dependency with"
+REV45-BLIND-047,1268,1269,github,https://github.com/amaybaum-prod/remediate-test/issues/23,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"spring-web-4.2.1.RELEASE.jar: 39 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>spring-web-4.2.1.RELEASE.jar</b></summary>
+
+<p>Spring Web</p>
+<p>Library home page: <a href=""https://github.com/spring-projects/spring-framework"">https://github.com/spring-projects/spring-framework</a></p>
+<p>Sample Path to Dependency File: /pom.xml</p>
+<p>Path to vulnerable library: /home/wss-scanner/.m2/repository/org/springframework/spring-web/4.2.1.RELEASE/spring-web-4.2.1.RELEASE.jar</p>
+<p>
+
+</details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Dependency | Type | Fixed in (spring-web version) | Remediation Possible** |
+| ------------- | ------------- | ----- | ----- | ----- | ------------- | --- |
+| [CVE-2026-47891](https://www.mend.io/vulnerability-database/CVE-2026-47891) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | spring-web-4.2.1.RELEASE.jar | Direct | N/A | &#10060; |
+| [CVE-2022-22965](https://www.mend.io/vulnerability-database/CVE-2022-22965) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | spring-beans-4.2.1.RELEASE.jar | Transitive | 5.2.20.RELEASE | &#9989; |
+| [CVE-2016-1000027](https://www.mend.io/vulnerability-database/CVE-2016-1000027) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | spring-web-4.2.1.RELEASE.jar | Direct | 4.3.26.RELEASE | &#9989; |
+| [CVE-2015-5211](https://www.mend.io/vulnerability-database/CVE-2015-5211) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.6 | detected in multiple dependencies | Direct | 4.2.2.RELEASE | &#9989; |
+| [CVE-2026-59283](https://www.mend.io/vulnerability-database/CVE-2026-59283) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.1 | spring-expression-4.2.1.RELEASE.jar | Transitive | N/A* | &#10060; |
+| [WS-2021-0170](https://github.com/spring-projects/spring-framework/commit/ea2843ecc01f50a090142eaf5f890df5e05c7ae0) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.0 | spring-core-4.2.1.RELEASE.jar | Transitive | 4.2.3.RELEASE | &#9989; |
+| [CVE-2020-5421](https://www.mend.io/vulnerability-database/CVE-2020-5421) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.7 | spring-web-4.2.1.RELEASE.jar | Direct | 4.3.29.RELEASE | &#9989; |
+| [CVE-2024-22262](https://www.mend.io/vulnerability-database/CVE-2024-22262) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.1 | spring-web-4.2.1.RELEASE.jar | Direct | 5.3.34 | &#9989; |
+| [CVE-2024-22259](https://www.mend.io/vulnerability-database/CVE-2024-22259) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.1 | spring-web-4.2.1.RELEASE.jar | Direct | 5.3.33 | &#9989; |
+| [CVE-2024-22243](https://www.mend.io/vulnerability-database/CVE-2024-22243) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.1 | spring-web-4.2.1.RELEASE.jar | Direct | 5.3.32 | &#9989; |
+| [CVE-2026-59282](https://www.mend.io/vulnerability-database/CVE-2026-59282) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | spring-beans-4.2.1.RELEASE.jar | Transitive | N/A* | &#10060; |
+| [CVE-2026-47886](https://www.mend.io/vulnerability-database/CVE-2026-47886) | <img src='https://whitesource-resources.whitesourceso"
+REV45-BLIND-048,1271,1272,github,https://github.com/AlmaLinux/updates/issues/3654,critical,85,cve-|privilege escalation|sql injection|security,critical,85,cve-|privilege escalation|sql injection|security,no,correcto,si,"Release postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e ALSA-2026:69923
+
+postgresql:15 security update
+Severity: Important
+Description
+PostgreSQL is an advanced object-relational database management system (DBMS).  
+
+Security Fix(es):  
+
+  * postgresql: PostgreSQL: Arbitrary code execution via integer wraparound in tsvector and tsquery functions (CVE-2026-14662)
+  * postgresql: PostgreSQL: Arbitrary code execution via untrusted data inclusion in pg_dump (CVE-2026-18408)
+  * postgresql: PostgreSQL psql: Arbitrary command execution via untrusted data in COPY FROM STDIN (CVE-2026-6464)
+  * postgresql: PostgreSQL: Arbitrary code execution via logical decoding plugin (CVE-2026-6471)
+  * postgresql: PostgreSQL: Arbitrary code execution via type confusion with ""internal"" arguments (CVE-2026-14680)
+  * postgresql: PostgreSQL: Arbitrary code execution via heap buffer overflow in regexp (CVE-2026-14664)
+  * postgresql: pltcl: plperl: PostgreSQL: Arbitrary code execution in 32-bit pltcl and plperl (CVE-2026-14677)
+  * postgresql-fuzzystrmatch: PostgreSQL fuzzystrmatch: Arbitrary code execution via integer wraparound (CVE-2026-15742)
+  * postgresql: PostgreSQL: Arbitrary code execution via type confusion in cursor lifecycle (CVE-2026-16239)
+  * postgresql: PostgreSQL: Arbitrary code execution via long POSIX timezone abbreviation (CVE-2026-14669)
+  * postgresql: PostgreSQL: Stack buffer overflow via OUT parameter count manipulation (CVE-2026-14679)
+  * postgresql: PostgreSQL: Arbitrary code execution via type confusion in 'refint' module (CVE-2026-14671)
+  * postgresql: PostgreSQL: Arbitrary code execution via plperl tied hash heap buffer overflow (CVE-2026-14670)
+  * postgresql: PostgreSQL: Information disclosure via type confusion in ctid selectivity estimator (CVE-2026-14668)
+  * postgresql: PostgreSQL pg_dump: Arbitrary code execution via crafted transform lists (CVE-2026-19385)
+  * postgresql: PostgreSQL: Privilege escalation via SQL injection in EXTRACT() deparse (CVE-2026-15741)
+
+
+For more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.
+
+
+Affected packages:
+postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e.noarch
+postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e.noarch
+pg_repack-1.4.8-1.module+el8.9.0+19797+c4ce5969.x86_64
+pgaudit-1.7.0-1.module+el8.9.0+19797+c4ce5969.x86_64
+postgres-decoderbufs-1.9.7-1.Final.module+el8.9.0+19797+c4ce5969.x86_64
+postgresql-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-contrib-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-docs-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-plperl-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-plpython3-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-pltcl-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-private-devel-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-private-libs-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-server-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-server-devel-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-static-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-test-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e.noarch
+postgresql-upgrade-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-upgrade-devel-15.19-1.module+el8.10.0+24831+9c841e4e.x86_64
+postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e.noarch
+postgresql-test-rpm-macros-15.19-1.module+el8.10.0+24831+9c841e4e.noarch
+pg_repack-1.4.8-1.module+el8.9.0+19797+c4ce5969.s390x
+pgaudit-1.7.0-1.module+el8.9.0+19797+c4ce5969.s390x
+postgres-decoderbufs-1.9.7-1.Final.module+el8.9.0+19797+c4ce5969.s390x
+postgresql-15.19-1.module+el8.10.0+24831+9c841e4e.s390x
+postgresql-contrib-15.19-1.module+el8.10.0+24831+9c841e4e.s390x
+postg"
+REV45-BLIND-049,1281,1282,github,https://github.com/luismayta/jetpackcompose-pokemon/issues/2,high,45,rce,medium,20,,sí,correcto,si,"Dependency Dashboard
+
+This issue lists Renovate updates and detected dependencies. Read the [Dependency Dashboard](https://docs.renovatebot.com/key-concepts/dashboard/) docs to learn more.<br>[View this repository on the Mend.io Web Portal](https://developer.mend.io/github/luismayta/jetpackcompose-pokemon).
+
+## Repository Problems
+
+These problems occurred while renovating this repository. [View logs](https://developer.mend.io//github/luismayta/jetpackcompose-pokemon).
+
+ - ⚠️ WARN: Maven Central rate limiting detected despite Redis caching.
+
+## Rate-Limited
+
+The following updates are currently rate-limited. To force their creation now, click on a checkbox below.
+
+ - [ ] <!-- unlimit-branch=renovate/agp -->ci(deps): Update agp to v8.13.2 (`com.android.library`, `com.android.application`)
+ - [ ] <!-- unlimit-branch=renovate/activitycompose -->ci(deps): Update dependency androidx.activity:activity-compose to v1.13.0
+ - [ ] <!-- unlimit-branch=renovate/corektx -->ci(deps): Update dependency androidx.core:core-ktx to v1.19.1
+ - [ ] <!-- unlimit-branch=renovate/androidxhiltnavigationcompose -->ci(deps): Update dependency androidx.hilt:hilt-navigation-compose to v1.4.0
+ - [ ] <!-- unlimit-branch=renovate/lifecycleruntimektx -->ci(deps): Update dependency androidx.lifecycle:lifecycle-runtime-ktx to v2.11.0
+ - [ ] <!-- unlimit-branch=renovate/espressocore -->ci(deps): Update dependency androidx.test.espresso:espresso-core to v3.7.0
+ - [ ] <!-- unlimit-branch=renovate/androidxjunit -->ci(deps): Update dependency androidx.test.ext:junit to v1.3.0
+ - [ ] <!-- unlimit-branch=renovate/kotlinxserialization -->ci(deps): Update dependency org.jetbrains.kotlinx:kotlinx-serialization-json to v1.11.0
+ - [ ] <!-- unlimit-branch=renovate/golang-1.x -->ci(deps): Update golang Docker tag to v1.27
+ - [ ] <!-- unlimit-branch=renovate/gradle-8.x -->ci(deps): Update Gradle to v8.14.5
+ - [ ] <!-- unlimit-branch=renovate/hilt -->ci(deps): Update hilt to v2.60.1 (`com.google.dagger.hilt.android`, `com.google.dagger:hilt-compiler`, `com.google.dagger:hilt-android`)
+ - [ ] <!-- unlimit-branch=renovate/lifecycleviewmodelcompose -->ci(deps): Update lifecycleViewmodelCompose to v2.11.0 (`androidx.lifecycle:lifecycle-viewmodel-compose`, `androidx.lifecycle:lifecycle-viewmodel-ktx`)
+ - [ ] <!-- unlimit-branch=renovate/navigationcompose -->ci(deps): Update navigationCompose to v2.10.2 (`androidx.navigation:navigation-testing`, `androidx.navigation:navigation-dynamic-features-fragment`, `androidx.navigation:navigation-ui`, `androidx.navigation:navigation-fragment`, `androidx.navigation:navigation-compose`)
+ - [ ] <!-- unlimit-branch=renovate/python-3.x -->ci(deps): Update python Docker tag to v3.14.7
+ - [ ] <!-- unlimit-branch=renovate/terraform-linters-tflint-ruleset-aws-0.x -->ci(deps): Update TFLint plugin terraform-linters/tflint-ruleset-aws to v0.49.0
+ - [ ] <!-- unlimit-branch=renovate/actions-checkout-4.x -->ci(deps): Update actions/checkout action to v4
+ - [ ] <!-- unlimit-branch=renovate/actions-checkout-5.x -->ci(deps): Update actions/checkout action to v5
+ - [ ] <!-- unlimit-branch=renovate/actions-checkout-6.x -->ci(deps): Update actions/checkout action to v6
+ - [ ] <!-- unlimit-branch=renovate/actions-checkout-7.x -->ci(deps): Update actions/checkout action to v7
+ - [ ] <!-- unlimit-branch=renovate/major-9-agp -->ci(deps): Update agp to v9 (`com.android.library`, `com.android.application`)
+ - [ ] <!-- unlimit-branch=renovate/arduino-setup-task-2.x -->ci(deps): Update arduino/setup-task action to v2
+ - [ ] <!-- unlimit-branch=renovate/arduino-setup-task-3.x -->ci(deps): Update arduino/setup-task action to v3
+ - [ ] <!-- unlimit-branch=renovate/major-2026-androidxcomposebom -->ci(deps): Update dependency androidx.compose:compose-bom to v2026
+ - [ ] <!-- unlimit-branch=renovate/major-2-ksp-monorepo -->ci(deps): Update dependency com.google.devtools.ksp to v2
+ - [ ] <!-- unlimit-branch=renovate/major-2-kotlin -->ci(deps): Update dependency org.jetbrains.kotl"
+REV45-BLIND-050,1287,1288,github,https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/issues/1068,critical,75,rce|sql injection|attack|security|vulnerability,high,50,sql injection|attack|security|vulnerability,sí,correcto,si,"Code Security Finding: SQL Injection (CWE-89, High Severity) in SqlInjection.java:3630 [main]
+
+# Code Security Finding
+<!-- <SAST-FINDING>7b580094-3a58-478e-82a8-a475ac9f48c5</SAST-FINDING> -->
+<!-- <SAST-FINDING-SNAPSHOT>8f5923fd-d076-434e-839c-d5f8ad0c52b0</SAST-FINDING-SNAPSHOT> -->
+<!-- <SAST-FINDING-BRANCHES>main</SAST-FINDING-BRANCHES> -->
+<!-- <SAST-FINDING-FEATURE-BRANCHES></SAST-FINDING-FEATURE-BRANCHES> -->
+This finding was first detected on 2026-09-29 02:00pm GMT.
+<!-- <SAST-BRANCH-LIST> -->
+
+This finding was spotted in the following branches: main
+
+> Please note: this list may be outdated if the branch was merged and deleted or the base branch configuration has changed.
+<!-- </SAST-BRANCH-LIST> -->
+<table role='table'><thead><tr><th>Severity</th><th>Vulnerability Type</th><th>CWE</th><th>File</th><th>Data Flows</th></tr></thead><tbody><tr><td><a href='#'><img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20></a> High</td><td>SQL Injection</td><td>
+
+[CWE-89](https://cwe.mitre.org/data/definitions/89.html)
+
+</td><td>
+
+[SqlInjection.java:3630](https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3630)
+
+</td><td>1</td></tr><tr><td colspan='5'><details><summary><a href='#'><img src='https://saas.mend.io/sast/favicon.png' width=15 height=15></a> Vulnerable Code</summary>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3625-L3630
+
+<details>
+<summary>1 Data Flow/s detected</summary></br>
+
+
+Tainted input <b>""identifier""</b> was received in line <b>3626</b> of the file <b>SqlInjection.java</b>:
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3626
+
+the value is then used in the function <b>""java.lang.StringBuffer.append""</b> in line <b>3628</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3628
+
+which is further passed on to the value of <b>""identifier""</b> in line <b>3628</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3628
+
+which is further used in the function <b>""java.lang.StringBuffer.append""</b> in line <b>3629</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3629
+
+which is further used in the function <b>""java.lang.StringBuffer.toString""</b> in line <b>3630</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3630
+
+which is further passed on to the value of <b>""toString""</b> in line <b>3630</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3630
+
+and finally passed unsanitized into a sensitive sink function <b>""java.sql.Connection.prepareStatement""</b> in line <b>3630</b> of the file <b>SqlInjection.java</b>, causing a <b>High</b> severity <b>SQL Injection</b> vulnerability. &#39;prepareStatement&#39; method of &#39;java.sql.Connection&#39; object could be abused to perform a SQL Injection attack:
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-bc264be4-5c0a-431c-b97b-c125d115543d/blob/476a172d51584f60630a7bee2b70ac3c19d1ff47/SqlInjection.java#L3630
+
+</details>
+</details>
+
+<details>
+
+<summary><a href='#'><img src='https://integration-api.securecodewarrior.com/explorer/favicon-32x32.png' width=15 heig"
+REV45-BLIND-051,1294,1295,github,https://github.com/marcusrbrown/dev-like/issues/10,high,50,xss|security,high,50,xss|security,no,correcto,si,"Fro Bot Autoheal
+
+Rolling issue for automated autoheal runs. Each run appends its findings below.
+
+<!-- fro-bot-autoheal:latest -->
+
+## Run 34857114142 — 2026-09-14
+
+**Verdict:** Same pre-existing failure re-confirmed (Link Check), still no safe fix available under hard boundaries. No PR opened.
+
+### Investigation (in required order)
+
+1. **CI / Site / Link Check / Fro Bot workflow failures** — root cause unchanged since the 2026-08-31 run:
+   - Link Check: [34815247632](https://github.com/marcusrbrown/dev-like/actions/runs/34815247632) (2026-09-14, most recent scheduled run) **failed** with `57 ok, 0 warn, 1 fail (of 58 unique URLs)`:
+     - `FAIL https://github.com/EveryInc/compound-engineering-plugin/blob/main/docs/skills/ce-compound.md (404)` — cited by `registry/every/entry.json` (provenance table) and `registry/every/profile.md`. Same URL, same two citing files as every prior run since 2026-08-31.
+   - The workflow's own follow-up step has now opened a third duplicate issue: [#122](https://github.com/marcusrbrown/dev-like/issues/122) (""Link rot detected 2026-09-14""), in addition to the still-open [#100](https://github.com/marcusrbrown/dev-like/issues/100) and [#114](https://github.com/marcusrbrown/dev-like/issues/114). Deduplicating against them here rather than filing a fourth. (Note for a human: the check-links workflow itself doesn't dedupe against prior `link-rot`-labeled issues before opening a new one each run — a `search`-before-`create` guard on that workflow step would stop this proliferation, but `release.yaml`/workflow files are out of autoheal's edit scope without evidence tying a *workflow bug* — as opposed to registry content — to a run; flagging for human follow-up rather than editing speculatively.)
+   - **Why no fix was applied:** unchanged from prior runs — the correction lives entirely inside `registry/every/entry.json` and `registry/every/profile.md` (plus derived `registry/every/skill/develop-like-every/*`). Hard boundaries state: ""Do not add a new registry entry or person profile, and do not edit consent tiers, OPTOUT files, or profile prose. Registry changes require a human."" This is a registry/profile-prose edit, so it stays out of scope for autoheal even though the likely replacement path (`skills/ce-compound/SKILL.md`, per the upstream repo's current `skills/` layout, identified in the 2026-08-31 run) is still believed correct.
+   - CI: all green on `main` (most recent push 2026-09-14, run [34826021323](https://github.com/marcusrbrown/dev-like/actions/runs/34826021323), success). Release: green (2026-09-14). Site: last run [34175885712](https://github.com/marcusrbrown/dev-like/actions/runs/34175885712) success (2026-09-08), no site-affecting changes since. Fro Bot: no non-skipped failures in recent history.
+   - No open PRs to deduplicate against.
+2. **Security** — `gh api repos/marcusrbrown/dev-like/dependabot/alerts` returns 4 historical alerts (#1–#4: Astro XSS ×3, sharp/libvips), all `state: fixed`. Zero open alerts. Code scanning not configured (404, not a finding).
+3. **Schema / generated drift** — `bun install --frozen-lockfile` reports no lockfile drift (589 installs, 692 packages, no changes). `bun run validate` passes (skill dev-like + 5 registry entries: 37signals, every, linear, oxide, theo) with `sync-release-version.mjs --check` OK. `bun run --cwd docs build` (runs `generate` first) leaves `git status` clean — zero diff against committed generated docs pages; internal-link checker reports 191 references checked, 0 failures.
+4. **Docs / tests / changesets / artifact hygiene** — working tree clean at `3c6d299` (HEAD). All 14 commits since the last autoheal run (`f482b66`..`3c6d299`) are Renovate dependency/action bumps (`fro-bot/agent` ×5, `bfra-me/.github` ×5, `playwright`, and one lockfile-maintenance commit), none touching `registry/`, `skills/`, `bin/`, or `scripts/`. `.changeset/` contains only `config.json` — no pending changeset needed.
+
+### Verification gates run locally (all "
+REV45-BLIND-052,1297,1298,github,https://github.com/Nexmo/enter-our-orbit/issues/20,critical,95,rce|exploit|cve-|vulnerability,critical,70,exploit|cve-|vulnerability,no,correcto,si,"express-4.17.1.tgz: 13 vulnerabilities (highest severity is: 9.1) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>express-4.17.1.tgz</b></summary>
+
+<p>Fast, unopinionated, minimalist web framework</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/express/-/express-4.17.1.tgz"">https://registry.npmjs.org/express/-/express-4.17.1.tgz</a></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/Nexmo/enter-our-orbit/commit/9b99e0d09c6cb714ce6a25360b36632476dac3d7"">9b99e0d09c6cb714ce6a25360b36632476dac3d7</a></p></details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Exploit Maturity | EPSS | Dependency | Type | Fixed in (express version) | Remediation Possible** | Reachability |
+| ------------- | ------------- | ----- | ----- | ----- | ----- | ----- | ------------- | --- | --- |
+| [CVE-2026-4867](https://www.mend.io/vulnerability-database/CVE-2026-4867) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 0.616% | path-to-regexp-0.1.7.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2024-52798](https://www.mend.io/vulnerability-database/CVE-2024-52798) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 0.787% | path-to-regexp-0.1.7.tgz | Transitive | 4.17.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2024-45296](https://www.mend.io/vulnerability-database/CVE-2024-45296) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 0.932% | path-to-regexp-0.1.7.tgz | Transitive | 4.17.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2022-24999](https://www.mend.io/vulnerability-database/CVE-2022-24999) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 15.622% | qs-6.7.0.tgz | Transitive | 4.17.2 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2024-29041](https://www.mend.io/vulnerability-database/CVE-2024-29041) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 6.1 | Not Defined | 0.786% | express-4.17.1.tgz | Direct | 4.19.0 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2026-82417](https://www.mend.io/vulnerability-database/CVE-2026-82417) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.3 | Not Defined | 0.418% | qs-6.7.0.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2024-47764](https://www.mend.io/vulnerability-database/CVE-2024-47764) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 5.3 | Not Defined | 0.744% | cookie-0.4.0.tgz | Transitive | 4.21.1 | &#9989;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2024-43800](https://www.mend.io/vulnerability-database/CVE-2024-43800) | <img src='"
+REV45-BLIND-053,1299,1300,github,https://github.com/Nexmo/enter-our-orbit/issues/1,critical,100,rce|exploit|cve-|threat|vulnerability,critical,80,exploit|cve-|threat|vulnerability,no,correcto,si,"cheerio-1.0.0-rc.5.tgz: 2 vulnerabilities (highest severity is: 7.5) reachable
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>cheerio-1.0.0-rc.5.tgz</b></summary>
+
+<p></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/Nexmo/enter-our-orbit/commit/9b99e0d09c6cb714ce6a25360b36632476dac3d7"">9b99e0d09c6cb714ce6a25360b36632476dac3d7</a></p></details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Exploit Maturity | EPSS | Dependency | Type | Fixed in (cheerio version) | Remediation Possible** | Reachability |
+| ------------- | ------------- | ----- | ----- | ----- | ----- | ----- | ------------- | --- | --- |
+| [CVE-2021-3803](https://www.mend.io/vulnerability-database/CVE-2021-3803) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 2.206% | nth-check-2.0.0.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+| [CVE-2021-33587](https://www.mend.io/vulnerability-database/CVE-2021-33587) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | Not Defined | 2.267% | css-what-4.0.0.tgz | Transitive | N/A* | &#10060;|<p align=""center""><img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> Reachable</p> |
+<p>*For some transitive vulnerabilities, there is no version of direct dependency with a fix. Check the ""Details"" section below to see if there is a version of transitive dependency where vulnerability is fixed.</p><p>**In some cases, Remediation PR cannot be created automatically for a vulnerability despite the availability of remediation</p>
+
+## Details
+
+<details>
+
+<summary><img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> <img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=19 height=20> CVE-2021-3803</summary>
+
+
+###  Vulnerable Library - <b>nth-check-2.0.0.tgz</b>
+
+<p>Parses and compiles CSS nth-checks to highly optimized functions.</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/nth-check/-/nth-check-2.0.0.tgz"">https://registry.npmjs.org/nth-check/-/nth-check-2.0.0.tgz</a></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - cheerio-1.0.0-rc.5.tgz (Root Library)
+    - cheerio-select-tmp-0.1.1.tgz
+      - css-select-3.1.2.tgz
+        - :x: **nth-check-2.0.0.tgz** (Vulnerable Library)
+<p>Found in HEAD commit: <a href=""https://github.com/Nexmo/enter-our-orbit/commit/9b99e0d09c6cb714ce6a25360b36632476dac3d7"">9b99e0d09c6cb714ce6a25360b36632476dac3d7</a></p>
+<p>Found in base branch: <b>main</b></p>
+</p>
+
+<p></p>
+
+### Reachability Analysis
+This vulnerability is potentially reachable
+
+```
+enter-our-orbit-1.0.0/components/stackoverflowQuestions.js (Application)
+  -> cheerio-1.0.0-rc.5/index.js (Extension)
+   -> cheerio-1.0.0-rc.5/lib/static.js (Extension)
+    -> css-select-3.1.2/lib/index.js (Extension)
+    ...
+      -> css-select-3.1.2/lib/pseudo-selectors/filters.js (Extension)
+       -> nth-check-2.0.0/lib/index.js (Extension)
+        -> ❌ nth-check-2.0.0/lib/parse.js (Vulnerable Component)
+
+```
+
+
+
+</p>
+
+<p></p>
+
+###  Vulnerability Details
+<p>  
+  
+nth-check is vulnerable to Inefficient Regular Expression Complexity
+
+<p>Publish Date: 2021-09-17
+<p>URL: <a href=https://www.mend.io/vulnerability-database/CVE-2021-3803>CVE-2021-3803</a></p>
+</p>
+
+<p></p>
+
+###  Threat Assessment
+<p>  
+
+<p>Exploit Maturity: Not Defined</p>
+<p>EPSS: 2.206%</p>
+</p>
+
+<p></p>
+
+###  CVS"
+REV45-BLIND-054,1304,1305,github,https://github.com/Vonage-Community/demo-vna-simswap-numberverification-video_meeting-demo/issues/7,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"twig-1.17.1.tgz: 16 vulnerabilities (highest severity is: 9.8)
+
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>twig-1.17.1.tgz</b></summary>
+
+<p></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json</p>
+<p>
+
+
+<p>Found in HEAD commit: <a href=""https://github.com/Vonage-Community/demo-vna-simswap-numberverification-video_meeting-demo/commit/8c7248f03f7a8ced9cf89fb56f94ac2c5d02fc39"">8c7248f03f7a8ced9cf89fb56f94ac2c5d02fc39</a></p></details>
+
+## Vulnerabilities
+
+| Vulnerability | Severity | <img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS | Dependency | Type | Fixed in (twig version) | Remediation Possible** |
+| ------------- | ------------- | ----- | ----- | ----- | ------------- | --- |
+| [CVE-2026-32304](https://www.mend.io/vulnerability-database/CVE-2026-32304) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.8 | locutus-2.0.32.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-25521](https://www.mend.io/vulnerability-database/CVE-2026-25521) | <img src='https://whitesource-resources.whitesourcesoftware.com/critical_vul.png?' width=19 height=20> Critical | 9.3 | locutus-2.0.32.tgz | Transitive | 2.0.0 | &#9989; |
+| [CVE-2026-29091](https://www.mend.io/vulnerability-database/CVE-2026-29091) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 8.1 | locutus-2.0.32.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-69152](https://www.mend.io/vulnerability-database/CVE-2026-69152) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-27904](https://www.mend.io/vulnerability-database/CVE-2026-27904) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | minimatch-3.0.8.tgz | Transitive | 2.0.0 | &#9989; |
+| [CVE-2026-27903](https://www.mend.io/vulnerability-database/CVE-2026-27903) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | minimatch-3.0.8.tgz | Transitive | 2.0.0 | &#9989; |
+| [CVE-2026-26996](https://www.mend.io/vulnerability-database/CVE-2026-26996) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | minimatch-3.0.8.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-14257](https://www.mend.io/vulnerability-database/CVE-2026-14257) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-13149](https://www.mend.io/vulnerability-database/CVE-2026-13149) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-102278](https://www.mend.io/vulnerability-database/CVE-2026-102278) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-102276](https://www.mend.io/vulnerability-database/CVE-2026-102276) | <img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20> High | 7.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2026-33750](https://www.mend.io/vulnerability-database/CVE-2026-33750) | <img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Medium | 6.5 | brace-expansion-1.1.11.tgz | Transitive | N/A* | &#10060; |
+| [CVE-2025-27789](https://www.mend.io/vulnerability-database/CVE-2025-27789) | <img src='https:/"
+REV45-BLIND-055,1364,1365,github,https://github.com/NVIDIA/garak/issues/2248,high,40,cve-,high,40,cve-,no,correcto,si,"datasets pinned <4.0 blocks fix for CVE-2026-66007 (path traversal), same in 0.17.0
+
+garak's dependency spec pins `datasets>=3.0.0,<4.0` (both `pyproject.toml` and `requirements.txt`). This is unchanged in the current latest release, 0.17.0.
+
+This range is entirely inside the vulnerable range for **CVE-2026-66007** — a path traversal (CWE-22) in `datasets`' folder-based dataset builders, where an unsanitized `file_name` metadata field lets a crafted dataset read arbitrary local files via directory traversal, exposed when `save_to_disk()`/`push_to_hub()` is called on the loaded dataset. Fixed upstream in `datasets` 5.0.1 (advisory: PYSEC-2026-3716).
+
+Because garak caps `datasets<4.0`, downstream consumers can't pick up the fix without breaking garak's own install:
+
+```
+pip install --dry-run garak==0.17.0 datasets==5.0.1
+# ResolutionImpossible: garak 0.17.0 depends on datasets<4.0,>=3.0.0
+```
+
+Could the `datasets` ceiling be raised/tested against `>=5.0.1`?"
+REV45-BLIND-056,1644,1645,github,https://github.com/amaybaum-prod/shopware/issues/225,critical,100,rce|exploit|cve-|threat|vulnerability|denial of service,critical,90,exploit|cve-|threat|vulnerability|denial of service,no,correcto,si,"register-7.18.9.tgz: 2 vulnerabilities (highest severity is: 5.3) [trunk] (reachable)
+
+<details>
+  <summary>📂 Vulnerable Library - <strong>register-7.18.9.tgz</strong></summary>
+
+babel require hook
+
+
+
+**Path to dependency file:** /tests/e2e/package.json
+
+
+
+
+</details>
+
+
+# Findings
+| Finding | Severity | 🎯 CVSS | Exploit Maturity | EPSS | Library | Type | Fixed in | Remediation Available | **Reachability** |
+| ------------- | ------------- | ---- | --- | ----- | ----- | ----- | --- | --- | --- |
+| [ CVE-2022-25883 ](https://www.mend.io/vulnerability-database/CVE-2022-25883) | 🟠 Medium | 5.3 | Proof of concept | 2.761% | semver-5.7.1.tgz | Transitive | 8.0.0 | ✅ |<img src='https://whitesource-resources.whitesourcesoftware.com/viaRed.png' width=20 height=22> Reachable |
+| [ CVE-2026-49356 ](https://www.mend.io/vulnerability-database/CVE-2026-49356) | 🟡 Low | 3.2 | Not Defined | < 1% | core-7.20.12.tgz | Direct | N/A | ❌ |<img src='https://whitesource-resources.whitesourcesoftware.com/viaGreen.png' width=20 height=22> Unreachable |
+
+
+# Details
+
+
+<details>
+  <summary>
+ 🟠CVE-2022-25883
+  </summary>
+
+### Vulnerable Library - **semver-5.7.1.tgz**
+
+The semantic version parser used by npm.
+
+**Library home page:** [ https://registry.npmjs.org/semver/-/semver-5.7.1.tgz ](https://registry.npmjs.org/semver/-/semver-5.7.1.tgz)
+
+**Path to dependency file:** /tests/e2e/package.json
+
+
+
+
+
+**Dependency Hierarchy:**
+
+
+- register-7.18.9.tgz (Root Library)
+    - make-dir-2.1.0.tgz
+        - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- cli-0.9.0.tgz (Root Library)
+    - lighthouse-9.3.0.tgz
+        - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- mocha-7.2.0.tgz (Root Library)
+    - node-environment-flags-1.0.6.tgz
+        - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- nuxt-2.10.2.tgz (Root Library)
+    - webpack-2.10.2.tgz
+        - hard-source-webpack-plugin-0.13.1.tgz
+            - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- optional-chaining-codemod-1.7.0.tgz (Root Library)
+    - jscodeshift-0.13.1.tgz
+        - register-7.21.0.tgz
+            - make-dir-2.1.0.tgz
+                - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- webpack-plugin-injector-1.0.7.tgz (Root Library)
+    - copy-webpack-plugin-5.1.2.tgz
+        - find-cache-dir-2.1.0.tgz
+            - make-dir-2.1.0.tgz
+                - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- webpack-cli-3.3.12.tgz (Root Library)
+    - cross-spawn-6.0.5.tgz
+        - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- pretty-2.0.0.tgz (Root Library)
+    - js-beautify-1.10.2.tgz
+        - editorconfig-0.15.3.tgz
+            - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- lighthouse-9.2.0.tgz (Root Library)
+    - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- test-utils-2.3.2.tgz (Root Library)
+    - js-beautify-1.14.6.tgz
+        - editorconfig-0.15.3.tgz
+            - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+- lighthouse-9.6.8.tgz (Root Library)
+    - ❌  **semver-5.7.1.tgz** (Vulnerable Library)
+
+
+
+
+***
+
+### Reachability Analysis
+This vulnerability is potentially reachable:
+
+```
+- administration-1.0.0/webpack.config.js (Application)
+    - fork-ts-checker-webpack-plugin-6.5.3/lib/index.js (Extension)
+        - fork-ts-checker-webpack-plugin-6.5.3/lib/ForkTsCheckerWebpackPlugin.js (Extension)
+            - fork-ts-checker-webpack-plugin-6.5.3/lib/typescript-reporter/TypeScriptSupport.js (Extension)
+                -> ❌ semver-5.7.1/semver.js (Vulnerable Component)
+```
+***
+
+### Vulnerability Details
+
+Versions of the package semver before 7.5.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.
+ Mend Note: The description of this vulnerability differs from MITRE. 
+
+**Publish Date:** Jun 21, 2023 05:00 AM
+
+**URL:** [ CVE-2022-25883 ](https://www.mend.io/vulnerability-database/CVE-2022-25883)
+
+**Threat Assessment**
+
+Exploit Maturity:Proof of concept
+
+EPSS:2.761%
+
+**Score:** 5.3
+
+
+***
+"
+REV45-BLIND-057,1752,1753,github,https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/issues/248,critical,75,rce|sql injection|attack|security|vulnerability,high,50,sql injection|attack|security|vulnerability,sí,correcto,si,"Code Security Finding: SQL Injection (CWE-89, High Severity) in SqlInjection.java:6423 [main]
+
+# Code Security Finding
+<!-- <SAST-FINDING>e916c5ef-7fc8-4c75-85ec-887df5eebb2d</SAST-FINDING> -->
+<!-- <SAST-FINDING-SNAPSHOT>66317373-5606-4d0b-ade6-61370249eb74</SAST-FINDING-SNAPSHOT> -->
+<!-- <SAST-FINDING-BRANCHES>main</SAST-FINDING-BRANCHES> -->
+<!-- <SAST-FINDING-FEATURE-BRANCHES></SAST-FINDING-FEATURE-BRANCHES> -->
+This finding was first detected on 2026-09-29 09:29am GMT.
+<!-- <SAST-BRANCH-LIST> -->
+
+This finding was spotted in the following branches: main
+
+> Please note: this list may be outdated if the branch was merged and deleted or the base branch configuration has changed.
+<!-- </SAST-BRANCH-LIST> -->
+<table role='table'><thead><tr><th>Severity</th><th>Vulnerability Type</th><th>CWE</th><th>File</th><th>Data Flows</th></tr></thead><tbody><tr><td><a href='#'><img src='https://whitesource-resources.whitesourcesoftware.com/high_vul.png?' width=19 height=20></a> High</td><td>SQL Injection</td><td>
+
+[CWE-89](https://cwe.mitre.org/data/definitions/89.html)
+
+</td><td>
+
+[SqlInjection.java:6423](https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/blob/a6885bb23d59b1b7b925b0b8c16eb993ff8bf1f1/SqlInjection.java#L6423)
+
+</td><td>1</td></tr><tr><td colspan='5'><details><summary><a href='#'><img src='https://saas.mend.io/sast/favicon.png' width=15 height=15></a> Vulnerable Code</summary>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/blob/a6885bb23d59b1b7b925b0b8c16eb993ff8bf1f1/SqlInjection.java#L6418-L6423
+
+<details>
+<summary>1 Data Flow/s detected</summary></br>
+
+
+Tainted input <b>""criteria""</b> was received in line <b>6420</b> of the file <b>SqlInjection.java</b>:
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/blob/a6885bb23d59b1b7b925b0b8c16eb993ff8bf1f1/SqlInjection.java#L6420
+
+the value is then passed on to the value of <b>""sql""</b> in line <b>6421</b> of the file <b>SqlInjection.java</b>
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/blob/a6885bb23d59b1b7b925b0b8c16eb993ff8bf1f1/SqlInjection.java#L6421
+
+and finally passed unsanitized into a sensitive sink function <b>""java.sql.Statement.execute""</b> in line <b>6423</b> of the file <b>SqlInjection.java</b>, causing a <b>High</b> severity <b>SQL Injection</b> vulnerability. &#39;execute&#39; method of &#39;java.sql.Statement&#39; object could be abused to perform a SQL Injection attack:
+
+https://github.com/SAST-UP-STG/SAST-Test-Repo-23e24cc2-72a9-49a7-913a-61f8691eacfc/blob/a6885bb23d59b1b7b925b0b8c16eb993ff8bf1f1/SqlInjection.java#L6423
+
+</details>
+</details>
+
+<details>
+
+<summary><a href='#'><img src='https://integration-api.securecodewarrior.com/explorer/favicon-32x32.png' width=15 height=15></a> Secure Code Warrior Training Material</summary>
+
+● Training
+
+&nbsp;&nbsp;&nbsp;▪ [Secure Code Warrior SQL Injection Training](https://portal.securecodewarrior.com/?utm_source=partner-integration:mend&partner_id=mend#/contextual-microlearning/web/injection/sql/java/vanilla)
+
+● Videos
+
+&nbsp;&nbsp;&nbsp;▪ [Secure Code Warrior SQL Injection Video](https://media.securecodewarrior.com/v2/module_01_sql_injection.mp4)
+
+● Further Reading
+
+&nbsp;&nbsp;&nbsp;▪ [OWASP SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+
+&nbsp;&nbsp;&nbsp;▪ [OWASP SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
+
+&nbsp;&nbsp;&nbsp;▪ [OWASP Query Parameterization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html)
+
+</details>
+
+<details><summary><a href='#'><img src='https://mend-resources.mend.io/images/eyeslash.svg' width=15 height=15></a> Suppress Finding</summary>
+
+To suppress this finding as a **acceptable risk**, comment:
+```bash
+/mend code suppress acceptable-risk Optional Comment
+```
+
+To suppress this finding as a **false"
+REV45-BLIND-058,1995,1996,github,https://github.com/ChoeMinji/react-17.0.2/issues/61,critical,75,rce|cve-|vulnerability,high,50,cve-|vulnerability,sí,correcto,si,"CVE-2020-7598 (Medium) detected in multiple libraries
+
+## CVE-2020-7598 - Medium Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Libraries - <b>minimist-1.2.3.tgz</b>, <b>minimist-1.2.5.tgz</b>, <b>minimist-0.0.8.tgz</b>, <b>minimist-1.2.0.tgz</b>, <b>minimist-0.0.10.tgz</b></summary>
+<p>
+
+<details><summary><b>minimist-1.2.3.tgz</b></summary>
+
+<p>parse argument options</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/minimist/-/minimist-1.2.3.tgz"">https://registry.npmjs.org/minimist/-/minimist-1.2.3.tgz</a></p>
+<p>Sample Path to Dependency File: /scripts/bench/package.json</p>
+<p>Path to vulnerable library: /scripts/bench/package.json,/package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - :x: **minimist-1.2.3.tgz** (Vulnerable Library)
+</details>
+<details><summary><b>minimist-1.2.5.tgz</b></summary>
+
+<p>parse argument options</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/minimist/-/minimist-1.2.5.tgz"">https://registry.npmjs.org/minimist/-/minimist-1.2.5.tgz</a></p>
+<p>Sample Path to Dependency File: /package.json</p>
+<p>Path to vulnerable library: /package.json,/fixtures/blocks/package.json,/fixtures/art/package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - babel-loader-8.1.0.tgz (Root Library)
+    - mkdirp-0.5.5.tgz
+      - :x: **minimist-1.2.5.tgz** (Vulnerable Library)
+</details>
+<details><summary><b>minimist-0.0.8.tgz</b></summary>
+
+<p>parse argument options</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/minimist/-/minimist-0.0.8.tgz"">https://registry.npmjs.org/minimist/-/minimist-0.0.8.tgz</a></p>
+<p>Sample Path to Dependency File: /fixtures/ssr/package.json</p>
+<p>Path to vulnerable library: /fixtures/ssr/package.json,/fixtures/packaging/systemjs-builder/dev/package.json,/fixtures/packaging/brunch/prod/package.json,/fixtures/packaging/webpack/prod/package.json,/fixtures/dom/package.json,/scripts/bench/package.json,/fixtures/blocks/package.json,/scripts/release/package.json,/fixtures/expiration/package.json,/fixtures/packaging/webpack-alias/prod/package.json,/fixtures/eslint/package.json,/fixtures/packaging/webpack/dev/package.json,/fixtures/art/package.json,/fixtures/concurrent/time-slicing/package.json,/fixtures/packaging/systemjs-builder/prod/package.json,/fixtures/fiber-debugger/node_modules/mkdirp/node_modules/minimist/package.json,/package.json,/fixtures/attribute-behavior/package.json,/fixtures/packaging/brunch/dev/package.json,/fixtures/flight/package.json,/fixtures/packaging/webpack-alias/dev/package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - brunch-2.10.12.tgz (Root Library)
+    - mkdirp-0.5.1.tgz
+      - :x: **minimist-0.0.8.tgz** (Vulnerable Library)
+</details>
+<details><summary><b>minimist-1.2.0.tgz</b></summary>
+
+<p>parse argument options</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz"">https://registry.npmjs.org/minimist/-/minimist-1.2.0.tgz</a></p>
+<p>Sample Path to Dependency File: /fixtures/flight/package.json</p>
+<p>Path to vulnerable library: /fixtures/flight/package.json,/fixtures/fiber-debugger/node_modules/minimist/package.json,/fixtures/ssr/package.json,/fixtures/packaging/webpack/prod/package.json,/fixtures/packaging/webpack/dev/package.json,/fixtures/expiration/package.json,/fixtures/packaging/webpack-alias/prod/package.json,/fixtures/packaging/browserify/dev/package.json,/fixtures/packaging/brunch/dev/package.json,/fixtures/dom/package.json,/fixtures/packaging/brunch/prod/package.json,/fixtures/concurrent/time-slicing/package.json,/fixtures/art/package.json,/fixtures/packaging/webpack-alias/dev/package.json,/fixtures/packaging/browserify/prod/package.json,/fixtures/attribute-behavior/package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - brunch-2.10.12.tgz (Root Library)
+    - chokidar-1.7.0.tgz
+      - fsevents-1.1.2.tgz
+        - node-pre-gyp-0.6.38.tgz
+          - rc-1.2.2.tgz
+            - :x: **minimist-1.2.0.tgz"
+REV45-BLIND-059,2009,2010,github,https://github.com/betterPeleg/WebGoat/issues/244,critical,100,rce|exploit|cve-|attack|vulnerability,critical,60,cve-|attack|vulnerability,no,correcto,si,"CVE-2026-41841 (Medium) detected in spring-webmvc-5.3.4.jar
+
+## CVE-2026-41841 - Medium Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>spring-webmvc-5.3.4.jar</b></summary>
+
+<p>Spring Web MVC</p>
+<p>Library home page: <a href=""https://github.com/spring-projects/spring-framework"">https://github.com/spring-projects/spring-framework</a></p>
+<p>Sample Path to Dependency File: /webgoat-integration-tests/pom.xml</p>
+<p>Path to vulnerable library: /home/wss-scanner/.m2/repository/org/springframework/spring-webmvc/5.3.4/spring-webmvc-5.3.4.jar</p>
+<p>
+
+Dependency Hierarchy:
+  - webwolf-8.2.1-SNAPSHOT.jar (Root Library)
+    - spring-boot-starter-web-2.4.3.jar
+      - :x: **spring-webmvc-5.3.4.jar** (Vulnerable Library)
+<p>Found in HEAD commit: <a href=""https://github.com/betterPeleg/WebGoat/commit/3f40aaa55b2c1a3432a061c27496ea82f484838a"">3f40aaa55b2c1a3432a061c27496ea82f484838a</a></p>
+<p>Found in base branch: <b>develop</b></p>
+</p>
+</details>
+<p></p>
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/medium_vul.png?' width=19 height=20> Vulnerability Details</summary>
+<p>  
+  
+Spring MVC and WebFlux applications are vulnerable to Information Disclosure attacks when resolving static resources.
+Affected versions:
+Spring Framework 7.0.0 through 7.0.7; 6.2.0 through 6.2.18; 6.1.0 through 6.1.27; 5.3.0 through 5.3.48.
+
+<p>Publish Date: 2026-06-09
+<p>URL: <a href=https://www.mend.io/vulnerability-database/CVE-2026-41841>CVE-2026-41841</a></p>
+</p>
+</details>
+<p></p>
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS 3 Score Details (<b>5.9</b>)</summary>
+<p>
+
+Base Score Metrics:
+- Exploitability Metrics:
+  - Attack Vector: Network
+  - Attack Complexity: High
+  - Privileges Required: None
+  - User Interaction: None
+  - Scope: Unchanged
+- Impact Metrics:
+  - Confidentiality Impact: High
+  - Integrity Impact: None
+  - Availability Impact: None
+</p>
+For more information on CVSS3 Scores, click <a href=""https://www.first.org/cvss/calculator/3.0"">here</a>.
+</p>
+</details>
+<p></p>"
+REV45-BLIND-060,2071,2072,github,https://github.com/iVipz/WebGoat/issues/141,critical,100,rce|exploit|cve-|attack|security|vulnerability|denial of service,critical,75,cve-|attack|security|vulnerability|denial of service,no,correcto,si,"CVE-2025-69873 (Low) detected in ajv-6.6.2.tgz
+
+## CVE-2025-69873 - Low Severity Vulnerability
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/vulnerability_details.png' width=19 height=20> Vulnerable Library - <b>ajv-6.6.2.tgz</b></summary>
+
+<p>Another JSON Schema Validator</p>
+<p>Library home page: <a href=""https://registry.npmjs.org/ajv/-/ajv-6.6.2.tgz"">https://registry.npmjs.org/ajv/-/ajv-6.6.2.tgz</a></p>
+<p>Sample Path to Dependency File: /docs/package.json</p>
+<p>Path to vulnerable library: /docs/package.json</p>
+<p>
+
+Dependency Hierarchy:
+  - gulp-sass-4.0.2.tgz (Root Library)
+    - node-sass-4.11.0.tgz
+      - request-2.88.0.tgz
+        - har-validator-5.1.3.tgz
+          - :x: **ajv-6.6.2.tgz** (Vulnerable Library)
+<p>Found in HEAD commit: <a href=""https://api.github.com/repos/iVipz/WebGoat/commits/b22423d123f2a162972d83138f5c1b596cac9420"">b22423d123f2a162972d83138f5c1b596cac9420</a></p>
+<p>Found in base branch: <b>develop</b></p>
+</p>
+</details>
+<p></p>
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/low_vul.png?' width=19 height=20> Vulnerability Details</summary>
+<p>  
+  
+ajv (Another JSON Schema Validator) before 8.18.0 is vulnerable to Regular Expression Denial of Service (ReDoS) when the $data option is enabled. The pattern keyword accepts runtime data via JSON Pointer syntax ($data reference), which is passed directly to the JavaScript RegExp() constructor without validation. An attacker can inject a malicious regex pattern (e.g., ""^(a|a)*$"") combined with crafted input to cause catastrophic backtracking. A 31-character payload causes approximately 44 seconds of CPU blocking, with each additional character doubling execution time. This enables complete denial of service with a single HTTP request against any API using ajv with $data: true for dynamic schema validation. This issue is also fixed in version 6.14.0.
+
+<p>Publish Date: 2026-02-11
+<p>URL: <a href=https://www.mend.io/vulnerability-database/CVE-2025-69873>CVE-2025-69873</a></p>
+</p>
+</details>
+<p></p>
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/cvss3.png' width=19 height=20> CVSS 3 Score Details (<b>2.9</b>)</summary>
+<p>
+
+Base Score Metrics:
+- Exploitability Metrics:
+  - Attack Vector: Local
+  - Attack Complexity: High
+  - Privileges Required: None
+  - User Interaction: None
+  - Scope: Unchanged
+- Impact Metrics:
+  - Confidentiality Impact: None
+  - Integrity Impact: None
+  - Availability Impact: Low
+</p>
+For more information on CVSS3 Scores, click <a href=""https://www.first.org/cvss/calculator/3.0"">here</a>.
+</p>
+</details>
+<p></p>
+<details><summary><img src='https://whitesource-resources.whitesourcesoftware.com/suggested_fix.png' width=19 height=20> Suggested Fix</summary>
+<p>
+
+<p>Type: Upgrade version</p>
+<p>Origin: <a href=""https://github.com/advisories/GHSA-2g4f-4pwh-qvx6"">https://github.com/advisories/GHSA-2g4f-4pwh-qvx6</a></p>
+<p>Release Date: 2026-02-11</p>
+<p>Fix Resolution: ajv - 6.14.0</p>
+
+</p>
+</details>
+<p></p>
+
+***
+Step up your Open Source Security Game with Mend [here](https://www.whitesourcesoftware.com/full_solution_bolt_github)"

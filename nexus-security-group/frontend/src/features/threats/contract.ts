@@ -24,7 +24,7 @@ export const THREATS_COPY = {
   empty: {
     initial: {
       title: 'No threats detected yet',
-      description: 'Detected OSINT threats will appear here when the backend exposes them.',
+      description: 'Detected OSINT threats will appear here once available.',
     },
     noResults: {
       title: 'No matching threats',

@@ -1,0 +1,55 @@
+{
+  "name": "REV46 campaign reconciliation manifest",
+  "generated_at_utc": "2026-10-04T17:03:09.922607+00:00",
+  "source": {
+    "database_container": "osint-postgres",
+    "database": "osint_db",
+    "note": "Exports generated from the running PostgreSQL database. Treat these files and hashes as the frozen REV46 evidence set."
+  },
+  "window": {
+    "start_utc": "2026-09-25 18:48:00+00",
+    "original_end_utc": "2026-09-29 15:01:09.653599+00",
+    "extended_end_utc": "2026-09-29 19:31:05.363840+00",
+    "inclusion_criterion": "social_mentions.collected_at between start_utc and extended_end_utc; execution logs selected by completed_at in the same interval."
+  },
+  "counts": {
+    "alertas_campana_REV46.csv": 1429,
+    "detecciones_campana_REV46.csv": 2102,
+    "execution_logs_campana_REV46.csv": 47,
+    "incidencias_muestra_REV46.csv": 200,
+    "poblacion_campana_REV46.csv": 2102
+  },
+  "sha256": {
+    "alertas_campana_REV46.csv": "0ce5bc8d652217c45625a49fdbf71db290412baead465edeb9e6a8c4737bf40a",
+    "consultas_reconciliacion_REV46.sql": "3a98a7aa43582974387b05cac3db7e8668c648c287fd098fd9c889c5c18dcb10",
+    "detecciones_campana_REV46.csv": "e21be91dbae9da1e275748e18bd0eed8b0e18b3d5a35f9637b5ceafffb613e36",
+    "execution_logs_campana_REV46.csv": "b541674d1b9b9d539aafb7785abfebaa28a85502297465893960ac8ff27ef545",
+    "incidencias_muestra_REV46.csv": "882d13288a123010fee2f77deb7e845f7f2f2e1277e71ff3a9e22a93cff775a7",
+    "poblacion_campana_REV46.csv": "15c602da381012a841ce03ecdd9e788eac49b0557c8ca91e4fd4199d273bfe43",
+    "reconciliacion_campana_REV46.md": "0dd9e865a6481bf65fb23d21f910a62c356cfa31f30a534569c3562b8ec64aa5"
+  },
+  "key_findings": {
+    "original_window_mentions": 1339,
+    "original_window_execution_logs": 29,
+    "extended_window_mentions": 2102,
+    "extended_window_detections": 2102,
+    "extended_window_alerts_by_campaign_mentions": 1429,
+    "extended_window_execution_logs": 47,
+    "extended_logs_mentions_processed": 2137,
+    "extended_logs_detections_generated": 2137,
+    "extended_logs_alerts_generated": 1452,
+    "historical_sample_size": 200,
+    "sample_cases_after_original_cutoff": 11,
+    "sample_cases_in_extended_window": 200
+  },
+  "caveats": [
+    "The original 1,339 mentions and 29 logs remain valid only for the original cutoff, not for the extended REV46 campaign window.",
+    "The extended window preserves all 200 historical sampled cases but changes population-level denominators.",
+    "Statistics and thesis text must be recalculated before using the extended population in conclusions."
+  ],
+  "reproduction": {
+    "sql_file": "consultas_reconciliacion_REV46.sql",
+    "psql_example": "psql -U osint_db -d osint_db -f consultas_reconciliacion_REV46.sql",
+    "note": "COPY statements are documented for reproducibility; generated CSV files are the frozen evidence set."
+  }
+}

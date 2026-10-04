@@ -8,9 +8,9 @@ from auth import require_permission
 
 logger = logging.getLogger("nsg.permissions")
 from database import get_db
-from models import Permission, RolePermission
+from models import Permission, Role, RolePermission
 from schemas.auth import TokenData
-from schemas.permission import PermissionMatrixResponse, RoleName, RolePermissionsResponse, RolePermissionsUpdate
+from schemas.permission import PermissionMatrixResponse, RolePermissionsResponse, RolePermissionsUpdate
 
 
 router = APIRouter(prefix="/api/permissions", tags=["permissions"])
@@ -39,28 +39,33 @@ def list_permissions(
 ):
     permissions = db.query(Permission).order_by(Permission.resource.asc(), Permission.action.asc()).all()
     role_permissions = db.query(RolePermission).all()
+    roles = db.query(Role).order_by(Role.name.asc()).all()
 
     permissions_by_id = {permission.permission_id: permission for permission in permissions}
-    # Roles defined inline — adding a roles table is deferred to a future release. See AUDIT.md 4.9
-    matrix = {"admin": [], "analyst": []}
+    matrix: dict[str, list[str]] = {role.name: [] for role in roles}
     for role_permission in role_permissions:
         permission = permissions_by_id.get(role_permission.permission_id)
-        if permission is not None and role_permission.role in matrix:
-            matrix[role_permission.role].append(_permission_key(permission))
+        role = next((r for r in roles if r.role_id == role_permission.role_id), None)
+        if permission is not None and role is not None:
+            matrix[role.name].append(_permission_key(permission))
 
     return {
         "permissions": [_permission_response(permission) for permission in permissions],
-        "role_permissions": {role: sorted(set(assigned_permissions)) for role, assigned_permissions in matrix.items()},
+        "role_permissions": {role_name: sorted(set(assigned)) for role_name, assigned in matrix.items()},
     }
 
 
-@router.put("/roles/{role}", response_model=RolePermissionsResponse)
+@router.put("/roles/{role_id}", response_model=RolePermissionsResponse)
 def update_role_permissions(
-    role: RoleName,
+    role_id: int,
     request: RolePermissionsUpdate,
     db: Session = Depends(get_db),
     current_user: TokenData = Depends(require_permission("permissions", "write")),
 ):
+    role = db.query(Role).filter(Role.role_id == role_id).first()
+    if role is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
+
     permissions = db.query(Permission).all()
     permissions_by_key = {_permission_key(permission): permission for permission in permissions}
 
@@ -70,15 +75,15 @@ def update_role_permissions(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unknown permissions: {', '.join(unknown_permissions)}",
         )
-    if role == "admin" and "permissions:write" not in request.permissions:
+    if role.name == "admin" and "permissions:write" not in request.permissions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="admin role must keep permissions:write",
         )
 
-    db.query(RolePermission).filter(RolePermission.role == role).delete()
+    db.query(RolePermission).filter(RolePermission.role_id == role_id).delete()
     for permission_key in request.permissions:
-        db.add(RolePermission(role=role, permission_id=permissions_by_key[permission_key].permission_id))
+        db.add(RolePermission(role_id=role_id, permission_id=permissions_by_key[permission_key].permission_id))
     try:
         db.commit()
     except IntegrityError:
@@ -88,5 +93,5 @@ def update_role_permissions(
             detail="Permission assignment conflict; changes were not saved",
         )
 
-    logger.info("Permissions updated: role=%s by %s", role, current_user.username)
-    return {"role": role, "permissions": request.permissions}
+    logger.info("Permissions updated: role=%s by %s", role.name, current_user.username)
+    return {"role": role.name, "permissions": request.permissions}

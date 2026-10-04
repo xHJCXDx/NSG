@@ -1,0 +1,45 @@
+# REV45 Load Test Evidence
+started_at=2026-10-03T18:15:30-03:00
+## Docker containers
+NAMES                 IMAGE                                STATUS                 PORTS
+osint-frontend        nexus-security-group-frontend        Up 3 hours (healthy)   4173/tcp
+osint-n8n             n8nio/n8n:2.39.7                     Up 3 hours             0.0.0.0:5678->5678/tcp, [::]:5678->5678/tcp
+osint-dashboard-api   nexus-security-group-dashboard-api   Up 3 hours (healthy)   8000/tcp
+osint-postgres-n8n    postgres:17                          Up 3 hours (healthy)   5432/tcp
+osint-postgres        postgres:17                          Up 3 hours (healthy)   5432/tcp
+osint-sentiment-api   nexus-security-group-sentiment-api   Up 3 hours (healthy)   5000/tcp
+osint-traefik         traefik:v2.10                        Up 3 hours             0.0.0.0:80->80/tcp, [::]:80->80/tcp
+## Docker network
+nexus-security-group_nexus-net
+## Host uname
+Linux xhjcxdx 7.1.5+kali-amd64 #1 SMP PREEMPT_DYNAMIC Kali 7.1.5-1kali1 (2026-07-29) x86_64 GNU/Linux
+## CPU
+Arquitectura:                             x86_64
+modo(s) de operación de las CPUs:         32-bit, 64-bit
+Tamaños de las direcciones:               48 bits physical, 48 bits virtual
+Orden de los bytes:                       Little Endian
+CPU(s):                                   12
+Lista de la(s) CPU(s) en línea:           0-11
+ID de fabricante:                         AuthenticAMD
+Nombre del modelo:                        AMD Ryzen 5 5500U with Radeon Graphics
+Familia de CPU:                           23
+Modelo:                                   104
+Hilo(s) de procesamiento por núcleo:      2
+Núcleo(s) por «socket»:                   6
+«Socket(s)»:                              1
+Revisión:                                 1
+Microcode version:                        0x8608109
+Aumento de frecuencia:                    activada
+CPU(s) factor de escala MHz:              93%
+CPU MHz máx.:                             4056,4451
+CPU MHz mín.:                             1400,0000
+BogoMIPS:                                 4192,26
+Indicadores:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip rdpid overflow_recov succor smca
+Virtualización:                           AMD-V
+Caché L1d:                                192 KiB (6 instancias)
+Caché L1i:                                192 KiB (6 instancias)
+Caché L2:                                 3 MiB (6 instancias)
+## Memory
+               total       usado       libre  compartido   búf/caché  disponible
+Mem:           7,1Gi       3,8Gi       461Mi       225Mi       3,4Gi       3,3Gi
+Inter:         7,4Gi          0B       7,4Gi

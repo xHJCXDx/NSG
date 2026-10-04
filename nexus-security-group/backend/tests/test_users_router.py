@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from auth import get_current_user, hash_password, require_permission
 from database import get_db
 from main import app
-from models import UserActivity
+from models import Role, UserActivity
 from routers.users import change_own_password, create_user, delete_user, list_users, router, update_user
 from schemas.auth import TokenData
 from schemas.user import ChangePasswordRequest, UserCreate, UserResponse, UserUpdate
@@ -25,6 +25,9 @@ class FakeQuery:
         self.filter_args.append(args)
         return self
 
+    def join(self, *args, **kwargs):
+        return self
+
     def first(self):
         return self.first_result
 
@@ -38,8 +41,16 @@ class FakeQuery:
         return self.count_result
 
 
+def _fake_role(role_id, name, is_system=True):
+    return Role(role_id=role_id, name=name, is_system=is_system)
+
+
+_ANALYST_ROLE = _fake_role(2, "analyst")
+_ADMIN_ROLE = _fake_role(1, "admin")
+
+
 class FakeDb:
-    def __init__(self, first_result=None, all_result=None, commit_exception=None, count_result=0, query_results=None):
+    def __init__(self, first_result=None, all_result=None, commit_exception=None, count_result=0, query_results=None, role_for_refresh=None):
         self.query_obj = FakeQuery(first_result=first_result, all_result=all_result, count_result=count_result)
         self.query_results = list(query_results or [])
         self.query_args = []
@@ -49,6 +60,7 @@ class FakeDb:
         self.rolled_back = False
         self.refreshed = []
         self.commit_exception = commit_exception
+        self.role_for_refresh = role_for_refresh
 
     def query(self, *args):
         self.query_args.append(args)
@@ -79,9 +91,11 @@ class FakeDb:
 
     def refresh(self, obj):
         self.refreshed.append(obj)
-        obj.user_id = 101
+        obj.user_id = getattr(obj, "user_id", None) or 101
         obj.created_at = datetime(2026, 7, 10, tzinfo=timezone.utc)
         obj.updated_at = datetime(2026, 7, 10, tzinfo=timezone.utc)
+        if self.role_for_refresh is not None and hasattr(obj, "role_rel"):
+            obj.role_rel = self.role_for_refresh
 
 
 def test_main_registers_api_users_post_route():
@@ -130,7 +144,10 @@ def test_user_router_delete_route_is_soft_delete_only():
 
 
 def test_admin_creates_user_hashes_password_and_response_has_no_secret():
-    fake_db = FakeDb(first_result=None)
+    fake_db = FakeDb(
+        query_results=[FakeQuery(first_result=_ANALYST_ROLE)],
+        role_for_refresh=_ANALYST_ROLE,
+    )
     request = UserCreate(username="analyst1", password="plain-secret", role="analyst")
     admin = TokenData(username="root", role="admin", auth_source="bootstrap")
 
@@ -154,9 +171,11 @@ def test_admin_creates_user_hashes_password_and_response_has_no_secret():
     assert fake_db.refreshed == [result]
     assert result.username == "analyst1"
     assert result.created_by == "root"
+    assert result.role_id == 2
     assert result.password_hash != "plain-secret"
     assert hash_password("plain-secret") != "plain-secret"
     assert response.user_id == 101
+    assert response.role == "analyst"
     assert "password_hash" not in response.model_dump()
 
 
@@ -200,6 +219,7 @@ def test_user_without_users_delete_cannot_delete_users():
 def test_duplicate_username_returns_409_and_does_not_commit():
     fake_db = FakeDb(
         first_result=None,
+        query_results=[FakeQuery(first_result=_ANALYST_ROLE)],
         commit_exception=IntegrityError("duplicate", params=None, orig=None),
     )
     request = UserCreate(username="analyst1", password="secret123")
@@ -216,6 +236,7 @@ def test_duplicate_username_returns_409_and_does_not_commit():
 def test_create_user_rolls_back_integrity_error_and_returns_409():
     fake_db = FakeDb(
         first_result=None,
+        query_results=[FakeQuery(first_result=_ANALYST_ROLE)],
         commit_exception=IntegrityError("duplicate", params=None, orig=None),
     )
     request = UserCreate(username="analyst1", password="secret123")
@@ -253,11 +274,17 @@ def test_admin_patches_user_role_active_and_password():
         "username": "analyst1",
         "password_hash": hash_password("old-password"),
         "role": "analyst",
+        "role_id": 2,
         "is_active": True,
         "created_at": now,
         "updated_at": now,
     })()
-    fake_db = FakeDb(first_result=user)
+    fake_db = FakeDb(
+        query_results=[
+            FakeQuery(first_result=user),
+            FakeQuery(first_result=_ADMIN_ROLE),
+        ],
+    )
     admin = TokenData(username="root", role="admin", auth_source="bootstrap")
 
     result = update_user(
@@ -268,7 +295,7 @@ def test_admin_patches_user_role_active_and_password():
     )
 
     assert result is user
-    assert user.role == "admin"
+    assert user.role_id == 1
     assert user.is_active is False
     assert user.password_hash != "new-password"
     assert fake_db.committed is True
@@ -337,7 +364,12 @@ def test_delete_blocks_last_active_admin():
         "created_at": now,
         "updated_at": now,
     })()
-    fake_db = FakeDb(first_result=target, count_result=1)
+    fake_db = FakeDb(
+        query_results=[
+            FakeQuery(first_result=target),
+            FakeQuery(count_result=1),
+        ],
+    )
     admin = TokenData(username="root", user_id=1, role="admin", auth_source="database")
 
     with pytest.raises(HTTPException) as exc_info:

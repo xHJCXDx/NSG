@@ -53,7 +53,7 @@ describe('AlertsPage', () => {
     localStorage.clear();
   });
 
-  it('renders backend alerts with severity, channels, delivery, acknowledgement, and timestamps', async () => {
+  it('renders alerts with severity, channels, delivery, acknowledgement, and timestamps', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => [alertResponse] } as Response);
 
     renderAlertsPage();
@@ -68,7 +68,7 @@ describe('AlertsPage', () => {
     expect(screen.getByText(/Created:/)).toBeInTheDocument();
   });
 
-  it('sends only backend-supported filters and resets pagination', async () => {
+  it('sends only supported filters and resets pagination', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, json: async () => [] } as Response);
     const user = userEvent.setup();
 
@@ -106,7 +106,7 @@ describe('AlertsPage', () => {
     renderAlertsPage(['alerts:read']);
 
     expect(await screen.findByText('Critical mention')).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('alerts:write');
+    expect(screen.getByRole('note')).toHaveTextContent('write permissions');
     expect(screen.queryByRole('button', { name: 'Acknowledge' })).not.toBeInTheDocument();
   });
 

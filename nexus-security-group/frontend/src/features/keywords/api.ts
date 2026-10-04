@@ -1,8 +1,8 @@
 import { authFetch } from '../../shared/api/apiClient';
-import { KEYWORDS_COPY, KEYWORDS_ENDPOINT } from './contract';
-import type { ApiErrorResponse, KeywordCreatePayload, KeywordResponse, KeywordUpdatePayload } from './types';
+import { KEYWORDS_COPY, KEYWORDS_ENDPOINT, KEYWORD_CATEGORIES_ENDPOINT } from './contract';
+import type { ApiErrorResponse, KeywordCategoryCreatePayload, KeywordCategoryResponse, KeywordCreatePayload, KeywordResponse, KeywordUpdatePayload } from './types';
 
-export { KEYWORDS_ENDPOINT } from './contract';
+export { KEYWORDS_ENDPOINT, KEYWORD_CATEGORIES_ENDPOINT } from './contract';
 
 export class ListKeywordsError extends Error {
   constructor(message: string, public readonly status?: number) {
@@ -120,5 +120,48 @@ export async function deleteKeyword(token: string | null, keywordId: number): Pr
   } catch (error) {
     if (error instanceof DeleteKeywordError) throw error;
     throw new DeleteKeywordError(KEYWORDS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export class CategoryError extends Error {
+  constructor(message: string, public readonly status?: number) {
+    super(message);
+    this.name = 'CategoryError';
+  }
+}
+
+export async function listCategories(token: string | null): Promise<KeywordCategoryResponse[]> {
+  if (!token) throw new CategoryError(KEYWORDS_COPY.errors.listWithoutToken);
+
+  try {
+    const response = await authFetch(token, KEYWORD_CATEGORIES_ENDPOINT, { method: 'GET' });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new CategoryError(detail ?? fallbackMessageByStatus(response.status, KEYWORDS_COPY.errors.listFallback), response.status);
+    }
+    return (await response.json()) as KeywordCategoryResponse[];
+  } catch (error) {
+    if (error instanceof CategoryError) throw error;
+    throw new CategoryError(KEYWORDS_COPY.errors.serviceUnavailable);
+  }
+}
+
+export async function createCategory(token: string | null, payload: KeywordCategoryCreatePayload): Promise<KeywordCategoryResponse> {
+  if (!token) throw new CategoryError(KEYWORDS_COPY.errors.createWithoutToken);
+
+  try {
+    const response = await authFetch(token, KEYWORD_CATEGORIES_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const detail = await readErrorDetail(response);
+      throw new CategoryError(detail ?? fallbackMessageByStatus(response.status, KEYWORDS_COPY.errors.createFallback), response.status);
+    }
+    return (await response.json()) as KeywordCategoryResponse;
+  } catch (error) {
+    if (error instanceof CategoryError) throw error;
+    throw new CategoryError(KEYWORDS_COPY.errors.serviceUnavailable);
   }
 }

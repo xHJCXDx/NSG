@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LoginView } from '../../features/auth';
 import { ErrorBoundary } from '../../shared/components/ErrorBoundary';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
+const HomePage = lazy(() => import('../../features/home').then(m => ({ default: m.HomePage })));
 const DashboardPage = lazy(() => import('../../features/dashboard').then(m => ({ default: m.DashboardPage })));
 const MentionsPage = lazy(() => import('../../features/mentions').then(m => ({ default: m.MentionsPage })));
 const ThreatsPage = lazy(() => import('../../features/threats').then(m => ({ default: m.ThreatsPage })));
@@ -37,7 +38,9 @@ export function AppRouter() {
             </ErrorBoundary>
           }
           >
-          <Route index element={<ProtectedRoute requiredPermission="dashboard:read"><Suspense fallback={<LazyFallback />}><DashboardPage /></Suspense></ProtectedRoute>} />
+          <Route index element={<Navigate to="/home" replace />} />
+          <Route path="home" element={<Suspense fallback={<LazyFallback />}><HomePage /></Suspense>} />
+          <Route path="dashboard" element={<ProtectedRoute requiredPermission="dashboard:read"><Suspense fallback={<LazyFallback />}><DashboardPage /></Suspense></ProtectedRoute>} />
           <Route path="mentions" element={<ProtectedRoute requiredPermission="mentions:read"><Suspense fallback={<LazyFallback />}><MentionsPage /></Suspense></ProtectedRoute>} />
           <Route path="threats" element={<ProtectedRoute requiredPermission="threats:read"><Suspense fallback={<LazyFallback />}><ThreatsPage /></Suspense></ProtectedRoute>} />
           <Route path="keywords" element={<ProtectedRoute requiredPermission="keywords:read"><Suspense fallback={<LazyFallback />}><KeywordsPage /></Suspense></ProtectedRoute>} />
@@ -46,7 +49,7 @@ export function AppRouter() {
           <Route path="logs" element={<ProtectedRoute requiredPermission="logs:read"><Suspense fallback={<LazyFallback />}><LogsPage /></Suspense></ProtectedRoute>} />
           <Route path="users" element={<ProtectedRoute requiredPermission="users:read"><Suspense fallback={<LazyFallback />}><UsersPage /></Suspense></ProtectedRoute>} />
           <Route path="analytics" element={<ProtectedRoute requiredPermission="metrics:read"><Suspense fallback={<LazyFallback />}><AnalyticsPage /></Suspense></ProtectedRoute>} />
-          <Route path="settings" element={<ProtectedRoute requiredPermission="permissions:read"><Suspense fallback={<LazyFallback />}><SettingsPage /></Suspense></ProtectedRoute>} />
+          <Route path="settings" element={<Suspense fallback={<LazyFallback />}><SettingsPage /></Suspense>} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

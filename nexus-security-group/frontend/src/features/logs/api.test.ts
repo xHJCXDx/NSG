@@ -69,7 +69,7 @@ describe('logs api', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('maps backend details and network failures to log errors', async () => {
+  it('maps error details and network failures to log errors', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({ detail: 'Forbidden' }) } as Response);
     await expect(listExecutionLogs('fake-jwt')).rejects.toMatchObject(new ListExecutionLogsError('Forbidden', 403));
 

@@ -1,5 +1,4 @@
 import { Moon, Sun } from 'lucide-react';
-import { useAuth } from '../../auth';
 import { ComplianceCard } from '../components/ComplianceCard';
 import { DateFormatCard } from '../components/DateFormatCard';
 import { PollingCard } from '../components/PollingCard';
@@ -11,8 +10,6 @@ import { useLanguage } from '../../../shared/contexts/LanguageContext';
 import { useTranslation } from '../../../shared/i18n/translations';
 
 export function SettingsPage() {
-  const { hasPermission } = useAuth();
-  const canWrite = hasPermission('permissions', 'write');
   const { theme, toggleTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
   const t = useTranslation();
@@ -27,12 +24,6 @@ export function SettingsPage() {
         <h1 className="mt-2 text-3xl font-bold text-content-heading">{t.settings.title}</h1>
         <p className="mt-2 max-w-3xl text-content-secondary">{t.settings.description}</p>
       </div>
-
-      {!canWrite && (
-        <div className="glass-card border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-600 dark:text-amber-100" role="note">
-          {t.settings.readOnlyNotice}
-        </div>
-      )}
 
       <ProfileCard />
 

@@ -1,0 +1,61 @@
+sample_id,mention_id,source,evaluador,pertinencia_evaluador,criticidad_evaluador,confianza_evaluador,criticidad_sistema_corregida,risk_score_sistema_corregido,keywords_sistema_corregidas,criticidad_original,criticidad_cambio_por_matching,consenso_previo,acuerdo_criticidad_exacta,acuerdo_banda_alerta,diferencia_nivel_evaluador_menos_sistema,observacion_evaluador
+REV45-BLIND-001,51,exploit-db,Camila,si,critical,alta,high,50,rce|cve-,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-002,74,exploit-db,Camila,si,critical,alta,high,50,remote code execution,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-003,88,exploit-db,Camila,si,critical,alta,high,50,remote code execution,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-004,89,exploit-db,Camila,si,critical,alta,high,50,remote code execution,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-005,169,github,Camila,si,critical,media,medium,35,security|incident,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-006,173,github,Camila,si,medium,alta,medium,20,security|vulnerability,medium,no,correcto,si,si,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-007,175,github,Camila,si,critical,media,low,15,,high,sí,correcto,no,no,3,Vulnerabilidad de severidad crítica.
+REV45-BLIND-008,213,github,Camila,si,medium,media,medium,30,vulnerability,medium,no,correcto,si,si,0,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-009,218,github,Camila,si,critical,media,low,15,vulnerability,high,sí,correcto,no,no,3,Vulnerabilidad de severidad crítica.
+REV45-BLIND-010,273,github,Camila,parcial,low,media,low,5,,low,no,correcto,si,si,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV45-BLIND-011,287,github,Camila,si,critical,media,medium,20,,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-012,288,github,Camila,no,no_aplica,alta,low,15,,low,no,correcto,no,no,-1,Texto fuera de contexto de ciberseguridad/vulnerabilidades técnicas.
+REV45-BLIND-013,303,github,Camila,si,medium,media,high,50,security|incident|vulnerability,high,no,correcto,no,no,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-014,385,github,Camila,si,critical,media,high,45,cve-|security,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-015,401,github,Camila,si,critical,media,high,40,malware,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-016,463,github,Camila,si,critical,media,high,45,exploit|security,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-017,471,github,Camila,si,critical,media,critical,90,exploit|cve-|threat|vulnerability|denial of service,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-018,476,github,Camila,si,critical,media,critical,80,exploit|cve-|threat|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-019,534,github,Camila,si,critical,media,medium,20,security|vulnerability,high,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-020,562,github,Camila,si,critical,media,high,40,exploit|security|vulnerability,high,no,parcial,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-021,566,github,Camila,si,critical,media,medium,20,,high,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-022,567,github,Camila,si,critical,media,high,45,cve-,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-023,606,github,Camila,si,critical,media,critical,65,rce|cve-,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-024,652,github,Camila,si,critical,media,medium,20,,high,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-025,694,github,Camila,si,critical,media,medium,35,security|vulnerability,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-026,700,github,Camila,si,critical,media,medium,20,security|vulnerability,high,sí,ambiguo,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-027,720,github,Camila,si,critical,media,high,40,cve-,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-028,743,github,Camila,si,critical,media,medium,35,security|vulnerability,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-029,768,github,Camila,si,medium,media,low,5,,medium,sí,correcto,no,si,1,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-030,884,github,Camila,si,critical,media,medium,20,security|vulnerability,high,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-031,942,github,Camila,si,critical,media,critical,75,ransomware|attack|security|incident,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-032,943,github,Camila,si,critical,media,low,5,,medium,sí,correcto,no,no,3,Vulnerabilidad de severidad crítica.
+REV45-BLIND-033,956,github,Camila,si,critical,media,high,40,cve-,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-034,959,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-035,962,github,Camila,si,critical,media,critical,75,remote code execution|cve-|sql injection,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-036,985,github,Camila,si,critical,media,medium,35,security|vulnerability,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-037,1013,github,Camila,si,critical,media,medium,35,security|vulnerability,critical,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-038,1017,github,Camila,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-039,1020,github,Camila,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-040,1032,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-041,1041,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-042,1096,github,Camila,parcial,low,media,low,10,security,low,no,correcto,si,si,0,"Documentación de desarrollo, escaneo o gestión de proyectos."
+REV45-BLIND-043,1159,github,Camila,si,critical,media,high,50,cve-|vulnerability,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-044,1178,github,Camila,si,critical,media,high,40,,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-045,1195,github,Camila,si,medium,media,high,55,backdoor|ataque|security,critical,sí,severidad_incorrecta,no,no,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-046,1260,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-047,1268,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-048,1271,github,Camila,si,critical,media,critical,85,cve-|privilege escalation|sql injection|security,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-049,1281,github,Camila,si,critical,media,medium,20,,high,sí,correcto,no,no,2,Vulnerabilidad de severidad crítica.
+REV45-BLIND-050,1287,github,Camila,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-051,1294,github,Camila,si,medium,media,high,50,xss|security,high,no,correcto,no,no,-1,Vulnerabilidad de impacto moderado o mención genérica.
+REV45-BLIND-052,1297,github,Camila,si,critical,media,critical,70,exploit|cve-|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-053,1299,github,Camila,si,critical,media,critical,80,exploit|cve-|threat|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-054,1304,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-055,1364,github,Camila,si,critical,media,high,40,cve-,high,no,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-056,1644,github,Camila,si,critical,media,critical,90,exploit|cve-|threat|vulnerability|denial of service,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-057,1752,github,Camila,si,critical,media,high,50,sql injection|attack|security|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-058,1995,github,Camila,si,critical,media,high,50,cve-|vulnerability,critical,sí,correcto,no,si,1,Vulnerabilidad de severidad crítica.
+REV45-BLIND-059,2009,github,Camila,si,critical,media,critical,60,cve-|attack|vulnerability,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
+REV45-BLIND-060,2071,github,Camila,si,critical,media,critical,75,cve-|attack|security|vulnerability|denial of service,critical,no,correcto,si,si,0,Vulnerabilidad de severidad crítica.
