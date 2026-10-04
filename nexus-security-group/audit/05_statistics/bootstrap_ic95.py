@@ -21,7 +21,7 @@ N_ITERATIONS = 10_000
 
 # Leer la matriz
 script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(script_dir, "Matriz_Auditoria_Fase2_REV37.csv")
+csv_path = os.path.join(script_dir, "..", "01_historical_audit", "Matriz_Auditoria_Fase2_REV37.csv")
 
 with open(csv_path) as f:
     rows = list(csv.DictReader(f))

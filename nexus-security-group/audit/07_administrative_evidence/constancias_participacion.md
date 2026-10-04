@@ -42,8 +42,8 @@ Las constancias originales con firma manuscrita, fecha y lugar se gestionan y en
 
 La participación descrita en este índice se vincula con los siguientes artefactos verificables:
 
-- `Matriz_Auditoria_Fase2_REV37.csv`: registros de clasificación, criticidad, observaciones y consenso.
-- `tabla_contingencia_kappa.md`: cálculo de acuerdo inter-evaluador.
+- `01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv`: registros de clasificación, criticidad, observaciones y consenso.
+- `01_historical_audit/tabla_contingencia_kappa.md`: cálculo de acuerdo inter-evaluador.
 - Capítulos §9.1.2, §9.6.8, §9.6.9 y §9.7 de la tesis: descripción metodológica de auditoría manual, consenso y baseline exploratorio.
 
 ---
