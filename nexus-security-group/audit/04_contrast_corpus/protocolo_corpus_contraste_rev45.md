@@ -10,17 +10,38 @@ El corpus de contraste busca responder una pregunta acotada:
 
 No busca medir recall global de amenazas ni cobertura completa del ecosistema de ciberseguridad.
 
+### Alcance seleccionado para REV45
+
+| Campo | Decisión |
+|---|---|
+| Ventana temporal | 25/09/2026 18:48 UTC – 29/09/2026 15:01 UTC |
+| Fuentes permitidas | GitHub Security Issues, Hacker News, Exploit-DB |
+| Tamaño objetivo | 20 casos reales verificables |
+| Métrica | Cobertura exploratoria, no recall global |
+
+Esta ventana coincide con la campaña operacional evaluada en REV45. No debe ampliarse con casos posteriores sin declararlo como una validación adicional separada.
+
 ## 2. Archivo de trabajo
 
 Completar:
 
 `Corpus_Contraste_REV45_Template.csv`
 
+Archivo auxiliar de trazabilidad de candidatos:
+
+`Candidatos_Corpus_Contraste_REV45.csv`
+
+Resumen metodológico del resultado:
+
+`resumen_corpus_contraste_rev45.md`
+
 Ejemplo didáctico de llenado:
 
 `Corpus_Contraste_REV45_Ejemplo.csv`
 
 El archivo de ejemplo **no debe usarse como evidencia**. Contiene casos ilustrativos y URLs de ejemplo para mostrar el formato esperado. El corpus real debe completarse con casos verificados manualmente.
+
+Para REV45, los candidatos iniciales se seleccionaron desde Hacker News usando la misma consulta declarada en el workflow (`query=security`) dentro de la ventana 25/09/2026 18:48 UTC – 29/09/2026 15:01 UTC. El cruce contra salidas de NSG debe realizarse después de esta selección.
 
 Cuando esté completo, guardar una copia con fecha:
 
@@ -72,6 +93,10 @@ Mínimo viable:
 
 - 20 casos verificables.
 
+Tamaño seleccionado para REV45:
+
+- 20 casos verificables.
+
 Recomendado:
 
 - 30 a 50 casos.
@@ -85,6 +110,16 @@ Distribución sugerida:
 | Casos fuera de cobertura explícita | 5–10 |
 
 ## 7. Métricas exploratorias
+
+### Regla de cruce aplicada en REV45
+
+Para los candidatos de Hacker News, el cruce se realiza por coincidencia exacta entre:
+
+- `source_url` del corpus: parámetro `id` de `https://news.ycombinator.com/item?id=...`;
+- `external_id` en `social_mentions_full_features_REV45.csv` o `social_mentions_text_full_REV45.csv`;
+- `platform = hackernews`.
+
+Si existe `mention_id` en el export preservado, el caso se marca como detectado. Si además el `mention_id` aparece en `Matriz_Reauditoria_Matching_REV45_Texto_Completo.csv`, se consigna el `detection_id`. Si no hay coincidencia exacta por `external_id`, se marca como no detectado en el export preservado, sin inferir causalidad operacional única.
 
 Cuando el corpus esté completo, calcular:
 
