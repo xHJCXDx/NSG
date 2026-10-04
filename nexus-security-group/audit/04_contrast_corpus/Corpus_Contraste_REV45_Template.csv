@@ -1,0 +1,11 @@
+case_id,source,source_url,publication_date,collection_window_start,collection_window_end,inclusion_reason,expected_signal,expected_keyword_or_pattern,should_be_detected_by_nsg,detected_by_nsg,evidence_mention_id,evidence_detection_id,detection_status,reviewer_observation
+REV45-CONTRAST-001,,,,,,,,,,,,,,
+REV45-CONTRAST-002,,,,,,,,,,,,,,
+REV45-CONTRAST-003,,,,,,,,,,,,,,
+REV45-CONTRAST-004,,,,,,,,,,,,,,
+REV45-CONTRAST-005,,,,,,,,,,,,,,
+REV45-CONTRAST-006,,,,,,,,,,,,,,
+REV45-CONTRAST-007,,,,,,,,,,,,,,
+REV45-CONTRAST-008,,,,,,,,,,,,,,
+REV45-CONTRAST-009,,,,,,,,,,,,,,
+REV45-CONTRAST-010,,,,,,,,,,,,,,
