@@ -16,7 +16,7 @@ Esta carpeta reúne las evidencias usadas para sustentar la validación académi
 |---|---|---|
 | `01_historical_audit/` | Matriz REV37 y tabla de contingencia/kappa históricas. | Evidencia base previa a los ajustes REV45. |
 | `02_reaudits/` | Reauditorías REV45, exportaciones completas y scripts de matching. | Comparar resultados históricos contra criterios de matching más estrictos o completos. |
-| `03_blind_evaluation/` | Muestra para evaluadores, referencia del sistema e instrucciones. | Ejecutar o documentar la evaluación ciega pendiente. |
+| `03_blind_evaluation/` | Muestra completada por evaluadora, referencia del sistema, comparación y resumen. | Documentar la evaluación ciega parcial REV45. |
 | `04_contrast_corpus/` | Plantilla, ejemplo y protocolo del corpus de contraste. | Preparar evidencia complementaria sin mezclar ejemplos didácticos con evidencia real. |
 | `05_statistics/` | Scripts de intervalo de confianza y ablación de sentimiento. | Reproducir cálculos estadísticos de apoyo. |
 | `06_chapter9_support/` | Consultas SQL y exportaciones de logs. | Respaldar afirmaciones del capítulo 9. |
@@ -34,5 +34,5 @@ Esta carpeta reúne las evidencias usadas para sustentar la validación académi
 
 ## Pendientes conocidos
 
-- Completar la evaluación ciega cuando los evaluadores devuelvan sus resultados.
-- Integrar cualquier resultado nuevo al plan de mejora REV45 antes de elevar conclusiones.
+- Integrar los resultados de la evaluación ciega parcial en la tesis sin presentarlos como validación operacional completa.
+- Si se suman más evaluadores, preservar cada devolución por separado y regenerar la comparación agregada.
