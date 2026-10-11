@@ -620,6 +620,17 @@ CREATE POLICY user_isolation_policy ON threat_detections
     FOR ALL TO osint_analyst
     USING (reviewed_by = current_user OR reviewed_by IS NULL);
 
+-- Read-only access to threat_detections for reporting and dashboard roles.
+CREATE POLICY threat_detections_read_policy ON threat_detections
+    FOR SELECT TO osint_readonly
+    USING (true);
+
+-- Full access for admin role (owner-equivalent for RLS purposes).
+CREATE POLICY threat_detections_admin_policy ON threat_detections
+    FOR ALL TO osint_admin
+    USING (true)
+    WITH CHECK (true);
+
 -- ============================================
 -- TABLA: roles
 -- ============================================
@@ -816,7 +827,7 @@ ON CONFLICT (role_id, permission_id) DO NOTHING;
 -- COMENTARIOS
 -- ============================================
 
-COMMENT ON TABLE social_mentions IS 'Menciones recopiladas de redes sociales y fuentes OSINT';
+COMMENT ON TABLE social_mentions IS 'Menciones recopiladas de fuentes OSINT públicas (repositorios, feeds técnicos, bases de vulnerabilidades)';
 COMMENT ON TABLE sentiment_analysis IS 'Resultados de análisis de sentimiento (VADER + TextBlob)';
 COMMENT ON TABLE threat_detections IS 'Detecciones de amenazas potenciales';
 COMMENT ON TABLE alerts IS 'Alertas generadas y enviadas';
