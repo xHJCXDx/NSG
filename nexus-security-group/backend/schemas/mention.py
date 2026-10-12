@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 _Platform = Literal[
-    "twitter", "reddit", "telegram", "discord", "github", "exploit-db", "other"
+    "twitter", "reddit", "telegram", "discord", "github", "exploit-db", "hackernews", "other"
 ]
 _ProcessingStatus = Literal["pending", "processed", "failed"]
 

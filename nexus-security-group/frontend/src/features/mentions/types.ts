@@ -7,6 +7,7 @@ export type MentionPlatform =
   | 'discord'
   | 'github'
   | 'exploit-db'
+  | 'hackernews'
   | 'other'
   | string;
 

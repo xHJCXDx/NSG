@@ -159,7 +159,6 @@
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 5000,
-      "disabled": true,
       "continueOnFail": true
     },
     {
@@ -265,7 +264,9 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "mode": "append"
+      },
       "id": "e3eec105-2e64-4708-a939-16123e39bd52",
       "name": "Merge HN + ExploitDB",
       "type": "n8n-nodes-base.merge",
@@ -276,7 +277,9 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "mode": "append"
+      },
       "id": "c2461cfa-2180-4a57-a48a-5d0b51b40e28",
       "name": "Merge All Sources",
       "type": "n8n-nodes-base.merge",
