@@ -15,8 +15,8 @@ from collections import Counter
 from pathlib import Path
 
 AUDIT_DIR = Path(__file__).resolve().parents[4] / "NSG" / "nexus-security-group" / "audit"
-HISTORICAL_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2_REV37.csv"
-BLIND_REV46_CSV = AUDIT_DIR / "03_blind_evaluation" / "rev46_new_evaluation" / "Resultados_Nueva_Evaluacion_Ciega_REV46.csv"
+HISTORICAL_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2.csv"
+BLIND_REV46_CSV = AUDIT_DIR / "03_blind_evaluation" / "nueva_evaluacion_ciega" / "Resultados_Nueva_Evaluacion_Ciega_REV46.csv"
 METRICS_JSON = AUDIT_DIR / "05_statistics" / "metricas_auditoria_REV46.json"
 
 

@@ -11,15 +11,15 @@ Este directorio contiene el paquete usado para ejecutar una nueva evaluación ci
 3. Para regenerar CSV individuales desde el consolidado, ejecutar:
 
 ```bash
-python nexus-security-group/audit/03_blind_evaluation/rev46_new_evaluation/extraer_respuestas_consolidadas_rev46.py
+python nexus-security-group/audit/03_blind_evaluation/nueva_evaluacion_ciega/extraer_respuestas_consolidadas_rev46.py
 ```
 
 4. Para regenerar la comparación contra la referencia interna:
 
 ```bash
-python nexus-security-group/audit/03_blind_evaluation/rev46_new_evaluation/comparar_nueva_evaluacion_ciega_rev46.py \
-  nexus-security-group/audit/03_blind_evaluation/rev46_new_evaluation/Respuestas_Evaluador_A_REV46_Nueva.csv \
-  nexus-security-group/audit/03_blind_evaluation/rev46_new_evaluation/Respuestas_Evaluador_B_REV46_Nueva.csv
+python nexus-security-group/audit/03_blind_evaluation/nueva_evaluacion_ciega/comparar_nueva_evaluacion_ciega_rev46.py \
+  nexus-security-group/audit/03_blind_evaluation/nueva_evaluacion_ciega/Respuestas_Evaluador_A_REV46_Nueva.csv \
+  nexus-security-group/audit/03_blind_evaluation/nueva_evaluacion_ciega/Respuestas_Evaluador_B_REV46_Nueva.csv
 ```
 
 ## Archivos

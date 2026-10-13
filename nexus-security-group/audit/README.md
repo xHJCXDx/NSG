@@ -45,7 +45,7 @@ Algunos artefactos conservan nombres REV45 o REV46 por su origen histórico. En 
 
 ## Evaluación ciega REV46
 
-La carpeta `03_blind_evaluation/rev46_new_evaluation/` incluye el paquete y los resultados de una evaluación ciega multi-evaluador:
+La carpeta `03_blind_evaluation/nueva_evaluacion_ciega/` incluye el paquete y los resultados de una evaluación ciega multi-evaluador:
 
 - `protocolo_nueva_evaluacion_ciega_rev46.md`: requisitos, muestra, indicadores e interpretación.
 - `instrucciones_evaluadores_nueva_rev46.md`: guía para entregar a evaluadores.

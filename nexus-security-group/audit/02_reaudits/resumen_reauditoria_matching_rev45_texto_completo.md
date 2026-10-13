@@ -1,6 +1,6 @@
 # Resumen de Re-auditoría Complementaria REV45 — Texto Completo
 
-> Fuente histórica: `01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv`  
+> Fuente histórica: `01_historical_audit/Matriz_Auditoria_Fase2.csv`  
 > Fuente textual completa: `social_mentions_full_features_REV45.csv`  
 > Salida: `Matriz_Reauditoria_Matching_REV45_Texto_Completo.csv`  
 > Alcance: recálculo complementario usando texto completo exportado desde PostgreSQL y matching por límite de palabra.

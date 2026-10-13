@@ -2,7 +2,7 @@
 
 This script compares the historical audited matrix against the current
 word-boundary keyword matching logic. It intentionally works only with the
-preserved text excerpt available in Matriz_Auditoria_Fase2_REV37.csv, so the
+preserved text excerpt available in Matriz_Auditoria_Fase2.csv, so the
 result must be reported as a partial/conservative re-audit, not as a full
 reproduction of the original pipeline.
 """
@@ -16,7 +16,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 AUDIT_DIR = BASE_DIR.parent
-INPUT_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2_REV37.csv"
+INPUT_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2.csv"
 OUTPUT_CSV = BASE_DIR / "Matriz_Reauditoria_Matching_REV45.csv"
 SUMMARY_MD = BASE_DIR / "resumen_reauditoria_matching_rev45.md"
 
@@ -181,7 +181,7 @@ def main() -> None:
 
     summary = f"""# Resumen de Re-auditoría Complementaria REV45 — Matching por Límite de Palabra
 
-> Fuente: `../01_historical_audit/01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv`  
+> Fuente: `../01_historical_audit/01_historical_audit/Matriz_Auditoria_Fase2.csv`  
 > Salida: `Matriz_Reauditoria_Matching_REV45.csv`  
 > Alcance: recálculo parcial/conservador sobre `text_excerpt` preservado.
 
