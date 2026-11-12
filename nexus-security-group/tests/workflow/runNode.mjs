@@ -9,9 +9,14 @@ export function loadWorkflow() {
   return JSON.parse(readFileSync(WORKFLOW_PATH, 'utf8'));
 }
 
-export function getNodeCode(name) {
+export function getNode(name) {
   const node = loadWorkflow().nodes.find((n) => n.name === name);
   if (!node) throw new Error(`Node not found in workflow.json: ${name}`);
+  return node;
+}
+
+export function getNodeCode(name) {
+  const node = getNode(name);
   const code = node.parameters.functionCode ?? node.parameters.jsCode;
   if (typeof code !== 'string') throw new Error(`Node has no code: ${name}`);
   return code;
