@@ -73,6 +73,36 @@ test('Build Alert Content: counts by level are unchanged', () => {
   assert.match(slack_blocks, /1 high/);
 });
 
+test('Build Alert Content: every label is in Spanish', () => {
+  const out = buildContent();
+  const english = [
+    'Scan Report', 'AUTOMATED REPORT', '>Summary<', 'Total Alerts', 'Scan Time', 'Scan time',
+    '>Severity<', 'Type / Preview', '>Platform<', '>Detected<', 'This is an automated report',
+    'lang="en"', 'more signal', 'check the full report',
+  ];
+  for (const field of ['email_html', 'email_subject', 'slack_blocks', 'alert_message']) {
+    for (const label of english) assert.equal(out[field].includes(label), false, `${field}: ${label}`);
+  }
+  for (const label of [
+    'lang="es"', 'Aviso consolidado', '>Resumen<', 'Total de señales', 'Hora de la ejecución',
+    '>Nivel<', 'Tipo / Vista previa', '>Plataforma<', '>Fecha de publicación<', 'Aviso automático de',
+  ]) {
+    assert.ok(out.email_html.includes(label), `email_html: ${label}`);
+  }
+  assert.match(out.email_subject, /^\[NSG\] Aviso consolidado — 2 señales para revisión/);
+  assert.match(out.slack_blocks, /Aviso consolidado/);
+  assert.match(out.slack_blocks, /Hora de la ejecución/);
+});
+
+test('Build Alert Content: Slack lists up to five signals and says how many remain, in Spanish', () => {
+  const many = Array.from({ length: 7 }, (_, i) => ({ ...ITEMS[0], external_id: String(2000 + i) }));
+  const aggregated = runNode('Aggregate Alerts', many).map((item) => item.json);
+  const { slack_blocks } = runNode('Build Alert Content', aggregated)[0].json;
+  const blocks = JSON.parse(slack_blocks);
+  assert.equal(blocks.filter((b) => b.type === 'section').length, 1 + 5);
+  assert.match(slack_blocks, /…y \*2\* señales más: el detalle completo está en el correo\./);
+});
+
 test('Prep Alert Insert: title "Señal <nivel> para revisión", message without author', () => {
   const [{ json }] = runNode('Prep Alert Insert', [enriched({ alert_severity: 'critical' })]);
   assert.equal(json.p_alert_title, 'Señal critical para revisión');
