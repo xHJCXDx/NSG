@@ -62,7 +62,7 @@ services:
       - "hn.algolia.com:34.160.168.181"
       - "www.exploit-db.com:192.124.249.13"
     ports:
-      - "5678:5678"
+      - "127.0.0.1:5678:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
