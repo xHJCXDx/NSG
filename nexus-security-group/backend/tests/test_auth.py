@@ -153,6 +153,7 @@ async def test_login_db_user_success():
         user_id=42,
         password_hash=password_hash,
         role="analyst",
+        role_id=2,
         is_active=True,
         permissions=[
             SimpleNamespace(resource="workflows", action="execute"),
@@ -181,6 +182,7 @@ async def test_login_db_user_success():
     assert claims["role"] == "analyst"
     assert claims["auth_source"] == "database"
     assert claims["user_id"] == 42
+    assert claims["role_id"] == 2
     assert claims["permissions"] == ["threats:read", "workflows:execute"]
     assert len(db.added) == 1
     activity = db.added[0]
@@ -202,6 +204,7 @@ async def test_login_db_user_handles_unavailable_permissions_relation():
     user.user_id = 42
     user.password_hash = auth.hash_password("user-password")
     user.role = "analyst"
+    user.role_id = 2
     user.is_active = True
 
     def override_db():

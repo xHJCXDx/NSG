@@ -88,7 +88,7 @@ def test_get_threats_lists_recent_detections_with_limit():
     #   2 → distinct(criticality_level) → severities list
     #   3 → distinct(threat_type)       → classifications part 1
     #   4 → distinct(threat_category)   → classifications part 2
-    data_query = FakeQuery(all_result=[(threat, mention)])
+    data_query = FakeQuery(all_result=[(threat, mention, None)])
     fake_db = FakeDb([
         data_query,
         FakeQuery(all_result=[]),
@@ -111,12 +111,15 @@ def test_get_threats_lists_recent_detections_with_limit():
         "contextual_notes": "Possible leaked credentials",
         "detected_at": threat.detected_at,
         "review_status": "pending",
+        "reviewed_by": None,
+        "reviewed_at": None,
         "last_updated": threat.last_updated,
         "related_mention": {
             "mention_id": 20,
             "text_content": "admin password leaked",
             "platform": "github",
         },
+        "alert": None,
     }
     assert result["data"] == [expected_item]
     assert result["page"] == 1
@@ -337,7 +340,7 @@ def test_threats_read_routes_allow_user_with_threats_read_permission():
     # /api/threats makes 4 db.query() calls; /api/threats/1 makes 1
     def make_db():
         return FakeDb([
-            FakeQuery(all_result=[(threat, mention)], first_result=threat),
+            FakeQuery(all_result=[(threat, mention, None)], first_result=threat),
             FakeQuery(all_result=[]),
             FakeQuery(all_result=[]),
             FakeQuery(all_result=[], first_result=threat),

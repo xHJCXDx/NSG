@@ -9,7 +9,14 @@ from auth import get_current_user
 from database import get_db
 from main import app
 from models import Role, RolePermission, SystemUser
-from routers.roles import create_role, delete_role, list_roles, router, update_role
+from routers.roles import (
+    create_role,
+    delete_role,
+    list_roles,
+    permanently_delete_role,
+    router,
+    update_role,
+)
 from schemas.auth import TokenData
 from schemas.role import RoleCreate, RoleResponse, RoleUpdate
 
@@ -79,12 +86,13 @@ class FakeDb:
         obj.updated_at = now
 
 
-def _fake_role(role_id, name, is_system=False, role_permissions=None):
+def _fake_role(role_id, name, is_system=False, role_permissions=None, is_active=True):
     return type("RoleRow", (), {
         "role_id": role_id,
         "name": name,
         "description": None,
         "is_system": is_system,
+        "is_active": is_active,
         "created_at": now,
         "updated_at": now,
         "role_permissions": role_permissions or [],
@@ -139,6 +147,7 @@ def test_list_roles_returns_roles_with_permissions():
     assert len(result) == 2
     assert result[0]["name"] == "admin"
     assert result[0]["is_system"] is True
+    assert result[0]["is_active"] is True
     assert result[0]["permissions"] == ["dashboard:read"]
     assert result[1]["name"] == "analyst"
     assert result[1]["permissions"] == []
@@ -219,14 +228,26 @@ def test_update_missing_role_returns_404():
     assert exc_info.value.status_code == 404
 
 
-def test_delete_role_removes_custom_role():
+def test_delete_role_deactivates_custom_role_without_removing_it():
     existing = _fake_role(5, "custom", is_system=False)
+    fake_db = FakeDb(query_results=[FakeQuery(first_result=existing)])
+
+    result = delete_role(role_id=5, db=fake_db, current_user=admin_user)
+
+    assert existing.is_active is False
+    assert result["is_active"] is False
+    assert fake_db.deleted == []
+    assert fake_db.committed is True
+
+
+def test_permanently_delete_inactive_role_removes_it():
+    existing = _fake_role(5, "custom", is_system=False, is_active=False)
     fake_db = FakeDb(query_results=[
         FakeQuery(first_result=existing),
         FakeQuery(count_result=0),
     ])
 
-    delete_role(role_id=5, db=fake_db, current_user=admin_user)
+    permanently_delete_role(role_id=5, db=fake_db, current_user=admin_user)
 
     assert fake_db.deleted == [existing]
     assert fake_db.committed is True
@@ -244,15 +265,15 @@ def test_delete_system_role_rejected():
     assert fake_db.committed is False
 
 
-def test_delete_role_with_assigned_users_returns_409():
-    existing = _fake_role(5, "custom", is_system=False)
+def test_permanently_delete_role_with_assigned_users_returns_409():
+    existing = _fake_role(5, "custom", is_system=False, is_active=False)
     fake_db = FakeDb(query_results=[
         FakeQuery(first_result=existing),
         FakeQuery(count_result=3),
     ])
 
     with pytest.raises(HTTPException) as exc_info:
-        delete_role(role_id=5, db=fake_db, current_user=admin_user)
+        permanently_delete_role(role_id=5, db=fake_db, current_user=admin_user)
 
     assert exc_info.value.status_code == 409
     assert "3 assigned user(s)" in exc_info.value.detail
