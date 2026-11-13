@@ -13,7 +13,7 @@ echo "== API scenarios: E12 (adapted), E13"
 (
   cd backend &&
     python3 -m pytest -rxX -p no:cacheprovider \
-      tests/test_scenarios_rev76.py \
+      tests/test_scenarios.py \
       "tests/test_threats_router.py::test_review_threat_rejects_user_without_threats_write_permission"
 ) || status=1
 

@@ -22,7 +22,7 @@ Requiere Node.js 22 o superior y las dependencias del backend (`backend/requirem
 | E20 | `tests/scenarios/sources.test.mjs` | «Parse GitHub Issues» con `incomplete_results: true` |
 | E31 | `tests/scenarios/sources.test.mjs` | «Parse Items» con una historia de Hacker News |
 | E12 (adaptado) | `backend/tests/test_threats_router.py::test_review_threat_rejects_user_without_threats_write_permission` | Rechazo de la revisión sin `threats:write`. El rol `viewer` no existe, así que se usa un usuario sin ese permiso |
-| E13 | `backend/tests/test_scenarios_rev76.py` | Token vigente de un usuario dado de baja contra un endpoint protegido |
+| E13 | `backend/tests/test_scenarios.py` | Token vigente de un usuario dado de baja contra un endpoint protegido |
 
 ## Fallas esperadas
 
