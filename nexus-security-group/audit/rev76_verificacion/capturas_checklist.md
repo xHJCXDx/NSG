@@ -6,9 +6,9 @@ Este archivo explica cómo registrar la corrida funcional breve con `scripts/fun
 
 ## 1. Antes de empezar
 
-- [ ] El repositorio está en el commit candidato y sin cambios sin commitear: `git -c core.fileMode=false status --untracked-files=no` no muestra nada.
-- [ ] Los contenedores están levantados: `docker compose up -d` desde `nexus-security-group/`. Tienen que estar en ejecución `osint-postgres`, `osint-postgres-n8n`, `osint-n8n`, `osint-sentiment-api`, `osint-dashboard-api`, `osint-frontend` y `osint-traefik`.
-- [ ] La interfaz responde en `http://localhost/` y la API en `http://localhost/api/health`.
+- [x] El repositorio está en el commit candidato y sin cambios sin commitear: `git -c core.fileMode=false status --untracked-files=no` no muestra nada.
+- [x] Los contenedores están levantados: `docker compose up -d` desde `nexus-security-group/`. Tienen que estar en ejecución `osint-postgres`, `osint-postgres-n8n`, `osint-n8n`, `osint-sentiment-api`, `osint-dashboard-api`, `osint-frontend` y `osint-traefik`.
+- [x] La interfaz responde en `http://localhost/` y la API en `http://localhost/api/health`.
 
 ## 2. Corrida funcional
 
@@ -38,21 +38,21 @@ La columna «Matriz» remite a la fila de `matriz_conformidad.md`. Si la fila es
 
 | Fila | Vista | URL | Permiso en el prototipo | Estado previo necesario | Archivo | Matriz | Hecha | Observaciones |
 |---|---|---|---|---|---|---|---|---|
-| T23-01 | Ingreso | `http://localhost/login` | Pública | Sesión cerrada | `T23-01_ingreso.png` | R8B-67, Implementada | [ ] | |
-| T23-02 | Inicio | `http://localhost/home` | Autenticado | Sesión iniciada | `T23-02_inicio.png` | R8B-68, Implementada | [ ] | |
-| T23-03 | Panel | `http://localhost/dashboard` | `dashboard:read` | Al menos una ejecución terminada | `T23-03_panel.png` | R8B-69, Parcial | [ ] | |
-| T23-04 | Menciones | `http://localhost/mentions` | `mentions:read` | Menciones persistidas en la corrida | `T23-04_menciones.png` | R8B-70, Parcial | [ ] | |
-| T23-05 | Detecciones | `http://localhost/threats` | `threats:read` | Al menos una detección, si la corrida la produjo | `T23-05_detecciones.png` | R8B-71, Implementada | [ ] | |
-| T23-06 | Avisos | `http://localhost/alerts` | `alerts:read` | Al menos un aviso, si la corrida lo produjo | `T23-06_avisos.png` | R8B-72, Parcial | [ ] | |
-| T23-07 | Términos | `http://localhost/keywords` | `keywords:read` | Los términos iniciales cargados | `T23-07_terminos.png` | R8B-73, Implementada | [ ] | |
-| T23-08 | Automatización | `http://localhost/automation` | `workflows:read` | Al menos una ejecución registrada | `T23-08_automatizacion.png` | R8B-74, Implementada | [ ] | |
-| T23-09 | Registros | `http://localhost/logs` | `logs:read` | Ejecuciones de la corrida registradas | `T23-09_registros.png` | R8B-75, Parcial | [ ] | |
-| T23-10 | Indicadores | `http://localhost/analytics` | `metrics:read` | Datos dentro de la ventana por defecto (30 días) | `T23-10_indicadores.png` | R8B-76, Parcial | [ ] | |
-| T23-11 | Usuarios | `http://localhost/users` | `users:read` | Al menos el usuario administrador | `T23-11_usuarios.png` | R8B-77, Implementada | [ ] | |
-| T23-12 | Preferencias | `http://localhost/settings` | Autenticado | Sesión iniciada | `T23-12_preferencias.png` | R8B-78, Implementada | [ ] | |
+| T23-01 | Ingreso | `http://localhost/login` | Pública | Sesión cerrada | `T23-01_ingreso.png` | R8B-67, Implementada | [x] | 13/11/2026. Sesión cerrada; formulario vacío (los campos muestran sus textos de ejemplo); sin datos personales. |
+| T23-02 | Inicio | `http://localhost/home` | Autenticado | Sesión iniciada | `T23-02_inicio.png` | R8B-68, Implementada | [x] | 13/11/2026. Sesión de `admin` (rol Admin, origen Bootstrap, 18 permisos); accesos rápidos a todas las vistas; sin datos personales. |
+| T23-03 | Panel | `http://localhost/dashboard` | `dashboard:read` | Al menos una ejecución terminada | `T23-03_panel.png` | R8B-69, Parcial | [x] | 13/11/2026, actualizado 14:02:39 (antes de E10). 369 detecciones, todas pendientes; 66 avisos sin reconocer; 10 términos activos; 9 registros de ejecución; actividad 6. Sin datos personales. |
+| T23-04 | Menciones | `http://localhost/mentions` | `mentions:read` | Menciones persistidas en la corrida | `T23-04_menciones.png` | R8B-70, Parcial | [x] | 13/11/2026. Menciones de GitHub y Hacker News de la corrida. **Editada:** se taparon los nombres de usuario del campo «Author» (datos personales según §7.8.4 y Tabla A3; minimización); el resto de la imagen no cambió. El texto de las menciones se muestra completo, como lo ve el analista durante la revisión (§7.8.4). El original se conserva fuera del repositorio. |
+| T23-05 | Detecciones | `http://localhost/threats` | `threats:read` | Al menos una detección, si la corrida la produjo | `T23-05_detecciones.png` | R8B-71, Implementada | [x] | 13/11/2026. Detecciones `general` de la corrida, todas `Pending`, con severidad, confianza, riesgo y mención relacionada; no muestra autoría. Sin datos personales. |
+| T23-06 | Avisos | `http://localhost/alerts` | `alerts:read` | Al menos un aviso, si la corrida lo produjo | `T23-06_avisos.png` | R8B-72, Parcial | [x] | 13/11/2026. Avisos `high` creados y enviados a las 14:00:56, sin reconocer, canales slack, email y #security-alerts. Figuran `Sent` aunque se generaron antes de definir `ALERT_EMAIL_TO` (correo rebotado; ver Notas de `escenarios.md`): es la limitación declarada de `delivery_status`. Sin datos personales. |
+| T23-07 | Términos | `http://localhost/keywords` | `keywords:read` | Los términos iniciales cargados | `T23-07_terminos.png` | R8B-73, Implementada | [x] | 13/11/2026. Los 10 términos iniciales activos, con categoría, prioridad, coincidencias y última coincidencia de la corrida. Sin datos personales. |
+| T23-08 | Automatización | `http://localhost/automation` | `workflows:read` | Al menos una ejecución registrada | `T23-08_automatizacion.png` | R8B-74, Implementada | [x] | 13/11/2026. Última ejecución en `success` (150 menciones recolectadas, 47 procesadas, 47 detecciones, 20 avisos) e historial; la fila con 41 detecciones y 15 avisos es la de E08. La duración figura en 0 s en todas: `started_at` se graba al final del flujo (hallazgo para B7b). Sin datos personales. |
+| T23-09 | Registros | `http://localhost/logs` | `logs:read` | Ejecuciones de la corrida registradas | `T23-09_registros.png` | R8B-75, Parcial | [x] | 13/11/2026. Pestaña «Executions»: ejecuciones de la corrida en `success` con contadores, horas y duración 0 s (inicio y fin iguales; ver T23-08). La de las 13:48:30 es E08 (41 detecciones y 15 avisos informados, 0 guardados). No muestra estado por fuente (limitación declarada). Sin datos personales; la pestaña «User Activity» no se capturó. |
+| T23-10 | Indicadores | `http://localhost/analytics` | `metrics:read` | Datos dentro de la ventana por defecto (30 días) | `T23-10_indicadores.png` | R8B-76, Parcial | [x] | 13/11/2026. Vista desplazada hacia abajo (no se ve el título): 410 menciones, 66 avisos, 369 detecciones, sentimiento medio 0,05; menciones en el tiempo y sentimiento desde el 14/10 (fecha de publicación) y distribución por plataforma (GitHub 75 %, Hacker News 20 %, Exploit-DB 5 %). Sin datos personales. |
+| T23-11 | Usuarios | `http://localhost/users` | `users:read` | Al menos el usuario administrador | `T23-11_usuarios.png` | R8B-77, Implementada | [x] | 13/11/2026. El directorio dice «No users registered yet.»: el administrador de la sesión es el de arranque (origen Bootstrap, definido por configuración) y no figura como usuario registrado. No se cumple el estado previo «al menos el usuario administrador»; se toma igual, sin cargar datos (ver §3). Roles de sistema Admin y Analyst, sin roles propios. Sin datos personales. |
+| T23-12 | Preferencias | `http://localhost/settings` | Autenticado | Sesión iniciada | `T23-12_preferencias.png` | R8B-78, Implementada | [x] | 13/11/2026, 14:31. Perfil `admin`, cambio de contraseña con los campos vacíos, tema oscuro e idioma inglés. Sin datos personales. |
 
 ## 4. Al terminar
 
-- [ ] En esta carpeta están la salida de la suite, el log de la corrida y las 12 capturas.
-- [ ] El commit del log coincide con el de la suite y con el que estaba al tomar las capturas.
-- [ ] Ningún archivo se editó a mano.
+- [x] En esta carpeta están la salida de la suite, el log de la corrida y las 12 capturas. (13/11/2026: `suite_20261113-161324.log`, `corrida_funcional_20261113-131408.log` e `imagenes/T23-01` a `T23-12`; los escenarios manuales, en `manuales/`.)
+- [x] El commit del log coincide con el de la suite y con el que estaba al tomar las capturas. (`b0c76dd` en los tres; los cambios posteriores están solo en `audit/`.)
+- [x] Ningún archivo se editó a mano, salvo `T23-04_menciones.png`: se taparon los nombres de usuario por minimización, y la edición se declara en su fila. Los logs y los resultados de `manuales/` no se editaron.

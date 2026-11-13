@@ -1,0 +1,19 @@
+BEGIN
+== Detections inserted or updated since the trigger
+ detections_touched | detections_new | high_or_critical 
+--------------------+----------------+------------------
+                  0 |              0 |                0
+(1 row)
+
+== Alerts of those detections, by creation time and delivery_status
+ created_after_trigger | delivery_status | alerts | first_created | last_created 
+-----------------------+-----------------+--------+---------------+--------------
+(0 rows)
+
+== Latest alert in the table
+     latest_alert_created      
+-------------------------------
+ 2026-11-13 18:30:48.825334+00
+(1 row)
+
+COMMIT

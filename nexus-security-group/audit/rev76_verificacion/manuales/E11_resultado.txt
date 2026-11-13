@@ -1,0 +1,23 @@
+BEGIN
+== Executions since the trigger
+ log_id | execution_id | status  | detections_generated | alerts_generated |         started_at         |         completed_at         
+--------+--------------+---------+----------------------+------------------+----------------------------+------------------------------
+     17 | 17           | success |                   47 |               34 | 2026-11-13 18:50:47.632+00 | 2026-11-13 18:50:47.65164+00
+(1 row)
+
+== Alerts since the trigger: one delivery_status for both channels?
+ alert_id | detection_id | alert_severity | channels_sent | slack_channel | delivery_status | sent_at | created_at 
+----------+--------------+----------------+---------------+---------------+-----------------+---------+------------
+(0 rows)
+
+== Alerts per delivery_status
+ delivery_status | alerts 
+-----------------+--------
+(0 rows)
+
+== Review status of the alerted detections (shown in the interface)
+ review_status | detections 
+---------------+------------
+(0 rows)
+
+COMMIT

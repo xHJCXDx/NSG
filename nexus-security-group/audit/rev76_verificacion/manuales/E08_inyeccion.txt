@@ -1,0 +1,19 @@
+== Injection time (use it as since for E08_consulta.sql)
+          injected_at          
+-------------------------------
+ 2026-11-13 16:48:02.977827+00
+(1 row)
+
+ALTER TABLE
+== Constraint in place (expect 1 row, convalidated f)
+       conname       | convalidated 
+---------------------+--------------
+ e08_reject_new_rows | f
+(1 row)
+
+ALTER TABLE
+== Constraint removed (expect 0 rows)
+ conname 
+---------
+(0 rows)
+
