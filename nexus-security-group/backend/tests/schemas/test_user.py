@@ -15,11 +15,13 @@ def test_user_create_defaults_to_active_analyst():
     assert payload.is_active is True
 
 
-def test_user_create_rejects_invalid_role():
+def test_user_create_leaves_role_validation_to_roles_table():
+    """Roles live in the roles table; the router rejects unknown names (400)."""
     from schemas.user import UserCreate
 
-    with pytest.raises(ValidationError):
-        UserCreate(username="user", password="secret123", role="owner")
+    payload = UserCreate(username="user", password="secret123", role="owner")
+
+    assert payload.role == "owner"
 
 
 def test_user_create_rejects_short_password():

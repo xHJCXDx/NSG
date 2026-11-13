@@ -233,6 +233,20 @@ def test_duplicate_username_returns_409_and_does_not_commit():
     assert not any(isinstance(obj, UserActivity) for obj in fake_db.added)
 
 
+def test_create_user_with_unknown_role_returns_400_and_does_not_persist():
+    fake_db = FakeDb(query_results=[FakeQuery(first_result=None)])
+    request = UserCreate(username="user", password="secret123", role="owner")
+    admin = TokenData(username="root", role="admin", auth_source="bootstrap")
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_user(request=request, db=fake_db, current_user=admin)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Unknown role: owner"
+    assert fake_db.added == []
+    assert fake_db.committed is False
+
+
 def test_create_user_rolls_back_integrity_error_and_returns_409():
     fake_db = FakeDb(
         first_result=None,

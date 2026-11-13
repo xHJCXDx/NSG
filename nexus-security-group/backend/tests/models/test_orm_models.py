@@ -169,7 +169,7 @@ class TestColumnCompleteness:
     ]
 
     SYSTEM_USER_COLS = [
-        "user_id", "username", "password_hash", "role", "is_active",
+        "user_id", "username", "password_hash", "role_id", "is_active",
         "created_by", "created_at", "updated_at",
     ]
 
@@ -179,7 +179,7 @@ class TestColumnCompleteness:
     ]
 
     ROLE_PERMISSION_COLS = [
-        "role", "permission_id", "created_at",
+        "role_id", "permission_id", "created_at",
     ]
 
     def _assert_columns(self, model, expected_cols):
@@ -299,6 +299,8 @@ class TestForeignKeys:
         (UserActivity,       "related_detection_id","threat_detections.detection_id"),
         (UserActivity,       "related_alert_id",    "alerts.alert_id"),
         (RolePermission,     "permission_id",       "permissions.permission_id"),
+        (RolePermission,     "role_id",             "roles.role_id"),
+        (SystemUser,         "role_id",             "roles.role_id"),
     ]
 
     def test_fk_references(self):
@@ -369,6 +371,15 @@ class TestForeignKeys:
         fk = next(iter(col.foreign_keys))
         assert fk.ondelete == "CASCADE", (
             f"RolePermission.permission_id must have ON DELETE CASCADE, got '{fk.ondelete}'"
+        )
+
+    def test_on_delete_cascade_role_permission_role(self):
+        """RolePermission.role_id → roles ON DELETE CASCADE."""
+        mapper = inspect(RolePermission)
+        col = mapper.columns["role_id"]
+        fk = next(iter(col.foreign_keys))
+        assert fk.ondelete == "CASCADE", (
+            f"RolePermission.role_id must have ON DELETE CASCADE, got '{fk.ondelete}'"
         )
 
 
@@ -532,16 +543,6 @@ class TestCheckConstraints:
     def test_keyword_weight_check(self):
         assert self._has_check_for(KeywordMonitor, "keyword_weight"), (
             "KeywordMonitor missing CHECK constraint on 'keyword_weight'"
-        )
-
-    def test_system_user_role_check(self):
-        assert self._has_check_for(SystemUser, "role"), (
-            "SystemUser missing CHECK constraint on 'role'"
-        )
-
-    def test_role_permission_role_check(self):
-        assert self._has_check_for(RolePermission, "role"), (
-            "RolePermission missing CHECK constraint on 'role'"
         )
 
 
