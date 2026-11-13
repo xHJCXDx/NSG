@@ -1,0 +1,32 @@
+BEGIN
+== Executions since the trigger
+ log_id | execution_id | status  | detections_generated | alerts_generated |         started_at         |         completed_at          
+--------+--------------+---------+----------------------+------------------+----------------------------+-------------------------------
+     10 | 10           | success |                   40 |                6 | 2026-11-13 17:15:55.001+00 | 2026-11-13 17:15:55.044164+00
+     11 | 11           | success |                    0 |                0 | 2026-11-13 17:16:11.8+00   | 2026-11-13 17:16:11.819257+00
+(2 rows)
+
+== Alerts since the trigger: one delivery_status for both channels?
+ alert_id | detection_id | alert_severity | channels_sent |  slack_channel   | delivery_status |           sent_at            |          created_at          
+----------+--------------+----------------+---------------+------------------+-----------------+------------------------------+------------------------------
+       73 |          428 | high           | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+       74 |          433 | high           | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+       75 |          436 | high           | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+       76 |          441 | high           | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+       77 |          446 | critical       | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+       78 |          450 | critical       | {slack,email} | #security-alerts | sent            | 2026-11-13 17:15:54.82174+00 | 2026-11-13 17:15:54.82174+00
+(6 rows)
+
+== Alerts per delivery_status
+ delivery_status | alerts 
+-----------------+--------
+ sent            |      6
+(1 row)
+
+== Review status of the alerted detections (shown in the interface)
+ review_status | detections 
+---------------+------------
+ pending       |          6
+(1 row)
+
+COMMIT

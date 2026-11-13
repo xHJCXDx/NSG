@@ -1,0 +1,25 @@
+BEGIN
+== Executions since the injection (expect status success: binary state)
+ log_id | execution_id | status  | mentions_collected | mentions_processed | detections_generated | alerts_generated |         started_at         |         completed_at         
+--------+--------------+---------+--------------------+--------------------+----------------------+------------------+----------------------------+------------------------------
+      7 | 7            | success |                150 |                 41 |                   41 |               15 | 2026-11-13 16:48:30.441+00 | 2026-11-13 16:48:30.45652+00
+(1 row)
+
+== Mentions since the injection: with analysis, with detection
+ mentions | with_analysis | with_detection | analysis_without_detection 
+----------+---------------+----------------+----------------------------
+       41 |            41 |              0 |                         41
+(1 row)
+
+== Detections created since the injection (expect 0)
+ detections 
+------------
+          0
+(1 row)
+
+== Alerts created since the injection
+ alert_id | detection_id | alert_severity | channels_sent | delivery_status | created_at 
+----------+--------------+----------------+---------------+-----------------+------------
+(0 rows)
+
+COMMIT

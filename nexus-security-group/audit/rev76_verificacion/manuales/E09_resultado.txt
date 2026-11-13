@@ -1,0 +1,49 @@
+== Executions started since the trigger (expect 2, overlapping)
+ log_id | execution_id | status  | mentions_collected | mentions_processed | detections_generated | alerts_generated |         started_at         |         completed_at          
+--------+--------------+---------+--------------------+--------------------+----------------------+------------------+----------------------------+-------------------------------
+      3 | 3            | success |                150 |                 44 |                   44 |                6 | 2026-11-13 16:27:09.426+00 | 2026-11-13 16:27:09.451384+00
+      4 | 4            | success |                150 |                 44 |                   44 |                6 | 2026-11-13 16:27:09.623+00 | 2026-11-13 16:27:09.644215+00
+      5 | 5            | success |                150 |                 40 |                   40 |                6 | 2026-11-13 16:30:56.384+00 | 2026-11-13 16:30:56.401181+00
+(3 rows)
+
+== Overlap check: second start before first completion
+ overlapped 
+------------
+ f
+(1 row)
+
+== Mentions collected since the trigger, per platform
+ platform | mentions 
+----------+----------
+ github   |       84
+          |       84
+(2 rows)
+
+== Duplicate (platform, external_id) among them (expect 0 rows)
+ platform | external_id | count 
+----------+-------------+-------
+(0 rows)
+
+== Rows per mention: analyses, detections, alerts (expect at most 1 each)
+ mentions | with_analysis | detections | alerts | extra_alerts 
+----------+---------------+------------+--------+--------------
+       84 |            84 |         84 |     12 |            0
+(1 row)
+
+== Alerts of those detections (compare with Slack and email messages received)
+ alert_id | detection_id | alert_severity | channels_sent | delivery_status |          created_at           
+----------+--------------+----------------+---------------+-----------------+-------------------------------
+       28 |          205 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       29 |          211 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       30 |          225 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       31 |          232 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       32 |          236 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       33 |          240 | high           | {slack,email} | sent            | 2026-11-13 16:27:09.103118+00
+       40 |          288 | high           | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+       41 |          289 | high           | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+       42 |          292 | critical       | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+       43 |          295 | high           | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+       44 |          296 | high           | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+       45 |          303 | high           | {slack,email} | sent            | 2026-11-13 16:30:56.205215+00
+(12 rows)
+

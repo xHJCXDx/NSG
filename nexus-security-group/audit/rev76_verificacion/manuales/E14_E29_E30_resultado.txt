@@ -1,0 +1,53 @@
+BEGIN
+== Real rows older than 365 days before the purge (should be 0: A8 data is from today)
+ old_real_mentions | old_real_logs | real_mentions_before | real_logs_before 
+-------------------+---------------+----------------------+------------------
+               113 |             0 |                  710 |               18
+(1 row)
+
+INSERT 0 4
+INSERT 0 4
+INSERT 0 1
+== Before the purge
+  external_id  | review_status |  created   |    author_username     | author_id |      raw_data       
+---------------+---------------+------------+------------------------+-----------+---------------------
+ rev76-e14     | confirmed     | 2025-11-12 | rev76-synthetic-author | rev76-a1  | {"synthetic": true}
+ rev76-e29-inv | investigating | 2025-11-12 | rev76-synthetic-author | rev76-a3  | {"synthetic": true}
+ rev76-e29-res | resolved      | 2025-11-12 | rev76-synthetic-author | rev76-a2  | {"synthetic": true}
+ rev76-e30     | confirmed     | 2025-10-09 | rev76-synthetic-author | rev76-a4  | {"synthetic": true}
+(4 rows)
+
+ log_id | workflow_name |  started   
+--------+---------------+------------
+     19 | rev76-e30     | 2025-10-09
+(1 row)
+
+== CALL purge_old_data()
+psql:<stdin>:62: NOTICE:  Purge completed: 115 mentions, 1 logs deleted (cutoff: 2025-11-13 19:12:14.285842+00)
+CALL
+== After the purge: mentions that survive (E14: author and raw data kept? E29: which one survives?)
+ external_id | review_status |  created   |    author_username     | author_id |      raw_data       
+-------------+---------------+------------+------------------------+-----------+---------------------
+ rev76-e14   | confirmed     | 2025-11-12 | rev76-synthetic-author | rev76-a1  | {"synthetic": true}
+ rev76-e30   | confirmed     | 2025-10-09 | rev76-synthetic-author | rev76-a4  | {"synthetic": true}
+(2 rows)
+
+== After the purge: E30 execution log (kept while its mention exists?)
+ e30_logs_left 
+---------------
+             0
+(1 row)
+
+== Real rows deleted by the purge (should be 0)
+ real_mentions_now | real_logs_now 
+-------------------+---------------
+               597 |            18
+(1 row)
+
+ROLLBACK
+== After ROLLBACK: synthetic rows left (should be 0 and 0)
+ mentions | logs 
+----------+------
+        0 |    0
+(1 row)
+
