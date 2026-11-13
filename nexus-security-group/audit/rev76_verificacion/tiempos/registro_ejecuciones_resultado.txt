@@ -1,0 +1,22 @@
+ log_id | execution_id | status  | mentions_collected | mentions_processed | detections_generated | alerts_generated
+--------+--------------+---------+--------------------+--------------------+----------------------+------------------
+      1 | 1            | success |                150 |                150 |                  150 |               22
+      2 | 2            | success |                150 |                 46 |                   46 |                5
+      3 | 3            | success |                150 |                 44 |                   44 |                6
+      4 | 4            | success |                150 |                 44 |                   44 |                6
+      5 | 5            | success |                150 |                 40 |                   40 |                6
+      6 | 6            | success |                150 |                 42 |                   42 |                7
+      7 | 7            | success |                150 |                 41 |                   41 |               15
+      8 | 9            | success |                150 |                  0 |                    0 |                0
+      9 | 8            | success |                150 |                 47 |                   47 |               20
+     10 | 10           | success |                150 |                 40 |                   40 |                6
+     11 | 11           | success |                150 |                  0 |                    0 |                0
+     12 | 12           | success |                149 |                 40 |                   40 |                3
+     13 | 13           | success |                150 |                 42 |                   42 |                3
+     14 | 14           | success |                150 |                 39 |                   39 |                3
+     15 | 15           | success |                150 |                 47 |                   47 |                5
+     16 | 16           | success |                150 |                 48 |                   48 |               18
+     17 | 17           | success |                150 |                 47 |                   47 |               34
+     18 | 18           | success |                150 |                 44 |                   44 |               11
+     20 | 19           | success |                150 |                 43 |                   43 |               17
+(19 rows)
