@@ -1,0 +1,11 @@
+E10 - Send Slack Alert node output, n8n execution 10 (2026-11-13 14:15:55 -03:00).
+Copied from the n8n Executions view. The node has continueOnFail enabled, so the
+workflow went on. Stack trace omitted (only n8n/axios internal frames).
+
+message: 404 - "no_team"
+name:    AxiosError
+code:    ERR_BAD_REQUEST
+status:  404
+
+Execution 11 (14:16:11 -03:00, manual trigger) found no new items and took the
+"Prep Log No Items" branch; it never reached Send Slack Alert.

@@ -85,6 +85,7 @@ def test_metrics_summary_maps_orm_query_results_to_frontend_shape():
             FakeQuery(scalar_result=12),
             FakeQuery(all_result=[("positive", 7), ("neutral", 3), ("negative", 2)]),
             FakeQuery(scalar_result=5),
+            FakeQuery(scalar_result=0.123456),
         ]
     )
 
@@ -94,8 +95,9 @@ def test_metrics_summary_maps_orm_query_results_to_frontend_shape():
         "total_mentions": 12,
         "sentiment_distribution": {"positive": 7, "neutral": 3, "negative": 2},
         "alerts_count": 5,
+        "avg_sentiment_score": 0.1235,
     }
-    assert len(fake_db.query_args) == 3
+    assert len(fake_db.query_args) == 4
 
 
 def test_metrics_summary_coerces_empty_counts_to_zero():
@@ -103,6 +105,7 @@ def test_metrics_summary_coerces_empty_counts_to_zero():
         [
             FakeQuery(scalar_result=None),
             FakeQuery(all_result=[]),
+            FakeQuery(scalar_result=None),
             FakeQuery(scalar_result=None),
         ]
     )
@@ -113,6 +116,7 @@ def test_metrics_summary_coerces_empty_counts_to_zero():
         "total_mentions": 0,
         "sentiment_distribution": {},
         "alerts_count": 0,
+        "avg_sentiment_score": None,
     }
 
 
@@ -230,6 +234,7 @@ def test_metrics_summary_allows_authenticated_user_with_metrics_read_permission(
         [
             FakeQuery(scalar_result=None),
             FakeQuery(all_result=[]),
+            FakeQuery(scalar_result=None),
             FakeQuery(scalar_result=None),
         ]
     )

@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent
 AUDIT_DIR = BASE_DIR.parent
-MATRIX_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2_REV37.csv"
+MATRIX_CSV = AUDIT_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2.csv"
 FEATURES_CSV = BASE_DIR / "social_mentions_full_features_REV45.csv"
 OUTPUT_CSV = BASE_DIR / "Matriz_Reauditoria_Matching_REV45_Texto_Completo.csv"
 SUMMARY_MD = BASE_DIR / "resumen_reauditoria_matching_rev45_texto_completo.md"
@@ -242,7 +242,7 @@ def main() -> None:
 
     summary = f"""# Resumen de Re-auditoría Complementaria REV45 — Texto Completo
 
-> Fuente histórica: `../01_historical_audit/01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv`  
+> Fuente histórica: `../01_historical_audit/01_historical_audit/Matriz_Auditoria_Fase2.csv`  
 > Fuente textual completa: `social_mentions_full_features_REV45.csv`  
 > Salida: `Matriz_Reauditoria_Matching_REV45_Texto_Completo.csv`  
 > Alcance: recálculo complementario usando texto completo exportado desde PostgreSQL y matching por límite de palabra.

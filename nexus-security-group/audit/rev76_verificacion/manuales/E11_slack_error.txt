@@ -1,0 +1,14 @@
+E11 - Send Slack Alert node output, n8n scheduled execution of 2026-11-13 15:45 -03:00
+(execution_logs log_id 17, logged at 15:50:47 -03:00). Copied from the n8n Executions view.
+SLACK_WEBHOOK_URL pointed to a local server (container e11-slack-hang, image
+n8nio/n8n:2.39.7 running a Node net server) that accepts the TCP connection and
+never answers. The node has continueOnFail enabled. Stack trace omitted (only
+n8n/axios internal frames).
+
+Fake server log (docker logs e11-slack-hang):
+2026-11-13T18:45:44.004Z connection from ::ffff:172.18.0.6
+
+Node output:
+message: timeout of 300000ms exceeded
+name:    AxiosError
+code:    ECONNABORTED

@@ -1,0 +1,52 @@
+== Chosen detection and mention
+ detection_id | mention_id 
+--------------+------------
+           30 |         30
+(1 row)
+
+== Before: mention engagement
+ mention_id |  platform  | likes_count | shares_count | replies_count | views_count |         last_updated          
+------------+------------+-------------+--------------+---------------+-------------+-------------------------------
+         30 | hackernews |         395 |            0 |           234 |           0 | 2026-11-13 16:12:35.030111+00
+(1 row)
+
+== Before: numeric and boolean fields kept in raw_data
+     key      |   value    
+--------------+------------
+ created_at_i | 1794466368
+ num_comments | 234
+ points       | 395
+ story_id     | 50463899
+(4 rows)
+
+== Before: stored detection
+ detection_id | criticality_level | risk_score | confidence_score | matched_keywords | detection_rules_triggered | detection_method | contextual_notes |         last_updated          
+--------------+-------------------+------------+------------------+------------------+---------------------------+------------------+------------------+-------------------------------
+           30 | medium            |         35 |            0.350 | {security}       |                           | heuristic        |                  | 2026-11-13 16:12:36.972495+00
+(1 row)
+
+== Change: likes_count + 2
+BEGIN
+UPDATE 1
+COMMIT
+== After: mention engagement
+ mention_id |  platform  | likes_count | shares_count | replies_count | views_count |         last_updated          
+------------+------------+-------------+--------------+---------------+-------------+-------------------------------
+         30 | hackernews |         397 |            0 |           234 |           0 | 2026-11-13 16:23:08.931719+00
+(1 row)
+
+== After: numeric and boolean fields kept in raw_data
+     key      |   value    
+--------------+------------
+ created_at_i | 1794466368
+ num_comments | 234
+ points       | 395
+ story_id     | 50463899
+(4 rows)
+
+== After: stored detection
+ detection_id | criticality_level | risk_score | confidence_score | matched_keywords | detection_rules_triggered | detection_method | contextual_notes |         last_updated          
+--------------+-------------------+------------+------------------+------------------+---------------------------+------------------+------------------+-------------------------------
+           30 | medium            |         35 |            0.350 | {security}       |                           | heuristic        |                  | 2026-11-13 16:12:36.972495+00
+(1 row)
+

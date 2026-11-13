@@ -1,6 +1,6 @@
 # Tabla de Contingencia y Cálculo de Cohen's κ
 
-**Fuente de datos:** `01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv` (n=200)
+**Fuente de datos:** `01_historical_audit/Matriz_Auditoria_Fase2.csv` (n=200)
 **Evaluador A:** Tomás Morales (estudiante de Ingeniería en Sistemas de Información, UTN FRM)
 **Evaluador B:** Camila Alaggia (estudiante de Ingeniería en Sistemas de Información, UTN FRM)
 **Fecha de generación:** Septiembre 2026
@@ -74,7 +74,7 @@
 import csv
 from collections import Counter
 
-with open('Matriz_Auditoria_Fase2_REV37.csv') as f:
+with open('Matriz_Auditoria_Fase2.csv') as f:
     rows = list(csv.DictReader(f))
 
 n = len(rows)

@@ -30,7 +30,7 @@ BOOTSTRAP_ITERATIONS = 10_000
 CONFIDENCE_LEVEL = 0.95
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-HISTORICAL_MATRIX = BASE_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2_REV37.csv"
+HISTORICAL_MATRIX = BASE_DIR / "01_historical_audit" / "Matriz_Auditoria_Fase2.csv"
 POPULATION_REV46 = BASE_DIR / "08_campaign_reconciliation" / "poblacion_campana_REV46.csv"
 DETECTIONS_REV46 = BASE_DIR / "08_campaign_reconciliation" / "detecciones_campana_REV46.csv"
 ALERTS_REV46 = BASE_DIR / "08_campaign_reconciliation" / "alertas_campana_REV46.csv"

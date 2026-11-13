@@ -1,7 +1,7 @@
 """
 Bootstrap IC95% — Cálculo de intervalos de confianza para métricas de auditoría.
 
-Fuente: Matriz_Auditoria_Fase2_REV37.csv (n=200)
+Fuente: Matriz_Auditoria_Fase2.csv (n=200)
 Método: Bootstrap con reemplazo, 10.000 iteraciones
 Referencia: §9.1.3, §9.6.9 de la tesis
 
@@ -21,7 +21,7 @@ N_ITERATIONS = 10_000
 
 # Leer la matriz
 script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(script_dir, "..", "01_historical_audit", "Matriz_Auditoria_Fase2_REV37.csv")
+csv_path = os.path.join(script_dir, "..", "01_historical_audit", "Matriz_Auditoria_Fase2.csv")
 
 with open(csv_path) as f:
     rows = list(csv.DictReader(f))

@@ -1,6 +1,6 @@
 # Resumen de Re-auditoría Complementaria REV45 — Matching por Límite de Palabra
 
-> Fuente: `01_historical_audit/Matriz_Auditoria_Fase2_REV37.csv`  
+> Fuente: `01_historical_audit/Matriz_Auditoria_Fase2.csv`  
 > Salida: `Matriz_Reauditoria_Matching_REV45.csv`  
 > Alcance: recálculo parcial/conservador sobre `text_excerpt` preservado.
 

@@ -1,0 +1,156 @@
+# Suite output (A8). Not edited.
+date: 2026-11-13 16:13:24 -03:00
+commit: b0c76dd3a3f10cb74bf69d2af7d8cea5ac378094
+tracked changes outside audit/: 0
+
+## sh tests/scenarios/run_scenarios.sh
+== Workflow scenarios: E01-E05, E09 (automatic part), E18 (partial), E20, E31
+✔ E01: Exploit-DB RCE title with own URL scores 30 + 25 + 5 = 60, critical, critical incident (2.807635ms)
+✔ E02: "apt install" and "vulnerability" with e <= 10 and URL scores 25 + 10 + 5 = 40, high, critical incident (declared false positive) (1.092576ms)
+✔ E03: nested pairs add both keywords: "supply chain attack" = 45 (high), "critical vulnerability" = 35 (medium) (2.104895ms)
+✔ E04: "exploit" repeated ten times with URL and e <= 10 scores 20 + 5 = 25, medium; repetition does not add (2.558576ms)
+✔ E05: thresholds 19, 20, 39, 40, 59, 60 give low, medium, medium, high, high, critical (0.52845ms)
+✔ E18 (partial): the Hacker News request asks for 50 items (1.602953ms)
+✔ E20: a GitHub response flagged incomplete still counts as a valid response (its items are normalized) (0.693353ms)
+✔ [falla esperada] E20: the incomplete-results indication is reported apart (0.872442ms)
+ℹ Declarada en la matriz (R8A-46, R8B-15, AD-50): no normalized item or source status carries incomplete_results
+✔ E31: a normalized Hacker News story keeps the username; followers and verification stay empty and Factor 4 adds 0 (5.973195ms)
+✔ [falla esperada] E31: the stored original content is the compact story object, not the full response (1.250826ms)
+ℹ Declarada en la matriz (A-12, R8A-42): raw_data keeps fields outside the compact object: _tags, _highlightResult, children
+✔ Prep Mention Insert: an existing mention is not modified (5.241934ms)
+✔ Insert Sentiment Analysis: an existing analysis is not modified (0.600623ms)
+✔ Insert Threat Detection: an existing detection is not reclassified (0.485832ms)
+✔ Enrich Mention + Prep Sentiment keeps every item when the insert returns no rows (1.963494ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 62.574158
+== API scenarios: E12 (adapted), E13
+============================= test session starts ==============================
+platform linux -- Python 3.14.8, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/hjcxd/Onedrive/Documentos/Obsidian/HJCXD/UTN/TecProgramacion/Tesis/NSG/nexus-security-group/backend
+plugins: anyio-4.15.1, typeguard-4.6.0
+collected 2 items
+
+tests/test_scenarios.py x                                                [ 50%]
+tests/test_threats_router.py .                                           [100%]
+
+=============================== warnings summary ===============================
+../../../../../../../../../../../../usr/lib/python3/dist-packages/slowapi/extension.py:720
+  /usr/lib/python3/dist-packages/slowapi/extension.py:720: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    if asyncio.iscoroutinefunction(func):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+XFAIL tests/test_scenarios.py::test_e13_deactivated_user_with_valid_token_is_rejected - Declared in the matrix (A-77, R8B-50): the token does not re-check is_active
+=================== 1 passed, 1 xfailed, 1 warning in 0.26s ====================
+exit code: 0
+
+## node --test "tests/workflow/*.test.mjs"
+✔ Aggregate Alerts does not carry the author (1.801167ms)
+✔ Build Alert Content: no channel includes the author (13.527603ms)
+✔ Build Alert Content: speaks of "señales para revisión", not of threats (1.95001ms)
+✔ Build Alert Content: email shows "Puntaje" as score x 100 with one decimal, no percent (0.987152ms)
+✔ Build Alert Content: counts by level are unchanged (0.92546ms)
+✔ Build Alert Content: every label is in Spanish (1.162505ms)
+✔ Build Alert Content: Slack lists up to five signals and says how many remain, in Spanish (1.331705ms)
+✔ Prep Alert Insert: title "Señal <nivel> para revisión", message without author (0.583421ms)
+✔ Parse Items: followers and verification are empty (NULL) (5.674087ms)
+✔ Parse GitHub Issues: followers and verification are empty (NULL) (0.61515ms)
+✔ Parse RSS Items: followers and verification are empty (NULL) (0.921442ms)
+✔ Hacker News points are still kept as likes_count (1.115688ms)
+✔ Classify Threat: empty followers and verification add 0 (Factor 4) (2.030287ms)
+✔ Prep Mention Insert writes NULL for empty followers and verification (1.183482ms)
+✔ Prep Mention Insert still writes real values when a source provides them (1.111209ms)
+✔ n8n port 5678 is published (0.438705ms)
+✔ n8n port 5678 is bound to 127.0.0.1 only (0.416795ms)
+✔ Prep Mention Insert: an existing mention is not modified (5.339674ms)
+✔ Insert Sentiment Analysis: an existing analysis is not modified (0.535553ms)
+✔ Insert Threat Detection: an existing detection is not reclassified (0.393132ms)
+✔ Enrich Mention + Prep Sentiment keeps every item when the insert returns no rows (1.716411ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 70.25615
+exit code: 0
+
+## cd backend && .venv/bin/python -m pytest -q -p no:cacheprovider tests
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+.............................................................F.......... [ 80%]
+......................x.............................................     [100%]
+=================================== FAILURES ===================================
+______ test_backend_application_code_uses_orm_instead_of_raw_sql_queries _______
+
+    def test_backend_application_code_uses_orm_instead_of_raw_sql_queries():
+        """Routers/auth/db wiring must not embed avoidable raw SQL queries.
+    
+        DDL-oriented model defaults are covered by ORM model tests and intentionally
+        live outside this contract; API/query code should use SQLAlchemy models.
+        """
+        findings = []
+    
+        for path in APPLICATION_FILES:
+            source = path.read_text()
+            tree = ast.parse(source, filename=str(path))
+    
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    function = node.func
+                    if isinstance(function, ast.Attribute) and function.attr == "execute":
+                        findings.append(
+                            f"{path.relative_to(BACKEND_ROOT)}:{node.lineno} uses .execute()"
+                        )
+                    if isinstance(function, ast.Name) and function.id == "text":
+                        findings.append(f"{path.relative_to(BACKEND_ROOT)}:{node.lineno} uses text()")
+    
+            for node in _string_literals(tree):
+                normalized = " ".join(node.value.lower().split())
+                if any(keyword in f"{normalized} " for keyword in RAW_SQL_KEYWORDS):
+                    findings.append(
+                        f"{path.relative_to(BACKEND_ROOT)}:{node.lineno} embeds SQL text"
+                    )
+    
+>       assert findings == []
+E       AssertionError: assert ['routers/met... text()', ...] == []
+E         
+E         Left contains 15 more items, first extra item: 'routers/metrics.py:253 uses .execute()'
+E         Use -v to get more diff
+
+tests/test_no_raw_sql_contract.py:66: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.14/site-packages/slowapi/extension.py:720
+  /home/hjcxd/Onedrive/Documentos/Obsidian/HJCXD/UTN/TecProgramacion/Tesis/NSG/nexus-security-group/backend/.venv/lib/python3.14/site-packages/slowapi/extension.py:720: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    if asyncio.iscoroutinefunction(func):
+
+.venv/lib/python3.14/site-packages/fastapi/routing.py:233: 103 warnings
+tests/test_activity_router.py: 2 warnings
+tests/test_alerts_router.py: 15 warnings
+tests/test_error_payloads_contract.py: 8 warnings
+tests/test_keywords_router.py: 30 warnings
+tests/test_logs_router.py: 2 warnings
+tests/test_metrics_router.py: 26 warnings
+tests/test_n8n.py: 7 warnings
+tests/test_permissions_router.py: 12 warnings
+tests/test_roles_router.py: 6 warnings
+tests/test_route_auth_contract.py: 7 warnings
+tests/test_scenarios.py: 1 warning
+tests/test_threats_router.py: 15 warnings
+tests/test_users_router.py: 35 warnings
+  /home/hjcxd/Onedrive/Documentos/Obsidian/HJCXD/UTN/TecProgramacion/Tesis/NSG/nexus-security-group/backend/.venv/lib/python3.14/site-packages/fastapi/routing.py:233: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    is_coroutine = asyncio.iscoroutinefunction(dependant.call)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_no_raw_sql_contract.py::test_backend_application_code_uses_orm_instead_of_raw_sql_queries
+1 failed, 354 passed, 1 xfailed, 270 warnings in 1.98s
+exit code: 1

@@ -77,7 +77,7 @@ class SocialMention(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "platform IN ('twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'other')",
+            "platform IN ('twitter', 'reddit', 'telegram', 'discord', 'github', 'exploit-db', 'hackernews', 'other')",
             name="social_mentions_platform_check",
         ),
         CheckConstraint(

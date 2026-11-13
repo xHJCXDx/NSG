@@ -36,7 +36,7 @@ Prep Existing Check → Check Existing IDs → Filter Already Processed → Has 
 
 - `01-ingestion.md`: fuentes, parseo, normalización y deduplicación.
 - `02-analysis.md`: análisis de sentimiento, clasificación y scoring.
-- `03-storage.md`: patrón Prep → Insert → Enrich, upserts y conflictos.
+- `03-storage.md`: patrón Prep → Insert → Enrich y conflictos sin sobrescritura.
 - `04-alerting.md`: lógica de alertas, templates y canales.
 - `05-logging.md`: logs de ejecución, contadores y métricas derivadas.
 - `06-data-model.md`: tablas, relaciones, campos clave y vistas materializadas.

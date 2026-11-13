@@ -16,7 +16,7 @@ Esta carpeta separa la evaluación ciega parcial ejecutada en REV45 de la nueva 
 
 El paquete y los resultados de la nueva evaluación ciega multi-evaluador están en:
 
-- `rev46_new_evaluation/`
+- `nueva_evaluacion_ciega/`
 
 Ese directorio contiene muestra, instrucciones, protocolo, respuestas consolidadas, resultados y resumen. Su lectura debe ser conservadora: aporta evidencia complementaria de pertinencia amplia y variabilidad humana, no validación operacional de severidad.
 

@@ -34,6 +34,10 @@ Campos clave: `platform`, `external_id`, `text_content`, `created_at`, `author_*
 - `Log Alert in DB` inserta en `alerts`.
 - `idx_alerts_detection_id` es único: una alerta por detección.
 
+## Conflictos: no se sobrescribe
+
+Las inserciones de menciones, sentimiento y detecciones usan `ON CONFLICT ... DO NOTHING`. Si dos ejecuciones se superponen y la segunda encuentra la fila ya escrita, no la modifica: una detección nunca se reclasifica en el lugar. En ese caso `RETURNING` no devuelve fila, y por eso las etapas siguientes no dependen de esa salida (ver la decisión de diseño).
+
 ## Decisión de diseño
 
 El workflow evita depender de la salida agregada de PostgreSQL para contar items. Los nodos `Enrich ...` son passthrough y sirven como fuente confiable para métricas de ejecución.

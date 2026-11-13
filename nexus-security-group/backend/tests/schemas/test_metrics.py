@@ -29,6 +29,7 @@ def test_metrics_summary_endpoint_response_frontend_contract():
         "total_mentions": 20,
         "sentiment_distribution": {"positive": 10, "neutral": 7, "negative": 3},
         "alerts_count": 4,
+        "avg_sentiment_score": None,
     }
 
 
