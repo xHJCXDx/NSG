@@ -582,6 +582,11 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_analyst;
 GRANT INSERT, UPDATE ON threat_detections TO osint_analyst;
 GRANT INSERT, UPDATE ON alerts TO osint_analyst;
 GRANT INSERT ON user_activity TO osint_analyst;
+-- INSERT on a BIGSERIAL table also needs USAGE on its sequence (nextval).
+GRANT USAGE ON SEQUENCE threat_detections_detection_id_seq,
+                        alerts_alert_id_seq,
+                        user_activity_activity_id_seq
+    TO osint_analyst;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
 

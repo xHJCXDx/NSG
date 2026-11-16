@@ -2,7 +2,9 @@
 # REV77 O1: verify on a clean database that the analyst and read-only roles
 # cannot read the network, session and additional data of user_activity
 # (ip_address, user_agent, session_id, activity_data) but can read the other
-# columns, and that the B5 restriction on system_users.password_hash still holds.
+# columns, that the analyst role can insert where init.sql grants INSERT (it
+# needs USAGE on the BIGSERIAL sequences), and that the B5 restriction on
+# system_users.password_hash still holds.
 #
 # Starts a throwaway postgres:17 container (same image as docker-compose.yml),
 # loads init.sql through docker-entrypoint-initdb.d, runs the checks and
@@ -98,8 +100,13 @@ for role in osint_analyst osint_readonly appsmith_readonly; do
     expect denied "$role" "$STAR"
 done
 expect ok osint_admin "SELECT ip_address, user_agent, session_id, activity_data FROM user_activity;"
-# The analyst role keeps its INSERT privilege on user_activity (init.sql).
+# The analyst role keeps its INSERT privilege on user_activity (init.sql) and
+# can draw ids from the sequences of the tables it inserts into (R8A-35).
 expect ok osint_analyst "INSERT INTO user_activity (username, activity_type, ip_address, session_id) VALUES ('o1-check', 'check', '127.0.0.1', 'sess-o1');"
+for seq in threat_detections_detection_id_seq alerts_alert_id_seq user_activity_activity_id_seq; do
+    expect ok     osint_analyst  "SELECT nextval('$seq');"
+    expect denied osint_readonly "SELECT nextval('$seq');"
+done
 
 echo
 echo "## 3. Regression: system_users.password_hash (REV77 B5)"
