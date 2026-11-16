@@ -439,13 +439,16 @@ describe('deleteRole', () => {
     vi.restoreAllMocks();
   });
 
-  it('sends DELETE with auth header and resolves void', async () => {
+  // a25b863 made role deletion a soft delete that returns the updated role
+  // (backend/routers/roles.py: response_model=RoleResponse).
+  it('sends DELETE with auth header and resolves the deactivated role', async () => {
+    const deactivatedRole = { role_id: 5, name: 'auditor', is_active: false };
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
-      json: async () => ({}),
+      json: async () => deactivatedRole,
     } as Response);
 
-    await expect(deleteRole('fake-jwt', 5)).resolves.toBeUndefined();
+    await expect(deleteRole('fake-jwt', 5)).resolves.toEqual(deactivatedRole);
 
     expect(fetchMock).toHaveBeenCalledWith(`${ROLES_ENDPOINT}/5`, {
       method: 'DELETE',

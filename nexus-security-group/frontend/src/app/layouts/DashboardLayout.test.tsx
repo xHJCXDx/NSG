@@ -77,10 +77,12 @@ describe('DashboardLayout navigation', () => {
 
     expect(screen.queryByRole('link', { name: /Overview/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Operations/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Dashboard/i })).toHaveAttribute('href', '/');
+    // c6bb818 moved the dashboard to /dashboard; / now redirects to /home.
+    expect(screen.getByRole('link', { name: /Dashboard/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /Analytics/i })).toHaveAttribute('href', '/analytics');
     expect(screen.getByRole('link', { name: /Mentions/i })).toHaveAttribute('href', '/mentions');
-    expect(screen.getByRole('link', { name: /Threats/i })).toHaveAttribute('href', '/threats');
+    // 030923e (REV77, finding Q-B2) labels the view Detections; the route stays /threats.
+    expect(screen.getByRole('link', { name: /Detections/i })).toHaveAttribute('href', '/threats');
     expect(screen.getByRole('link', { name: /Keywords/i })).toHaveAttribute('href', '/keywords');
     expect(screen.getByRole('link', { name: /Automation/i })).toHaveAttribute('href', '/automation');
     expect(screen.getByRole('link', { name: /Alerts/i })).toHaveAttribute('href', '/alerts');
@@ -115,7 +117,10 @@ describe('DashboardLayout navigation', () => {
     expect(screen.queryByRole('link', { name: /Logs/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /OSINT/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /Operations/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /Administration/i })).not.toBeInTheDocument();
+    // c6bb818 made Settings (Preferencias, Tabla 23: any authenticated user) visible without
+    // permissions, so the Administration heading stays, holding only Settings.
+    expect(screen.getByRole('heading', { name: /Administration/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Settings/i })).toHaveAttribute('href', '/settings');
   });
 
   it('shows the Automation destination only when workflows:read is present', () => {

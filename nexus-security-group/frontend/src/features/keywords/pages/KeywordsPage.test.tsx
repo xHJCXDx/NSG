@@ -13,6 +13,22 @@ const encodePayload = (payload: unknown) =>
 
 const makeToken = (permissions: string[]) => `header.${encodePayload({ permissions })}.signature`;
 
+// 4a65f8d added a second request for the managed category list. These tests script
+// the keyword requests in order, so the category request is answered separately
+// (empty list, as GET /api/keyword-categories returns a list) and the scripted
+// responses keep their original order.
+const mockFetchWithCategories = (responses: Response[]) => {
+  const queue = [...responses];
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    if (String(input).includes('/api/keyword-categories')) {
+      return { ok: true, json: async () => [] } as Response;
+    }
+    const next = queue.shift();
+    if (!next) throw new Error(`Unexpected fetch: ${String(input)}`);
+    return next;
+  });
+};
+
 const keyword = {
   keyword_id: 10,
   keyword_text: 'acme',
@@ -85,10 +101,11 @@ describe('KeywordsPage', () => {
 
   it('creates keywords with minimal validation and sanitized optional category', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...keyword, keyword_text: 'new-acme', keyword_category: null, keyword_weight: 30 }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => [{ ...keyword, keyword_text: 'new-acme', keyword_category: null, keyword_weight: 30 }] } as Response);
+    const fetchMock = mockFetchWithCategories([
+      { ok: true, json: async () => [] } as Response,
+      { ok: true, json: async () => ({ ...keyword, keyword_text: 'new-acme', keyword_category: null, keyword_weight: 30 }) } as Response,
+      { ok: true, json: async () => [{ ...keyword, keyword_text: 'new-acme', keyword_category: null, keyword_weight: 30 }] } as Response,
+    ]);
 
     renderKeywordsPage();
 
@@ -117,14 +134,15 @@ describe('KeywordsPage', () => {
 
   it('supports inline edit, active toggle, and safe delete confirmation', async () => {
     const user = userEvent.setup();
-    const fetchMock = vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce({ ok: true, json: async () => [keyword] } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...keyword, keyword_weight: 25 }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => [{ ...keyword, keyword_weight: 25 }] } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...keyword, is_active: false }) } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => [{ ...keyword, is_active: false }] } as Response)
-      .mockResolvedValueOnce({ ok: true } as Response)
-      .mockResolvedValueOnce({ ok: true, json: async () => [] } as Response);
+    const fetchMock = mockFetchWithCategories([
+      { ok: true, json: async () => [keyword] } as Response,
+      { ok: true, json: async () => ({ ...keyword, keyword_weight: 25 }) } as Response,
+      { ok: true, json: async () => [{ ...keyword, keyword_weight: 25 }] } as Response,
+      { ok: true, json: async () => ({ ...keyword, is_active: false }) } as Response,
+      { ok: true, json: async () => [{ ...keyword, is_active: false }] } as Response,
+      { ok: true } as Response,
+      { ok: true, json: async () => [] } as Response,
+    ]);
 
     renderKeywordsPage();
     expect(await screen.findByText('acme')).toBeInTheDocument();

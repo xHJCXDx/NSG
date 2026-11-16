@@ -52,9 +52,10 @@ describe('ThreatsPage', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Loading detections');
     expect(await screen.findByText('Potential leaked credential')).toBeInTheDocument();
-    expect(screen.getByText('credential_leak')).toBeInTheDocument();
+    // 8f86451 shows readable labels instead of raw values (credential_leak, high).
+    expect(screen.getByText('credential leak')).toBeInTheDocument();
     expect(screen.getByText('data exposure')).toBeInTheDocument();
-    expect(screen.getByText('high')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
     expect(screen.getByText('Normalized score 87%')).toBeInTheDocument();
     expect(screen.getByText('Evidence')).toBeInTheDocument();
     expect(screen.getByText('password')).toBeInTheDocument();
