@@ -585,6 +585,17 @@ GRANT INSERT ON user_activity TO osint_analyst;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
 
+-- Column-level read access on user_activity: network, session and additional
+-- data (ip_address, user_agent, session_id, activity_data) are readable only by
+-- the owner (service role) and osint_admin. appsmith_readonly inherits osint_readonly.
+REVOKE SELECT ON TABLE user_activity FROM osint_analyst, osint_readonly;
+GRANT SELECT (activity_id, username, user_role, activity_type, activity_description,
+              related_mention_id, related_detection_id, related_alert_id, activity_timestamp)
+    ON TABLE user_activity TO osint_analyst;
+GRANT SELECT (activity_id, username, user_role, activity_type, activity_description,
+              related_mention_id, related_detection_id, related_alert_id, activity_timestamp)
+    ON TABLE user_activity TO osint_readonly;
+
 -- Appsmith dashboard demo login: placeholder password only.
 -- For existing ./data/postgres volumes, apply this block manually because
 -- docker-entrypoint-initdb.d scripts run only on first database initialization.
