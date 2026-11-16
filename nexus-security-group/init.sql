@@ -683,8 +683,12 @@ CREATE TRIGGER update_system_users_updated_at
 
 GRANT ALL PRIVILEGES ON TABLE system_users TO osint_admin;
 GRANT ALL PRIVILEGES ON SEQUENCE system_users_user_id_seq TO osint_admin;
-GRANT SELECT ON TABLE system_users TO osint_analyst;
-GRANT SELECT ON TABLE system_users TO osint_readonly;
+-- Column-level read access: password_hash is readable only by the owner
+-- (service role) and osint_admin. appsmith_readonly inherits osint_readonly.
+GRANT SELECT (user_id, username, role_id, is_active, created_by, created_at, updated_at)
+    ON TABLE system_users TO osint_analyst;
+GRANT SELECT (user_id, username, role_id, is_active, created_by, created_at, updated_at)
+    ON TABLE system_users TO osint_readonly;
 
 -- ============================================
 -- TABLAS: permissions / role_permissions
