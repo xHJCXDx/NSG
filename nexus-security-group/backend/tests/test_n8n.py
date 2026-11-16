@@ -335,3 +335,37 @@ async def test_proxy_webhook_rejects_with_503_when_webhook_secret_is_not_configu
     assert response.json()["detail"] == "n8n webhook secret is not configured"
     client_factory.assert_not_called()
     assert fake_db.added == []
+
+
+@pytest.mark.anyio
+async def test_proxy_webhook_maps_n8n_secret_rejection_to_bad_gateway():
+    """A 401 from n8n means the shared secret does not match; it must not look
+    like an expired user session (the frontend logs the user out on 401)."""
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
+    fake_db = FakeDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    mock_client_instance = AsyncMock()
+    mock_client_instance.post = AsyncMock(
+        return_value=Response(
+            401,
+            json={"message": "Unauthorized"},
+            headers={"content-type": "application/json"},
+        )
+    )
+    mock_async_client = MagicMock()
+    mock_async_client.__aenter__ = AsyncMock(return_value=mock_client_instance)
+    mock_async_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("routers.n8n.httpx.AsyncClient", return_value=mock_async_client):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/api/n8n/webhook/osint-trigger", content=b"{}")
+
+    assert response.status_code == 502
+    assert response.json() == {"detail": "n8n rejected the webhook secret"}
+    assert fake_db.added == []

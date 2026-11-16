@@ -23,7 +23,7 @@ logger = logging.getLogger("nsg.n8n")
     responses={
         200: {"description": "Payload returned by the n8n workflow."},
         401: {"description": "Missing or invalid bearer token."},
-        502: {"description": "n8n could not be reached."},
+        502: {"description": "n8n could not be reached or rejected the webhook secret."},
         503: {"description": "The shared webhook secret is not configured."},
     },
 )
@@ -64,6 +64,15 @@ async def proxy_webhook(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="n8n workflow service unavailable",
             )
+
+    if response.status_code == status.HTTP_401_UNAUTHORIZED:
+        # The manual trigger answers 401 only when the shared secret does not
+        # match. Passing it through would look like an expired user session.
+        logger.error("n8n rejected the webhook secret: check WEBHOOK_SECRET on the API and n8n")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="n8n rejected the webhook secret",
+        )
 
     content_type = response.headers.get("content-type", "")
     if "application/json" in content_type.lower():
