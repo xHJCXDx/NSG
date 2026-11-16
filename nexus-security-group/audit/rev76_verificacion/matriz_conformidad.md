@@ -171,7 +171,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | A-75 | La API rechaza desactivar, eliminar o cambiar de rol al último `admin` activo | A.3 regla 2 l.2071 | | Parcial | Se controla borrar y desactivar: users.py:167-178, 254-265. PATCH `update_user` (users.py:125-129) cambia el rol o `is_active=False` sin control | sin escenario | declarar |  |
 | A-76 | Las bajas de usuarios y roles son lógicas | A.3 regla 3 l.2072 | | Parcial | Lógicas: users.py:180, roles.py:123. También hay borrado físico: users.py:234-283, roles.py:150-181 | sin escenario | corregir el texto |  |
 | A-77 | Un usuario inactivo no puede autenticarse (se verifica en cada solicitud) | A.3 regla 3 l.2072; E13 | | Parcial | El ingreso rechaza inactivos (auth/routes.py:96-97), pero tokens.py:36-57 no vuelve a mirar `is_active`: un token válido sigue funcionando | E13 | implementar | 9ad1573 (REV77) |
-| A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) | sin escenario | declarar |  |
+| A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) | sin escenario | implementar | de14e9b (REV77) |
 | A-79 | El control de estado del servicio es público | A.3 regla 4 l.2073 | | Implementada | backend/main.py:103-111 | sin escenario |  |  |
 | A-80 | La instalación crea un primer usuario `admin` | A.3 regla 5 l.2074 | | Parcial | init.sql no siembra ningún usuario en system_users (758-824); solo hay un ingreso de arranque por variables de entorno mientras la tabla está vacía (auth/routes.py:122-142) | sin escenario | declarar |  |
 | A-81 | La contraseña inicial de `admin` se guarda solo como hash | A.3 regla 5 l.2074 | | Contraria | backend/config.py:9 `ADMIN_PASSWORD` en el entorno, comparada en texto plano con hmac.compare_digest (auth/routes.py:123) | sin escenario | declarar |  |
@@ -297,7 +297,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | R8B-61 | T22: `viewer` no revisa detecciones, no reconoce avisos, no edita términos ni ejecuta el flujo | Tabla 22 l.1680-1689 | | No implementada | El rol no existe (init.sql:758-761); la regla se cumple solo porque no hay usuarios viewer | E12 | declarar |  |
 | R8B-62 | T22: «Ver automatización» habilita el estado del flujo y las últimas ejecuciones | Tabla 22 l.1688 | | Parcial | workflows:read solo se aplica en la interfaz (frontend/src/app/router/AppRouter.tsx:47); la API usa logs:read (AutomationPage.tsx:48; backend/routers/logs.py:23) | sin escenario | corregir el texto |  |
 | R8B-63 | T22: alta, edición y reactivación de usuarios; baja lógica; roles y matriz de permisos | Tabla 22 l.1690-1694 | | Implementada | backend/routers/users.py:36,115,205,155,180; roles.py:41,51; permissions.py:38,63. Extra no especificado: borrado definitivo en users.py:234 | sin escenario |  |  |
-| R8B-64 | Inicio, preferencias e información del sistema exigen usuario autenticado; el control de estado es público | Tabla 22 nota l.1696 | | Parcial | Estado público (backend/main.py:104); /info sin autenticación (backend/routers/system.py:15-17) | sin escenario | declarar |  |
+| R8B-64 | Inicio, preferencias e información del sistema exigen usuario autenticado; el control de estado es público | Tabla 22 nota l.1696 | | Parcial | Estado público (backend/main.py:104); /info sin autenticación (backend/routers/system.py:15-17) | sin escenario | implementar | de14e9b (REV77) |
 | R8B-65 | Cada vista exige su permiso y la API aplica el mismo permiso a los datos | §8.5.3 l.1700 | | Implementada | frontend/src/app/router/AppRouter.tsx:43-51 (ProtectedRoute) + require_permission en los routers | E12 |  |  |
 | R8B-66 | Las listas van de la más reciente a la más antigua y se paginan | §8.5.3 l.1700 | | Parcial | threats.py:93 (detected_at desc), alerts.py:39, logs.py:33 con offset/limit; las menciones se ordenan por created_at (publicación), backend/routers/metrics.py:92 | sin escenario | declarar |  |
 | R8B-67 | T23 Ingreso (pública, autenticación) | Tabla 23 l.1708 | | Implementada | AppRouter.tsx:29; frontend/src/features/auth/LoginView.tsx; backend/auth/routes.py:70 | sin escenario |  |  |
@@ -488,7 +488,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 ## Cambios REV77
 
-Fecha: 16/11/2026. Rama `fix/rev77-active-user-and-hash-grant`. Las columnas «Estado» y «Evidencia» siguen describiendo la auditoría sobre `9b90270`; los cambios se registran en «Decisión» y «Commit», como en los arreglos de B4.
+Fecha: 16/11/2026. Ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth`. Las columnas «Estado» y «Evidencia» siguen describiendo la auditoría sobre `9b90270`; los cambios se registran en «Decisión» y «Commit», como en los arreglos de B4.
 
 | Fila | Antes | Después | Commit | Verificación |
 |---|---|---|---|---|
@@ -496,6 +496,8 @@ Fecha: 16/11/2026. Rama `fix/rev77-active-user-and-hash-grant`. Las columnas «E
 | R8B-50 | No implementada, declarar | implementar | `9ad1573` | Ídem A-77 |
 | A-50 | Contraria, declarar | implementar | `df1f478` | init.sql: `SELECT` por columnas sobre `system_users`, sin `password_hash`, para `osint_analyst` y `osint_readonly` (`appsmith_readonly` hereda). Base limpia: `audit/rev77_verificacion/password_hash_20261116-140536.log`, 10/10 PASS |
 | R8A-34 | Contraria, declarar | declarar (corregida en parte) | `df1f478` | La regla abarca el hash y los datos de red: el hash quedó corregido; los datos de red y de sesión de la actividad siguen legibles (A-15) |
+| A-78 | Contraria, declarar | implementar | `de14e9b` | `/api/system/info` exige usuario autenticado (`Depends(get_current_user)` en backend/routers/system.py); el contrato de rutas lo pasa de «público» a «autenticado». Pruebas: `test_system_info_rejects_missing_bearer_token` (401) y `test_system_info_allows_any_authenticated_user` (200) en `backend/tests/test_system_router.py` |
+| R8B-64 | Parcial, declarar | implementar | `de14e9b` | Ídem A-78; el control de estado (`/api/health`) sigue público |
 
-**Conteos de decisión (196 filas no implementadas por completo):** implementar 13 → 16; corregir el texto 14; manual 12; declarar 157 → 154. Las 154 declaradas, por estado: No implementada 69, Parcial 61, Contraria 23, Contraria (sin ejecutar) 1.
+**Conteos de decisión (196 filas no implementadas por completo):** implementar 13 → 18; corregir el texto 14; manual 12; declarar 157 → 152. Las 152 declaradas, por estado: No implementada 69, Parcial 60, Contraria 22, Contraria (sin ejecutar) 1.
 

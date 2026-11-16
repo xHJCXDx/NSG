@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 154 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 152 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -14,7 +14,6 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 2 | Datos de red legibles por análisis y consulta (`password_hash` corregido en la REV77) | A-15, R8A-34 |
 | 2 | Rol de servicio superusuario | A-52, A-53, R8A-32, AD-14 |
 | 2 | Permisos leídos del token y no de la base | A-73, R8B-51 |
-| 2 | `/api/system/info` público | A-78, R8B-64 |
 | 2 | Contraseña inicial del admin en texto plano | A-80, A-81 |
 | 2 | Webhook manual sin secreto | R8B-09, R8B-39 |
 | 2 | Límite de tasa solo en el ingreso | R8B-40 |
@@ -50,9 +49,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **154** |
+| | **Total** | **152** |
 
-Por estado en la matriz: No implementada: 69, Parcial: 61, Contraria: 23, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 22, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
@@ -126,15 +125,6 @@ La especificación comprueba el permiso de cada operación con el rol del usuari
 |---|---|---|---|---|
 | A-73 | La API comprueba en cada solicitud el permiso de la operación con el rol del usuario | A.3 l.2068 | Parcial | permissions.py:71-77 compara con los permisos copiados en el JWT (tokens.py:52), no con la base: un cambio de rol no se ve hasta que vence el token |
 | R8B-51 | En cada solicitud se comprueba que el rol tenga el permiso de la operación | §8.5.2 l.1667 | Parcial | backend/auth/permissions.py:66-72 valida los permisos copiados en el token al ingresar (si el rol cambia, quedan desactualizados hasta 60 min) |
-
-### `/api/system/info` público
-
-La especificación exige usuario autenticado para la información del sistema; solo el control de estado es público. `/api/system/info` no tiene dependencia de autenticación y una prueba lo declara público a propósito. **Consecuencia:** cualquiera que alcance la API puede leer esa información. **Trabajo futuro:** exigir usuario autenticado y actualizar la prueba.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) |
-| R8B-64 | Inicio, preferencias e información del sistema exigen usuario autenticado; el control de estado es público | Tabla 22 nota l.1696 | Parcial | Estado público (backend/main.py:104); /info sin autenticación (backend/routers/system.py:15-17) |
 
 ### Contraseña inicial del admin en texto plano
 
@@ -543,12 +533,13 @@ La matriz se auditó sobre `develop` 9b90270. En la rama `fix/rev76-conformidad`
 
 ## Cambios REV77
 
-Fecha: 16/11/2026. Tres filas dejan de ser limitaciones porque se implementaron (rama `fix/rev77-active-user-and-hash-grant`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
+Fecha: 16/11/2026. Cinco filas dejan de ser limitaciones porque se implementaron (ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
 
 | Fila | Tema anterior | Commit |
 |---|---|---|
 | A-77, R8B-50 | Usuario inactivo con token válido (tema eliminado) | `9ad1573` |
 | A-50 | `password_hash` y datos de red legibles por análisis y consulta (el tema queda solo con los datos de red) | `df1f478` |
+| A-78, R8B-64 | `/api/system/info` público (tema eliminado) | `de14e9b` |
 
-R8A-34 sigue declarada porque también exige ocultar los datos de red. Total: 157 → 154 filas; 43 → 42 temas.
+R8A-34 sigue declarada porque también exige ocultar los datos de red. Total: 157 → 152 filas; 43 → 41 temas.
 
