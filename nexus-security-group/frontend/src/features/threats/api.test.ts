@@ -74,6 +74,8 @@ describe('fetchThreats', () => {
         reviewedAt: null,
         reviewNotes: null,
         remediationStatus: null,
+        // ce107a1 added the alert summary to each detection.
+        alert: null,
       },
       {
         id: 'direct-id',
@@ -90,6 +92,8 @@ describe('fetchThreats', () => {
         reviewedAt: null,
         reviewNotes: null,
         remediationStatus: null,
+        // ce107a1 added the alert summary to each detection.
+        alert: null,
       },
     ]);
     expect(result.total).toBe(2);
