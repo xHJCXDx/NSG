@@ -118,6 +118,6 @@ describe('fetchThreats', () => {
   it('throws for non-ok responses', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false } as Response);
 
-    await expect(fetchThreats('fake-jwt')).rejects.toThrow('Threats could not be loaded');
+    await expect(fetchThreats('fake-jwt')).rejects.toThrow('Detections could not be loaded');
   });
 });
