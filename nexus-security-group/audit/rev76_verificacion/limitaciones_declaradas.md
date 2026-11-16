@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 154 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -11,10 +11,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-57, A-58, A-60, A-61, AD-33, AD-35 |
 | 1 | Persistencia atómica por mención | R8A-04, R8A-05, R8B-04, R8B-05, R8B-35, AD-59, AD-60 |
 | 1 | Superposición: la segunda ejecución no crea ni modifica nada | AD-64, AD-94 |
-| 2 | `password_hash` y datos de red legibles por análisis y consulta | A-15, A-50, R8A-34 |
+| 2 | Datos de red legibles por análisis y consulta (`password_hash` corregido en la REV77) | A-15, R8A-34 |
 | 2 | Rol de servicio superusuario | A-52, A-53, R8A-32, AD-14 |
 | 2 | Permisos leídos del token y no de la base | A-73, R8B-51 |
-| 2 | Usuario inactivo con token válido | A-77, R8B-50 |
 | 2 | `/api/system/info` público | A-78, R8B-64 |
 | 2 | Contraseña inicial del admin en texto plano | A-80, A-81 |
 | 2 | Webhook manual sin secreto | R8B-09, R8B-39 |
@@ -51,9 +50,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **157** |
+| | **Total** | **154** |
 
-Por estado en la matriz: No implementada: 70, Parcial: 62, Contraria: 24, Contraria (sin ejecutar): 1.
+Por estado en la matriz: No implementada: 69, Parcial: 61, Contraria: 23, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
@@ -97,14 +96,15 @@ Desde `c81c96f` (arreglo b) las inserciones usan `ON CONFLICT … DO NOTHING`, a
 
 ## Grupo 2 · Seguridad y datos personales
 
-### `password_hash` y datos de red legibles por análisis y consulta
+### Datos de red legibles por análisis y consulta (`password_hash` corregido en la REV77)
+
+**REV77:** `df1f478` quitó `password_hash` de lo que leen análisis y consulta (A-50 pasó a «implementar»). Lo que sigue declarado son los datos de red y de sesión de la actividad (A-15 y la parte correspondiente de R8A-34).
 
 La especificación prohíbe que los roles de análisis y consulta lean hashes de contraseña y datos de red o sesión. `init.sql` otorga `SELECT` sobre todas las tablas a esos roles, incluido `system_users` con `password_hash`, y el endpoint de actividad devuelve IP, agente de usuario y sesión a quien tenga `logs:read` (también `analyst`). **Consecuencia:** una credencial de análisis puede leer los hashes y los datos de red de otros usuarios. **Trabajo futuro:** permisos por columna (`REVOKE` + `GRANT` de columnas) y ocultar esos campos en la API.
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|
 | A-15 | Datos de red y sesión de la actividad: solo los leen el rol de servicio y el de administración | Tabla 8 l.1172; Tabla A2 l.2023 | Contraria | init.sql:581, 586 (SELECT ON ALL TABLES a análisis y consulta, sin restricción por columna); API: backend/routers/activity.py:23 (`logs:read`, que tiene analyst, init.sql:818) devuelve ip, user_agent y sesión (backend/schemas/activity.py:58-60) |
-| A-50 | Usuario: análisis y consulta leen sin el hash de contraseña | Tabla A2 l.2024 | Contraria | init.sql:686-687 `GRANT SELECT ON TABLE system_users` (incluye password_hash, init.sql:667) |
 | R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` |
 
 ### Rol de servicio superusuario
@@ -126,15 +126,6 @@ La especificación comprueba el permiso de cada operación con el rol del usuari
 |---|---|---|---|---|
 | A-73 | La API comprueba en cada solicitud el permiso de la operación con el rol del usuario | A.3 l.2068 | Parcial | permissions.py:71-77 compara con los permisos copiados en el JWT (tokens.py:52), no con la base: un cambio de rol no se ve hasta que vence el token |
 | R8B-51 | En cada solicitud se comprueba que el rol tenga el permiso de la operación | §8.5.2 l.1667 | Parcial | backend/auth/permissions.py:66-72 valida los permisos copiados en el token al ingresar (si el rol cambia, quedan desactualizados hasta 60 min) |
-
-### Usuario inactivo con token válido
-
-La especificación verifica en cada solicitud que el usuario siga activo. El ingreso rechaza a los inactivos, pero la validación del token no vuelve a consultar `is_active`. **Consecuencia:** un usuario desactivado conserva el acceso hasta que vence su token. **Trabajo futuro:** comprobar `is_active` en cada solicitud.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-77 | Un usuario inactivo no puede autenticarse (se verifica en cada solicitud) | A.3 regla 3 l.2072; E13 | Parcial | El ingreso rechaza inactivos (auth/routes.py:96-97), pero tokens.py:36-57 no vuelve a mirar `is_active`: un token válido sigue funcionando |
-| R8B-50 | En cada solicitud se verifica que el usuario siga activo | §8.5.2 l.1667 | No implementada | backend/auth/tokens.py:36-56 solo decodifica el JWT, no consulta system_users |
 
 ### `/api/system/info` público
 
@@ -549,3 +540,15 @@ La matriz se auditó sobre `develop` 9b90270. En la rama `fix/rev76-conformidad`
 | A-25 | La evidencia cita `ON CONFLICT … DO UPDATE`; desde `c81c96f` es `DO NOTHING`. La instantánea sigue sin existir. |
 | AD-99 | La evidencia dice que el mensaje lleva el autor; desde `8ced8ae` ya no lo lleva. Siguen faltando la vista previa y el identificador. |
 | AD-85 | Desde `c81c96f` el conteo también incluye los ítems que no se escribieron por conflicto (ya anotado en el plan). |
+
+## Cambios REV77
+
+Fecha: 16/11/2026. Tres filas dejan de ser limitaciones porque se implementaron (rama `fix/rev77-active-user-and-hash-grant`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
+
+| Fila | Tema anterior | Commit |
+|---|---|---|
+| A-77, R8B-50 | Usuario inactivo con token válido (tema eliminado) | `9ad1573` |
+| A-50 | `password_hash` y datos de red legibles por análisis y consulta (el tema queda solo con los datos de red) | `df1f478` |
+
+R8A-34 sigue declarada porque también exige ocultar los datos de red. Total: 157 → 154 filas; 43 → 42 temas.
+

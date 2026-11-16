@@ -2,9 +2,8 @@
 is still valid must be rejected, because the rule checks on every request that
 the user is still active (§8.5.2; A.3, rule 3).
 
-The prototype only decodes the JWT (declared in the matrix: A-77, R8B-50), so
-the test is a strict expected failure: it passes while the rule fails and turns
-red if the rule starts to hold, so the mark and the matrix get updated.
+Since REV77 the token dependency checks on every request that the user still
+exists and is active (A-77, R8B-50), so this scenario is a regular test.
 
 Scenario E12 uses the existing test
 tests/test_threats_router.py::test_review_threat_rejects_user_without_threats_write_permission.
@@ -20,10 +19,7 @@ import auth
 from tests.conftest import FakeDb, FakeQuery
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Declared in the matrix (A-77, R8B-50): the token does not re-check is_active",
-)
+@pytest.mark.real_user_status
 def test_e13_deactivated_user_with_valid_token_is_rejected():
     inactive_user = SimpleNamespace(
         user_id=42,

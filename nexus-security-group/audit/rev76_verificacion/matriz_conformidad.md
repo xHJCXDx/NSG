@@ -1,6 +1,6 @@
 # Matriz de conformidad especificación ↔ prototipo (REV76)
 
-Prompt B3 del plan REV76. Fecha: 12/11/2026. Fuente de las reglas: `Tesis_NSG_OSINT_REV76.md` (capítulos 7 y 8 y Anexos A–D; los números «l.» son líneas de ese archivo). Código cotejado: rama `develop`, commit `9b90270`. Las rutas son relativas a `nexus-security-group/`. Para `workflow.json` se cita el nombre del nodo de n8n y, cuando existe, la línea del campo de código o consulta.
+Prompt B3 del plan REV76. Fecha: 12/11/2026. Fuente de las reglas: `Tesis_NSG_OSINT_REV76.md` (capítulos 7 y 8 y Anexos A–D; los números «l.» son líneas de ese archivo). Código cotejado: rama `develop`, commit `9b90270`. Actualizada para la REV77 el 16/11/2026 (sección «Cambios REV77»). Las rutas son relativas a `nexus-security-group/`. Para `workflow.json` se cita el nombre del nodo de n8n y, cuando existe, la línea del campo de código o consulta.
 
 **Método.** Lectura del código, sin ejecutar el sistema. Cada estado es una inferencia sobre el código y no un resultado de prueba. Los escenarios E01–E31 (Anexo E) se asocian por contenido; ninguno se ejecutó para esta matriz.
 
@@ -85,7 +85,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 ## Columnas para completar
 
-- **Decisión (A6):** completada el 12/11/2026 con la Opción B, en cada fila que no está *Implementada*. **implementar** marca solo los cuatro arreglos triviales (13 filas: AD-08 se sumó al arreglo c el 12/11/2026, y AD-20 quedó cubierta por el arreglo d al reevaluarla en el paso 4). **corregir el texto** se usa cuando el código es correcto y la tesis se ajusta a él (14 filas). **manual** se usa para los procedimientos humanos (12 filas). **declarar** es una limitación que se informa y no se implementa (157 filas; el detalle está en `limitaciones_declaradas.md`).
+- **Decisión (A6):** completada el 12/11/2026 con la Opción B, en cada fila que no está *Implementada*. **implementar** marca solo los cuatro arreglos triviales (13 filas: AD-08 se sumó al arreglo c el 12/11/2026, y AD-20 quedó cubierta por el arreglo d al reevaluarla en el paso 4). **corregir el texto** se usa cuando el código es correcto y la tesis se ajusta a él (14 filas). **manual** se usa para los procedimientos humanos (12 filas). **declarar** es una limitación que se informa y no se implementa (157 filas; el detalle está en `limitaciones_declaradas.md`). En la REV77, A-50, A-77 y R8B-50 pasaron de **declarar** a **implementar**: quedan 16 filas **implementar** y 154 **declarar** (sección «Cambios REV77»).
 - **Commit:** se completa en B4 con el commit que implementa la regla.
 
 ## Matriz
@@ -143,7 +143,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | A-47 | Mención: administración solo lectura (sin política de escritura) | Tabla A2 l.2017 | | Implementada | init.sql:577 da ALL, pero la RLS (609/615) solo tiene política SELECT: la escritura queda bloqueada | sin escenario |  |  |
 | A-48 | Aviso: análisis lee, da de alta y actualiza; consulta solo lee | Tabla A2 l.2020 | | Implementada | init.sql:583, 586 | sin escenario |  |  |
 | A-49 | Actividad: análisis puede dar de alta actividad | Tabla A2 l.2023 | | Implementada | init.sql:584 | sin escenario |  |  |
-| A-50 | Usuario: análisis y consulta leen sin el hash de contraseña | Tabla A2 l.2024 | | Contraria | init.sql:686-687 `GRANT SELECT ON TABLE system_users` (incluye password_hash, init.sql:667) | sin escenario | declarar |  |
+| A-50 | Usuario: análisis y consulta leen sin el hash de contraseña | Tabla A2 l.2024 | | Contraria | init.sql:686-687 `GRANT SELECT ON TABLE system_users` (incluye password_hash, init.sql:667) | sin escenario | implementar | df1f478 (REV77) |
 | A-51 | Resto de entidades: administración lectura/escritura; análisis y consulta lectura | Tabla A2 l.2018, l.2021-2022, l.2025 | | Implementada | init.sql:577-581, 586, 655-658, 721-727 | sin escenario |  |  |
 | A-52 | Purga y supresión: solo las ejecuta el rol de servicio | Tabla A2 l.2026; A.2 l.2031, l.2041 | | Parcial | init.sql:579 `GRANT EXECUTE ON ALL FUNCTIONS … TO osint_admin`; no se revoca el EXECUTE de PUBLIC sobre purge_old_data; no hay procedimiento de supresión | sin escenario | declarar |  |
 | A-53 | El rol de servicio crea los tres roles de grupo y después no puede crear, modificar ni otorgar roles | Tabla A2 l.2027 | | No implementada | docker-compose.yml:14, 87, 180: backend y n8n usan `POSTGRES_USER` (superusuario inicial); no hay ALTER ROLE NOCREATEROLE | sin escenario | declarar |  |
@@ -170,7 +170,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | A-74 | Un administrador puede crear roles y asignarles permisos | A.3 l.2068 | | Implementada | backend/routers/roles.py (alta ~l.40-65); backend/routers/permissions.py (`permissions:write`) | sin escenario |  |  |
 | A-75 | La API rechaza desactivar, eliminar o cambiar de rol al último `admin` activo | A.3 regla 2 l.2071 | | Parcial | Se controla borrar y desactivar: users.py:167-178, 254-265. PATCH `update_user` (users.py:125-129) cambia el rol o `is_active=False` sin control | sin escenario | declarar |  |
 | A-76 | Las bajas de usuarios y roles son lógicas | A.3 regla 3 l.2072 | | Parcial | Lógicas: users.py:180, roles.py:123. También hay borrado físico: users.py:234-283, roles.py:150-181 | sin escenario | corregir el texto |  |
-| A-77 | Un usuario inactivo no puede autenticarse (se verifica en cada solicitud) | A.3 regla 3 l.2072; E13 | | Parcial | El ingreso rechaza inactivos (auth/routes.py:96-97), pero tokens.py:36-57 no vuelve a mirar `is_active`: un token válido sigue funcionando | E13 | declarar |  |
+| A-77 | Un usuario inactivo no puede autenticarse (se verifica en cada solicitud) | A.3 regla 3 l.2072; E13 | | Parcial | El ingreso rechaza inactivos (auth/routes.py:96-97), pero tokens.py:36-57 no vuelve a mirar `is_active`: un token válido sigue funcionando | E13 | implementar | 9ad1573 (REV77) |
 | A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) | sin escenario | declarar |  |
 | A-79 | El control de estado del servicio es público | A.3 regla 4 l.2073 | | Implementada | backend/main.py:103-111 | sin escenario |  |  |
 | A-80 | La instalación crea un primer usuario `admin` | A.3 regla 5 l.2074 | | Parcial | init.sql no siembra ningún usuario en system_users (758-824); solo hay un ingreso de arranque por variables de entorno mientras la tabla está vacía (auth/routes.py:122-142) | sin escenario | declarar |  |
@@ -213,7 +213,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | R8A-31 | Rol de servicio: propietario de las tablas, único que usan el orquestador y la API, no sujeto a RLS | §8.2.1 l.1507; l.1516 | | Implementada | `DATABASE_URL` y n8n con `${POSTGRES_USER}` (docker-compose.yml:87, 128, 180) | sin escenario |  |  |
 | R8A-32 | El rol de servicio no es superusuario y pierde CREATEROLE/ADMIN OPTION al terminar la instalación | §8.2.1 l.1520 | | Contraria (sin ejecutar) | `POSTGRES_USER` de la imagen oficial es superusuario (docker-compose.yml:14); no hay ALTER ROLE ... NOSUPERUSER/NOCREATEROLE. Se infiere del comportamiento estándar de la imagen; no se ejecutó | sin escenario | declarar |  |
 | R8A-33 | Rol de administración: accede a todo, pero no puede escribir menciones | §8.2.1 l.1508 | | Implementada | GRANT ALL (init.sql:577); RLS activo en social_mentions con política solo FOR SELECT (init.sql:609, 615-617) | sin escenario |  |  |
-| R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` | E12 | declarar |  |
+| R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` | E12 | declarar | df1f478 corrige solo `password_hash` (REV77); los datos de red siguen expuestos |
 | R8A-35 | Análisis registra revisiones y reconocimientos y agrega actividad; consulta es solo lectura; roles de grupo sin login | §8.2.1 l.1509-1512 | | Implementada | init.sql:573-584 (CREATE ROLE sin LOGIN = NOLOGIN); 586. El rol de análisis también recibe INSERT en detecciones y avisos | E12 |  |  |
 | R8A-36 | Política por fila en detecciones para cada rol (análisis: sin revisor o propias; consulta: todas; administración: completo); menciones de lectura abierta | §8.2.1 l.1514 | ★ | Implementada | `user_isolation_policy` (init.sql:619-621), `threat_detections_read_policy` (624-626), `threat_detections_admin_policy` (629-632), agregadas en 1040a87; `social_mentions_read_policy` (615-617) | sin escenario |  |  |
 | R8A-37 | Seguidores y verificación no disponibles en las 3 fuentes: banda vacía y Factor 4 = 0 | Tabla 19 l.1572, nota l.1577; §8.3.1 l.1532; §8.1.1 l.1446 | ★ | Contraria | «Parse Items» `author_followers_count: item.points \|\| 0` (workflow.json:229), sin cambios tras 876caca: una historia con >1000 puntos suma +5..+15. GH usa `issue.user?.followers`; se guarda 0/false en lugar de vacío | E31 | implementar | d69a210 |
@@ -283,7 +283,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | R8B-47 | Máximo 5 intentos de ingreso por minuto por IP | §8.5.2 l.1666 | | Parcial | backend/auth/routes.py:71 y backend/rate_limit.py:4 (get_remote_address). Detrás de Traefik, uvicorn corre sin --proxy-headers (backend/Dockerfile:15): la clave es la IP del proxy | sin escenario | declarar |  |
 | R8B-48 | Cada intento de ingreso, exitoso o no, se registra en la actividad | §8.5.2 l.1666 | | Implementada | backend/auth/routes.py:103-111, :124-133, :156-164 | sin escenario |  |  |
 | R8B-49 | En cada solicitud se valida el token | §8.5.2 l.1667 | | Implementada | backend/auth/tokens.py:36-43 | E13 |  |  |
-| R8B-50 | En cada solicitud se verifica que el usuario siga activo | §8.5.2 l.1667 | | No implementada | backend/auth/tokens.py:36-56 solo decodifica el JWT, no consulta system_users | E13 | declarar |  |
+| R8B-50 | En cada solicitud se verifica que el usuario siga activo | §8.5.2 l.1667 | | No implementada | backend/auth/tokens.py:36-56 solo decodifica el JWT, no consulta system_users | E13 | implementar | 9ad1573 (REV77) |
 | R8B-51 | En cada solicitud se comprueba que el rol tenga el permiso de la operación | §8.5.2 l.1667 | | Parcial | backend/auth/permissions.py:66-72 valida los permisos copiados en el token al ingresar (si el rol cambia, quedan desactualizados hasta 60 min) | E12 | declarar |  |
 | R8B-52 | La revisión guarda como revisor al usuario de la aplicación, con la hora | §8.5.2 l.1668 | | Implementada | backend/routers/threats.py:172 (reviewed_by), :181 (reviewed_at) | sin escenario |  |  |
 | R8B-53 | La actividad de usuarios registra las revisiones | §8.5.2 l.1669 | | No implementada | backend/routers/threats.py:152-187 no llama a record_user_activity | sin escenario | declarar |  |
@@ -485,4 +485,17 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 - AD-10, AD-11 y AD-98: el texto de los avisos contradice B1 y D.5.3 (autoría, «amenaza/threats detected», «Confidence %»).
 - AD-35: la purga conserva las confirmadas sin plazo y sin minimizar; no hay paso a 730 días.
 - La mayor parte del Anexo C es manual. No hay scripts de respaldo, supresión, lápidas ni bloqueo.
+
+## Cambios REV77
+
+Fecha: 16/11/2026. Rama `fix/rev77-active-user-and-hash-grant`. Las columnas «Estado» y «Evidencia» siguen describiendo la auditoría sobre `9b90270`; los cambios se registran en «Decisión» y «Commit», como en los arreglos de B4.
+
+| Fila | Antes | Después | Commit | Verificación |
+|---|---|---|---|---|
+| A-77 | Parcial, declarar | implementar | `9ad1573` | `get_current_user` (backend/auth/tokens.py) busca al usuario en cada solicitud y responde 401 si no existe o está inactivo. E13 pasa sin la marca de falla esperada; 5 pruebas nuevas en `backend/tests/test_active_user_check.py` (`audit/rev77_verificacion/suite_20261116-141305.log`) |
+| R8B-50 | No implementada, declarar | implementar | `9ad1573` | Ídem A-77 |
+| A-50 | Contraria, declarar | implementar | `df1f478` | init.sql: `SELECT` por columnas sobre `system_users`, sin `password_hash`, para `osint_analyst` y `osint_readonly` (`appsmith_readonly` hereda). Base limpia: `audit/rev77_verificacion/password_hash_20261116-140536.log`, 10/10 PASS |
+| R8A-34 | Contraria, declarar | declarar (corregida en parte) | `df1f478` | La regla abarca el hash y los datos de red: el hash quedó corregido; los datos de red y de sesión de la actividad siguen legibles (A-15) |
+
+**Conteos de decisión (196 filas no implementadas por completo):** implementar 13 → 16; corregir el texto 14; manual 12; declarar 157 → 154. Las 154 declaradas, por estado: No implementada 69, Parcial 61, Contraria 23, Contraria (sin ejecutar) 1.
 
