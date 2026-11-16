@@ -16,6 +16,7 @@ BACKEND_DIR = Path(__file__).parent.parent
 EXPECTED_ERROR_STATUS_BY_FILE = {
     "auth/tokens.py": {
         "status.HTTP_401_UNAUTHORIZED",
+        "status.HTTP_503_SERVICE_UNAVAILABLE",
     },
     "auth/permissions.py": {
         "status.HTTP_403_FORBIDDEN",

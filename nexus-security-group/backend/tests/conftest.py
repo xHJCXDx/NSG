@@ -6,6 +6,8 @@ does not depend on local developer credentials.
 """
 import os
 
+import pytest
+
 
 os.environ.setdefault("DATABASE_URL", "postgresql://test-user:test-password@localhost:5432/osint_db")
 os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-that-is-at-least-32-characters-long")
@@ -22,6 +24,26 @@ import auth  # noqa: F401, E402
 # login tests run in rapid succession.
 from rate_limit import limiter  # noqa: E402
 limiter.enabled = False
+
+
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "real_user_status: run the per-request active-user check against the test database double",
+    )
+
+
+@pytest.fixture(autouse=True)
+def _skip_active_user_check_unless_requested(request, monkeypatch):
+    """Router tests script their database doubles query by query and are about
+    permissions, not account status. The per-request active-user check (E13) is
+    covered by the tests marked ``real_user_status``; elsewhere it is a no-op so
+    it does not consume the scripted queries."""
+    if request.node.get_closest_marker("real_user_status"):
+        return
+    import auth.tokens
+
+    monkeypatch.setattr(auth.tokens, "_ensure_user_is_active", lambda *args, **kwargs: None)
 
 
 # ---------------------------------------------------------------------------
