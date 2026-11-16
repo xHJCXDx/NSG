@@ -4,12 +4,12 @@ export const THREATS_DEFAULT_PAGE_SIZE = 25;
 export const THREATS_COPY = {
   page: {
     eyebrow: 'OSINT monitoring',
-    title: 'Threats',
-    description: 'Review detected threats with severity, classification, confidence, evidence, and optional mention context.',
-    loading: 'Loading threats...',
+    title: 'Detections',
+    description: 'Review heuristic detections with severity, classification, normalized score, evidence, and optional mention context. A detection is a prefiltered signal for human review, not a confirmed threat.',
+    loading: 'Loading detections...',
   },
   toolbar: {
-    searchLabel: 'Search threats',
+    searchLabel: 'Search detections',
     searchPlaceholder: 'Search by evidence, summary, source, or mention',
     severityLabel: 'Filter by severity',
     severityPlaceholder: 'Severity',
@@ -17,29 +17,29 @@ export const THREATS_COPY = {
     classificationPlaceholder: 'Classification',
   },
   error: {
-    title: 'Threats could not be loaded',
+    title: 'Detections could not be loaded',
     fallbackDetail: 'The information could not be loaded right now.',
     retryLabel: 'Retry',
   },
   empty: {
     initial: {
-      title: 'No threats detected yet',
-      description: 'Detected OSINT threats will appear here once available.',
+      title: 'No detections yet',
+      description: 'Heuristic detections will appear here once available.',
     },
     noResults: {
-      title: 'No matching threats',
+      title: 'No matching detections',
       description: 'Try adjusting the search, severity, or classification filter.',
     },
   },
   list: {
-    ariaLabel: 'Detected threats',
+    ariaLabel: 'Heuristic detections',
   },
   card: {
     unknownDate: 'Unknown date',
-    fallbackCategory: 'Threat detection',
+    fallbackCategory: 'Heuristic detection',
     detectedLabel: 'Detected',
-    confidenceLabel: 'Confidence',
-    riskLabel: 'Risk',
+    confidenceLabel: 'Normalized score',
+    riskLabel: 'Risk score',
     evidenceLabel: 'Evidence',
     sourceLabel: 'Source',
     relatedMentionLabel: 'Related mention',
@@ -47,12 +47,12 @@ export const THREATS_COPY = {
     noRelatedMention: 'No related mention provided',
   },
   review: {
-    unauthenticated: 'You must be logged in to review threats',
-    forbidden: 'You do not have permission to review threats',
-    notFound: 'Threat not found',
+    unauthenticated: 'You must be logged in to review detections',
+    forbidden: 'You do not have permission to review detections',
+    notFound: 'Detection not found',
     validation: 'Invalid review data',
-    fallback: 'Failed to save threat review',
+    fallback: 'Failed to save detection review',
     serviceUnavailable: 'Service is temporarily unavailable',
-    withoutToken: 'Authentication required to review threats',
+    withoutToken: 'Authentication required to review detections',
   },
 } as const;

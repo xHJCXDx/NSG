@@ -6,8 +6,8 @@ export const DASHBOARD_COPY = {
     description: 'Real-time security and system metrics.',
   },
   kpi: {
-    totalThreats: 'Total Threats',
-    pendingThreats: 'Pending Threats',
+    totalThreats: 'Total Detections',
+    pendingThreats: 'Pending Detections',
     totalAlerts: 'Total Alerts',
     unacknowledgedAlerts: 'Unacknowledged Alerts',
     activeKeywords: 'Active Keywords',
