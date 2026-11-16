@@ -48,6 +48,16 @@ def auth_env(monkeypatch):
     monkeypatch.setenv("ADMIN_PASSWORD", "test-admin-password")
 
 
+TEST_WEBHOOK_SECRET = "test-webhook-secret"
+
+
+@pytest.fixture(autouse=True)
+def webhook_secret(monkeypatch):
+    from config import settings
+
+    monkeypatch.setattr(settings, "WEBHOOK_SECRET", TEST_WEBHOOK_SECRET)
+
+
 def test_n8n_no_os_getenv():
     """routers/n8n.py must not call os.getenv() anywhere."""
     source = N8N_PATH.read_text()
@@ -114,7 +124,8 @@ async def test_proxy_webhook_uses_settings_url():
     )
     assert mock_client_instance.post.call_args.kwargs["content"] == b"{}"
     assert mock_client_instance.post.call_args.kwargs["headers"] == {
-        "Content-Type": "application/vnd.nsg+json"
+        "Content-Type": "application/vnd.nsg+json",
+        "X-Webhook-Secret": TEST_WEBHOOK_SECRET,
     }
     webhook_ref = _safe_webhook_ref("test-id")
     activity = fake_db.added[0]
@@ -298,3 +309,29 @@ def test_proxy_webhook_rejects_user_without_workflows_execute_permission():
 
     assert response.status_code == 403
     assert "workflows:execute" in response.json()["detail"]
+
+
+@pytest.mark.anyio
+async def test_proxy_webhook_rejects_with_503_when_webhook_secret_is_not_configured(monkeypatch):
+    """R8B-09/R8B-39: without the shared secret the proxy never calls n8n."""
+    from config import settings
+
+    monkeypatch.setattr(settings, "WEBHOOK_SECRET", "")
+    app = FastAPI()
+    app.include_router(router)
+    app.dependency_overrides[get_current_user] = lambda: TokenData(
+        username="analyst1", role="analyst", auth_source="database",
+        permissions=["workflows:execute"],
+    )
+    fake_db = FakeDb()
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    mock_async_client = MagicMock()
+    with patch("routers.n8n.httpx.AsyncClient", return_value=mock_async_client) as client_factory:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post("/api/n8n/webhook/osint-trigger", content=b"{}")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "n8n webhook secret is not configured"
+    client_factory.assert_not_called()
+    assert fake_db.added == []
