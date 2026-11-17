@@ -510,24 +510,24 @@ Fecha: 16/11/2026 (A-57: 17/11/2026, rama `fix/rev77-purge-cutoff`). Ramas `fix/
 
 ### Correcciones del texto (Q-A1)
 
-Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, que no está en este repositorio; por eso su columna «Commit» dice «tesis REV77». La tabla indica dónde está cada corrección en `Tesis_NSG_OSINT_REV77.md`. Las páginas se completan con el PDF de la REV77 (prompt B12). Los conteos no cambian.
+Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, que no está en este repositorio; por eso su columna «Commit» dice «tesis REV77». La tabla indica dónde está cada corrección en `Tesis_NSG_OSINT_REV77.md`. Las páginas son las del PDF de la REV77 (`Entrega_Tesis_NSG_OSINT_REV77.pdf`, 17/11/2026). Los conteos no cambian.
 
 | Fila | Qué dice ahora la tesis | Ubicación en la REV77 | Página |
 |---|---|---|---|
-| A-10 | Se guarda la cantidad de seguidores; el Factor 4 usa su banda | Tabla 8 (§7.8.4); Tabla A1, Mención | B12 |
-| R8A-38 | La mención guarda la cantidad; el factor la convierte en banda | §8.1.1 | B12 |
-| A-27 | Puntaje normalizado entre 0 y 1 (el flujo lo acota a 0,99) | Tabla A1, Detección; §8.1.1, «Métricas derivadas» | B12 |
-| A-39 | Éxito, éxito parcial o error; la base admite además advertencia y tiempo agotado | Tabla A1, Registro de ejecución | B12 |
-| A-76 | Bajas lógicas; el administrador puede además eliminar en forma definitiva | A.3, regla 3 | B12 |
-| R8A-02 | La fecha de adquisición es la hora en que se guarda la mención (aproxima la recepción) | §8.1, Etapa 1 | B12 |
-| R8B-12 | Ídem, en la consulta de cada fuente | Tabla 21, paso 1 | B12 |
-| AD-48 | Ídem, para todos los ítems de la respuesta | D.1, regla 2; aclaración del estado por fuente en Tabla A1 (Registro de ejecución) y D.4 | B12 |
-| AD-61 | El análisis y la detección registran la hora en que se guardan | D.1, regla 5 | B12 |
-| R8B-42 | PBKDF2-SHA256 con 600.000 iteraciones; bcrypt solo verifica *hashes* anteriores | §8.5.2, «Contraseñas» | B12 |
-| R8B-43 | Ídem | §8.5.2, «Contraseñas» | B12 |
-| R8B-62 | «Ver automatización» da acceso a la vista; sus datos se leen con «Ver registros de ejecución» | Tabla 22 | B12 |
-| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (sin cambios; coincide con §8.2.1 y la Tabla A2) | B12 |
-| AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | B12 |
+| A-10 | Se guarda la cantidad de seguidores; el Factor 4 usa su banda | Tabla 8 (§7.8.4); Tabla A1, Mención | pp. 45 y 91 |
+| R8A-38 | La mención guarda la cantidad; el factor la convierte en banda | §8.1.1 | p. 58 |
+| A-27 | Puntaje normalizado entre 0 y 1 (el flujo lo acota a 0,99) | Tabla A1, Detección; §8.1.1, «Métricas derivadas» | pp. 59 y 92 |
+| A-39 | Éxito, éxito parcial o error; la base admite además advertencia y tiempo agotado | Tabla A1, Registro de ejecución | p. 92 |
+| A-76 | Bajas lógicas; el administrador puede además eliminar en forma definitiva | A.3, regla 3 | p. 96 |
+| R8A-02 | La fecha de adquisición es la hora en que se guarda la mención (aproxima la recepción) | §8.1, Etapa 1 | p. 51 |
+| R8B-12 | Ídem, en la consulta de cada fuente | Tabla 21, paso 1 | p. 69 |
+| AD-48 | Ídem, para todos los ítems de la respuesta | D.1, regla 2; aclaración del estado por fuente en Tabla A1 (Registro de ejecución) y D.4 | pp. 92, 100 y 102 |
+| AD-61 | El análisis y la detección registran la hora en que se guardan | D.1, regla 5 | p. 101 |
+| R8B-42 | PBKDF2-SHA256 con 600.000 iteraciones; bcrypt solo verifica *hashes* anteriores | §8.5.2, «Contraseñas» | p. 71 |
+| R8B-43 | Ídem | §8.5.2, «Contraseñas» | p. 71 |
+| R8B-62 | «Ver automatización» da acceso a la vista; sus datos se leen con «Ver registros de ejecución» | Tabla 22 | p. 72 |
+| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (sin cambios; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 |
+| AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | p. 102 |
 
 **AD-37.** La evidencia de la fila es incompleta. `osint_admin` recibe `GRANT ALL` (init.sql:577), pero `social_mentions` tiene RLS activa con una sola política, `FOR SELECT` (init.sql:609 y 615-617 en `9b90270`; 625 y 631-633 en la REV77). `osint_admin` no es propietario de la tabla ni tiene `BYPASSRLS`, así que solo puede leer menciones (igual que R8A-33 y A-47). El texto de C.4 ya lo decía y no se modificó.
 
