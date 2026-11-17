@@ -1,6 +1,6 @@
 # Matriz de conformidad especificación ↔ prototipo (REV76)
 
-Prompt B3 del plan REV76. Fecha: 12/11/2026. Fuente de las reglas: `Tesis_NSG_OSINT_REV76.md` (capítulos 7 y 8 y Anexos A–D; los números «l.» son líneas de ese archivo). Código cotejado: rama `develop`, commit `9b90270`. Actualizada para la REV77 el 16/11/2026 (sección «Cambios REV77»). Las rutas son relativas a `nexus-security-group/`. Para `workflow.json` se cita el nombre del nodo de n8n y, cuando existe, la línea del campo de código o consulta.
+Prompt B3 del plan REV76. Fecha: 12/11/2026. Fuente de las reglas: `Tesis_NSG_OSINT_REV76.md` (capítulos 7 y 8 y Anexos A–D; los números «l.» son líneas de ese archivo). Código cotejado: rama `develop`, commit `9b90270`. Actualizada para la REV77 el 16/11/2026 y el 17/11/2026 (sección «Cambios REV77»). Las rutas son relativas a `nexus-security-group/`. Para `workflow.json` se cita el nombre del nodo de n8n y, cuando existe, la línea del campo de código o consulta.
 
 **Método.** Lectura del código, sin ejecutar el sistema. Cada estado es una inferencia sobre el código y no un resultado de prueba. Los escenarios E01–E31 (Anexo E) se asocian por contenido; ninguno se ejecutó para esta matriz.
 
@@ -86,7 +86,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 ## Columnas para completar
 
 - **Decisión (A6):** completada el 12/11/2026 con la Opción B, en cada fila que no está *Implementada*. **implementar** marca solo los cuatro arreglos triviales (13 filas: AD-08 se sumó al arreglo c el 12/11/2026, y AD-20 quedó cubierta por el arreglo d al reevaluarla en el paso 4). **corregir el texto** se usa cuando el código es correcto y la tesis se ajusta a él (14 filas). **manual** se usa para los procedimientos humanos (12 filas). **declarar** es una limitación que se informa y no se implementa (157 filas; el detalle está en `limitaciones_declaradas.md`). En la REV77, A-15, A-50, A-77, A-78, R8A-34, R8B-09, R8B-39, R8B-50 y R8B-64 pasaron de **declarar** a **implementar**: quedan 22 filas **implementar** y 148 **declarar** (sección «Cambios REV77»).
-- **Commit:** se completa en B4 con el commit que implementa la regla.
+- **Commit:** se completa en B4 con el commit que implementa la regla. En las filas **corregir el texto** dice «tesis REV77», porque la corrección está en la tesis y no en el código (ubicación en «Cambios REV77», «Correcciones del texto (Q-A1)»).
 
 ## Matriz
 
