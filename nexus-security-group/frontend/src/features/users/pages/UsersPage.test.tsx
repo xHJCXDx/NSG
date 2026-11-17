@@ -293,7 +293,9 @@ describe('UsersPage', () => {
     renderUsersPage(deleteToken);
 
     expect(await screen.findByRole('button', { name: 'Current user' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Inactive' })).toBeDisabled();
+    // a25b863 replaced the disabled Inactive button with reactivation and permanent deletion.
+    expect(screen.getByRole('button', { name: 'Reactivate' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Delete permanently' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
   });
 

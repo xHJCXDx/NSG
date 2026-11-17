@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 147 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -8,16 +8,12 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 
 | Grupo | Tema | Filas |
 |---|---|---|
-| 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-57, A-58, A-60, A-61, AD-33, AD-35 |
+| 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-58, A-60, A-61, AD-33, AD-35 |
 | 1 | Persistencia atómica por mención | R8A-04, R8A-05, R8B-04, R8B-05, R8B-35, AD-59, AD-60 |
 | 1 | Superposición: la segunda ejecución no crea ni modifica nada | AD-64, AD-94 |
-| 2 | `password_hash` y datos de red legibles por análisis y consulta | A-15, A-50, R8A-34 |
 | 2 | Rol de servicio superusuario | A-52, A-53, R8A-32, AD-14 |
 | 2 | Permisos leídos del token y no de la base | A-73, R8B-51 |
-| 2 | Usuario inactivo con token válido | A-77, R8B-50 |
-| 2 | `/api/system/info` público | A-78, R8B-64 |
 | 2 | Contraseña inicial del admin en texto plano | A-80, A-81 |
-| 2 | Webhook manual sin secreto | R8B-09, R8B-39 |
 | 2 | Límite de tasa solo en el ingreso | R8B-40 |
 | 2 | Límite de ingreso detrás del proxy | R8B-47 |
 | 3 | Transiciones de revisión libres; reapertura por cualquier analista | A-29, A-31 |
@@ -51,21 +47,20 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **157** |
+| | **Total** | **147** |
 
-Por estado en la matriz: No implementada: 70, Parcial: 62, Contraria: 24, Contraria (sin ejecutar): 1.
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 17, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
 ### Purga de las confirmadas (365/730 con minimización)
 
-La especificación corta la purga por fecha de adquisición; elimina las menciones vencidas no confirmadas; a las confirmadas (incluidas las resueltas) les borra la autoría y el contenido original, las conserva solo con revisión de minimización y las elimina a los 730 días. `purge_old_data` corta por fecha de publicación (`created_at`), protege solo las detecciones `confirmed` (las resueltas se purgan) y conserva las confirmadas sin plazo y sin minimizar. **Consecuencia:** las menciones confirmadas retienen datos personales por tiempo indefinido, las resueltas se pierden, y el plazo se cuenta desde la publicación y no desde la adquisición. **Trabajo futuro:** reescribir `purge_old_data` según el Anexo A.2 (corte por `collected_at`, minimización a los 365 días y borrado a los 730).
+La especificación elimina las menciones vencidas no confirmadas; a las confirmadas (incluidas las resueltas) les borra la autoría y el contenido original, las conserva solo con revisión de minimización y las elimina a los 730 días. `purge_old_data` protege solo las detecciones `confirmed` (las resueltas se purgan) y conserva las confirmadas sin plazo y sin minimizar. **Consecuencia:** las menciones confirmadas retienen datos personales por tiempo indefinido y las resueltas se pierden. **Trabajo futuro:** reescribir `purge_old_data` según el Anexo A.2 (minimización a los 365 días y borrado a los 730). El corte por fecha de adquisición (A-57) se implementó en la REV77 (`7edd963`; ver «Cambios REV77»).
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|
 | A-32 | «Detección confirmada» = confirmada o resuelta (la resuelta conserva la protección de la purga) | A.1 l.2007 | Contraria | init.sql:463 `WHERE review_status = 'confirmed'`: las resueltas se purgan |
 | A-56 | Regla 1: las menciones vencidas no confirmadas se eliminan con su análisis, detección y aviso | A.2 l.2033; §7.8.4 l.1150 | Parcial | init.sql:458-464 + cascadas 78, 111, 167. «Confirmada» excluye las resueltas (A-32) |
-| A-57 | El corte usa la fecha de adquisición | A.2 l.2039 | Contraria | init.sql:459 `WHERE created_at < cutoff_date` (fecha de publicación; la de adquisición es `collected_at`, init.sql:24) |
 | A-58 | Regla 2: las confirmadas vencidas pierden la autoría (usuario, ID, banda, verificación) y el contenido original | A.2 l.2034; §7.8.4 l.1150; Tabla 8 l.1168, l.1170 | No implementada | init.sql:449-481: no hay UPDATE que borre author_* ni raw_data |
 | A-60 | Las confirmadas se conservan solo con la revisión de minimización registrada; sin ella se eliminan | A.2 l.2034; §7.8.4 l.1154; Tabla 8 l.1171 | Contraria | init.sql:460-464 conserva toda 'confirmed' sin marca ni control de minimización |
 | A-61 | Las confirmadas conservadas se eliminan al doble del plazo (730 días) | A.2 l.2034; §7.8.4 l.1150 | Contraria | init.sql:460-464: las confirmadas quedan fuera del borrado sin límite (se conservan para siempre) |
@@ -97,16 +92,6 @@ Desde `c81c96f` (arreglo b) las inserciones usan `ON CONFLICT … DO NOTHING`, a
 
 ## Grupo 2 · Seguridad y datos personales
 
-### `password_hash` y datos de red legibles por análisis y consulta
-
-La especificación prohíbe que los roles de análisis y consulta lean hashes de contraseña y datos de red o sesión. `init.sql` otorga `SELECT` sobre todas las tablas a esos roles, incluido `system_users` con `password_hash`, y el endpoint de actividad devuelve IP, agente de usuario y sesión a quien tenga `logs:read` (también `analyst`). **Consecuencia:** una credencial de análisis puede leer los hashes y los datos de red de otros usuarios. **Trabajo futuro:** permisos por columna (`REVOKE` + `GRANT` de columnas) y ocultar esos campos en la API.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-15 | Datos de red y sesión de la actividad: solo los leen el rol de servicio y el de administración | Tabla 8 l.1172; Tabla A2 l.2023 | Contraria | init.sql:581, 586 (SELECT ON ALL TABLES a análisis y consulta, sin restricción por columna); API: backend/routers/activity.py:23 (`logs:read`, que tiene analyst, init.sql:818) devuelve ip, user_agent y sesión (backend/schemas/activity.py:58-60) |
-| A-50 | Usuario: análisis y consulta leen sin el hash de contraseña | Tabla A2 l.2024 | Contraria | init.sql:686-687 `GRANT SELECT ON TABLE system_users` (incluye password_hash, init.sql:667) |
-| R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` |
-
 ### Rol de servicio superusuario
 
 La especificación pide un rol de servicio sin superusuario, sin `BYPASSRLS` y sin `CREATEROLE` una vez instalada la base. El backend y n8n se conectan con `POSTGRES_USER`, que en la imagen oficial de Postgres es superusuario, y no se revoca el `EXECUTE` de `PUBLIC` sobre la purga. Esto se infiere del comportamiento estándar de la imagen; no se ejecutó. **Consecuencia:** quien obtenga la credencial del backend o de n8n controla toda la base y pasa por encima de las políticas por fila. **Trabajo futuro:** crear un rol de servicio dedicado y quitarle los privilegios al terminar la instalación. No se hace ahora porque cambiar los roles a esta altura arriesga romper la instalación.
@@ -127,41 +112,14 @@ La especificación comprueba el permiso de cada operación con el rol del usuari
 | A-73 | La API comprueba en cada solicitud el permiso de la operación con el rol del usuario | A.3 l.2068 | Parcial | permissions.py:71-77 compara con los permisos copiados en el JWT (tokens.py:52), no con la base: un cambio de rol no se ve hasta que vence el token |
 | R8B-51 | En cada solicitud se comprueba que el rol tenga el permiso de la operación | §8.5.2 l.1667 | Parcial | backend/auth/permissions.py:66-72 valida los permisos copiados en el token al ingresar (si el rol cambia, quedan desactualizados hasta 60 min) |
 
-### Usuario inactivo con token válido
-
-La especificación verifica en cada solicitud que el usuario siga activo. El ingreso rechaza a los inactivos, pero la validación del token no vuelve a consultar `is_active`. **Consecuencia:** un usuario desactivado conserva el acceso hasta que vence su token. **Trabajo futuro:** comprobar `is_active` en cada solicitud.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-77 | Un usuario inactivo no puede autenticarse (se verifica en cada solicitud) | A.3 regla 3 l.2072; E13 | Parcial | El ingreso rechaza inactivos (auth/routes.py:96-97), pero tokens.py:36-57 no vuelve a mirar `is_active`: un token válido sigue funcionando |
-| R8B-50 | En cada solicitud se verifica que el usuario siga activo | §8.5.2 l.1667 | No implementada | backend/auth/tokens.py:36-56 solo decodifica el JWT, no consulta system_users |
-
-### `/api/system/info` público
-
-La especificación exige usuario autenticado para la información del sistema; solo el control de estado es público. `/api/system/info` no tiene dependencia de autenticación y una prueba lo declara público a propósito. **Consecuencia:** cualquiera que alcance la API puede leer esa información. **Trabajo futuro:** exigir usuario autenticado y actualizar la prueba.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) |
-| R8B-64 | Inicio, preferencias e información del sistema exigen usuario autenticado; el control de estado es público | Tabla 22 nota l.1696 | Parcial | Estado público (backend/main.py:104); /info sin autenticación (backend/routers/system.py:15-17) |
-
 ### Contraseña inicial del admin en texto plano
 
-La especificación crea un primer usuario `admin` cuya contraseña se guarda solo como hash. `init.sql` no siembra ningún usuario: mientras la tabla está vacía hay un ingreso de arranque con `ADMIN_PASSWORD`, que se lee del entorno y se compara en texto plano. **Consecuencia:** la contraseña inicial queda legible en el archivo de entorno. **Trabajo futuro:** que el entorno reciba el hash y no la contraseña.
+La especificación crea un primer usuario `admin` cuya contraseña se guarda solo como hash. `init.sql` no siembra ningún usuario: mientras la tabla está vacía hay un ingreso de arranque con `ADMIN_PASSWORD`, que se lee del entorno y se compara en texto plano. **Consecuencia:** la contraseña inicial queda legible en el archivo de entorno. **Trabajo futuro:** que el entorno reciba el hash y no la contraseña. En la REV77 (`3164216`) el token de arranque deja de valer en cuanto existe el primer usuario de la base; antes seguía valiendo hasta vencer.
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|
 | A-80 | La instalación crea un primer usuario `admin` | A.3 regla 5 l.2074 | Parcial | init.sql no siembra ningún usuario en system_users (758-824); solo hay un ingreso de arranque por variables de entorno mientras la tabla está vacía (auth/routes.py:122-142) |
 | A-81 | La contraseña inicial de `admin` se guarda solo como hash | A.3 regla 5 l.2074 | Contraria | backend/config.py:9 `ADMIN_PASSWORD` en el entorno, comparada en texto plano con hmac.compare_digest (auth/routes.py:123) |
-
-### Webhook manual sin secreto
-
-La especificación acepta el disparador manual solo si lo envía la API con un secreto compartido. El webhook de n8n no exige autenticación, la API no envía `WEBHOOK_SECRET` y n8n recibe esa variable pero no la usa. Desde `e990d80` (arreglo d) el puerto 5678 se publica solo en `127.0.0.1`, así que ya no se alcanza desde la red, pero cualquier proceso del equipo o contenedor de la red interna puede disparar el flujo. **Trabajo futuro:** validar el encabezado secreto en el webhook y enviarlo desde la API.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| R8B-09 | El disparador manual HTTP solo se acepta si lo envía la API con un secreto compartido | §8.4.1 l.1616 | Contraria | «Manual OSINT Trigger» es un webhook POST sin autenticación; backend/routers/n8n.py:45-49 no envía WEBHOOK_SECRET |
-| R8B-39 | La ejecución manual la reenvía la API con un secreto que solo ella conoce; ningún otro componente dispara el flujo | §8.5.1 l.1657 | Contraria | backend/routers/n8n.py:45-49 no agrega el secreto; WEBHOOK_SECRET llega a n8n (docker-compose.yml:77) pero no se usa; el puerto 5678 está expuesto |
 
 ### Límite de tasa solo en el ingreso
 
@@ -544,8 +502,31 @@ La matriz se auditó sobre `develop` 9b90270. En la rama `fix/rev76-conformidad`
 | Fila | Qué cambió |
 |---|---|
 | AD-20 | `e990d80` publica 5678 solo en `127.0.0.1`. Al reevaluarla en el paso 4 pasó a «implementar», así que ya no figura en este documento. |
-| R8B-39 | La evidencia menciona el puerto expuesto, que se corrigió en `e990d80`. La falta del secreto sigue. |
+| R8B-39 | La evidencia menciona el puerto expuesto, que se corrigió en `e990d80`. La falta del secreto sigue (resuelto en la REV77 con `99a5f32`, ver «Cambios REV77»). |
 | AD-64, AD-94 | `c81c96f` evita reescribir y el índice único evita el segundo aviso en la base; el reenvío por los canales sigue. Se reevaluaron en el paso 4 y quedan en «declarar». |
 | A-25 | La evidencia cita `ON CONFLICT … DO UPDATE`; desde `c81c96f` es `DO NOTHING`. La instantánea sigue sin existir. |
 | AD-99 | La evidencia dice que el mensaje lleva el autor; desde `8ced8ae` ya no lo lleva. Siguen faltando la vista previa y el identificador. |
 | AD-85 | Desde `c81c96f` el conteo también incluye los ítems que no se escribieron por conflicto (ya anotado en el plan). |
+
+## Cambios REV77
+
+Fecha: 16/11/2026. Nueve filas dejan de ser limitaciones porque se implementaron (ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
+
+| Fila | Tema anterior | Commit |
+|---|---|---|
+| A-77, R8B-50 | Usuario inactivo con token válido (tema eliminado) | `9ad1573` |
+| A-50 | `password_hash` y datos de red legibles por análisis y consulta (el tema queda solo con los datos de red) | `df1f478` |
+| A-78, R8B-64 | `/api/system/info` público (tema eliminado) | `de14e9b` |
+| A-15, R8A-34 | Datos de red legibles por análisis y consulta (tema eliminado) | `3994149` |
+| R8B-09, R8B-39 | Webhook manual sin secreto (tema eliminado) | `99a5f32` |
+
+R8A-34 se completó en dos pasos: el *hash* (`df1f478`) y los datos de red (`3994149`). Total: 157 → 148 filas; 43 → 39 temas.
+
+El 17/11/2026 se implementó también A-57 (rama `fix/rev77-purge-cutoff`):
+
+| Fila | Tema anterior | Commit |
+|---|---|---|
+| A-57 | Purga de las confirmadas (el tema sigue, sin el corte por fecha de publicación) | `7edd963` |
+
+Total: 148 → 147 filas; los temas siguen siendo 39.
+

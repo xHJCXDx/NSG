@@ -50,12 +50,13 @@ describe('ThreatsPage', () => {
 
     renderThreatsPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading threats');
+    expect(screen.getByRole('status')).toHaveTextContent('Loading detections');
     expect(await screen.findByText('Potential leaked credential')).toBeInTheDocument();
-    expect(screen.getByText('credential_leak')).toBeInTheDocument();
+    // 8f86451 shows readable labels instead of raw values (credential_leak, high).
+    expect(screen.getByText('credential leak')).toBeInTheDocument();
     expect(screen.getByText('data exposure')).toBeInTheDocument();
-    expect(screen.getByText('high')).toBeInTheDocument();
-    expect(screen.getByText('Confidence 87%')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
+    expect(screen.getByText('Normalized score 87%')).toBeInTheDocument();
     expect(screen.getByText('Evidence')).toBeInTheDocument();
     expect(screen.getByText('password')).toBeInTheDocument();
     expect(screen.getByText(/Related mention: public post/)).toBeInTheDocument();
@@ -70,7 +71,7 @@ describe('ThreatsPage', () => {
 
     renderThreatsPage();
 
-    expect(await screen.findByText('No threats detected yet')).toBeInTheDocument();
+    expect(await screen.findByText('No detections yet')).toBeInTheDocument();
     cleanup();
 
     fetchMock.mockResolvedValueOnce({ ok: false } as Response).mockResolvedValueOnce({
@@ -79,10 +80,10 @@ describe('ThreatsPage', () => {
     } as Response);
 
     renderThreatsPage();
-    expect(await screen.findByText('Threats could not be loaded')).toBeInTheDocument();
+    expect(await screen.findByText('Detections could not be loaded')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByText('No threats detected yet')).toBeInTheDocument();
+    expect(await screen.findByText('No detections yet')).toBeInTheDocument();
   });
 
   it('filters threats by supported fields and shows no-results copy', async () => {
@@ -120,7 +121,7 @@ describe('ThreatsPage', () => {
     await userEvent.clear(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'));
     await userEvent.type(screen.getByPlaceholderText('Search by evidence, summary, source, or mention'), 'no-match-xyz');
 
-    await waitFor(() => expect(screen.getByText('No matching threats')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('No matching detections')).toBeInTheDocument());
   });
 
   it('hides filter criteria controls when severity and classification are unavailable', async () => {

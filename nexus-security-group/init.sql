@@ -455,8 +455,10 @@ DECLARE
 BEGIN
     cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
 
+    -- The retention period runs from acquisition (collected_at), not from
+    -- publication (created_at): see thesis Annex A.2, "Corte de la purga".
     DELETE FROM social_mentions
-    WHERE created_at < cutoff_date
+    WHERE collected_at < cutoff_date
       AND mention_id NOT IN (
           SELECT mention_id
           FROM threat_detections
@@ -582,8 +584,24 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_analyst;
 GRANT INSERT, UPDATE ON threat_detections TO osint_analyst;
 GRANT INSERT, UPDATE ON alerts TO osint_analyst;
 GRANT INSERT ON user_activity TO osint_analyst;
+-- INSERT on a BIGSERIAL table also needs USAGE on its sequence (nextval).
+GRANT USAGE ON SEQUENCE threat_detections_detection_id_seq,
+                        alerts_alert_id_seq,
+                        user_activity_activity_id_seq
+    TO osint_analyst;
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO osint_readonly;
+
+-- Column-level read access on user_activity: network, session and additional
+-- data (ip_address, user_agent, session_id, activity_data) are readable only by
+-- the owner (service role) and osint_admin. appsmith_readonly inherits osint_readonly.
+REVOKE SELECT ON TABLE user_activity FROM osint_analyst, osint_readonly;
+GRANT SELECT (activity_id, username, user_role, activity_type, activity_description,
+              related_mention_id, related_detection_id, related_alert_id, activity_timestamp)
+    ON TABLE user_activity TO osint_analyst;
+GRANT SELECT (activity_id, username, user_role, activity_type, activity_description,
+              related_mention_id, related_detection_id, related_alert_id, activity_timestamp)
+    ON TABLE user_activity TO osint_readonly;
 
 -- Appsmith dashboard demo login: placeholder password only.
 -- For existing ./data/postgres volumes, apply this block manually because
@@ -683,8 +701,12 @@ CREATE TRIGGER update_system_users_updated_at
 
 GRANT ALL PRIVILEGES ON TABLE system_users TO osint_admin;
 GRANT ALL PRIVILEGES ON SEQUENCE system_users_user_id_seq TO osint_admin;
-GRANT SELECT ON TABLE system_users TO osint_analyst;
-GRANT SELECT ON TABLE system_users TO osint_readonly;
+-- Column-level read access: password_hash is readable only by the owner
+-- (service role) and osint_admin. appsmith_readonly inherits osint_readonly.
+GRANT SELECT (user_id, username, role_id, is_active, created_by, created_at, updated_at)
+    ON TABLE system_users TO osint_analyst;
+GRANT SELECT (user_id, username, role_id, is_active, created_by, created_at, updated_at)
+    ON TABLE system_users TO osint_readonly;
 
 -- ============================================
 -- TABLAS: permissions / role_permissions

@@ -16,6 +16,10 @@ vi.mock('../layouts/DashboardLayout', async () => {
   };
 });
 
+vi.mock('../../features/home', () => ({
+  HomePage: () => <div>Home page</div>,
+}));
+
 vi.mock('../../features/dashboard', () => ({
   DashboardPage: () => <div>Dashboard page</div>,
 }));
@@ -68,9 +72,21 @@ describe('AppRouter', () => {
     window.history.pushState({}, '', '/');
   });
 
+  // c6bb818: the index route redirects to /home (Inicio, Tabla 23) and the dashboard
+  // moved to /dashboard. Both are checked so no coverage is lost.
   it('keeps the protected index route mounted under the dashboard layout', async () => {
     localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
     window.history.pushState({}, '', '/');
+
+    renderRouter();
+
+    expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
+    expect(await screen.findByText('Home page')).toBeInTheDocument();
+  });
+
+  it('keeps the dashboard route inside the protected dashboard layout', async () => {
+    localStorage.setItem('nsg:auth:token', makeToken(['dashboard:read']));
+    window.history.pushState({}, '', '/dashboard');
 
     renderRouter();
 

@@ -16,6 +16,7 @@ BACKEND_DIR = Path(__file__).parent.parent
 EXPECTED_ERROR_STATUS_BY_FILE = {
     "auth/tokens.py": {
         "status.HTTP_401_UNAUTHORIZED",
+        "status.HTTP_503_SERVICE_UNAVAILABLE",
     },
     "auth/permissions.py": {
         "status.HTTP_403_FORBIDDEN",
@@ -31,7 +32,7 @@ EXPECTED_ERROR_STATUS_BY_FILE = {
         "status.HTTP_409_CONFLICT",
     },
     "routers/logs.py": {"status.HTTP_404_NOT_FOUND"},
-    "routers/n8n.py": {"status.HTTP_502_BAD_GATEWAY"},
+    "routers/n8n.py": {"status.HTTP_502_BAD_GATEWAY", "status.HTTP_503_SERVICE_UNAVAILABLE"},
     "routers/threats.py": {"status.HTTP_404_NOT_FOUND"},
     "routers/users.py": {
         "status.HTTP_400_BAD_REQUEST",

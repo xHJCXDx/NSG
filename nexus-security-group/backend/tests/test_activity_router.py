@@ -31,6 +31,9 @@ from services.activity_audit import record_user_activity
 from tests.conftest import FakeDb, FakeQuery
 
 
+ADMIN_USER = TokenData(username="admin1", role="admin", permissions=["logs:read"])
+SENSITIVE_FIELDS = ("ip_address", "user_agent", "session_id", "activity_data")
+
 
 def _activity_row(**overrides):
     now = datetime(2026, 7, 5, 15, 0, tzinfo=timezone.utc)
@@ -65,7 +68,7 @@ def test_get_activities_lists_recent_user_activity_with_limit():
     query = FakeQuery(all_result=[activity])
     fake_db = FakeDb(query)
 
-    result = get_activities(db=fake_db, limit=7, current_user=object())
+    result = get_activities(db=fake_db, limit=7, current_user=ADMIN_USER)
 
     assert result == [activity]
     assert len(fake_db.query_args) == 1
@@ -91,7 +94,7 @@ def test_get_activities_lists_helper_generated_user_activity():
     activity.activity_timestamp = datetime(2026, 7, 5, 16, 0, tzinfo=timezone.utc)
 
     query = FakeQuery(all_result=[activity])
-    result = get_activities(db=FakeDb(query), limit=10, current_user=object())
+    result = get_activities(db=FakeDb(query), limit=10, current_user=ADMIN_USER)
 
     response = UserActivityResponse.model_validate(result[0])
     assert response.activity_id == 11
@@ -135,7 +138,7 @@ def test_get_activity_returns_detail_by_activity_id():
     query = FakeQuery(first_result=activity)
     fake_db = FakeDb(query)
 
-    result = get_activity(activity_id=42, db=fake_db, current_user=object())
+    result = get_activity(activity_id=42, db=fake_db, current_user=ADMIN_USER)
 
     detail = UserActivityResponse.model_validate(result)
     assert result == activity
@@ -292,3 +295,56 @@ def test_get_activities_rejects_invalid_limit_username_and_activity_type():
     )
 
     assert response.status_code == 422
+
+
+def _get_as(role, path, activity_row, *, detail=False):
+    access_token = auth.create_access_token(
+        {"sub": f"{role}1", "role": role, "permissions": ["logs:read"]}
+    )
+    fake_query = (
+        FakeQuery(first_result=activity_row) if detail else FakeQuery(all_result=[activity_row])
+    )
+    app.dependency_overrides[get_db] = lambda: FakeDb(fake_query)
+    try:
+        return TestClient(app).get(path, headers={"Authorization": f"Bearer {access_token}"})
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_non_admin_activity_list_hides_network_session_and_additional_data():
+    activity = _activity_row()
+    response = _get_as("analyst", "/api/activity", activity)
+
+    assert response.status_code == 200
+    item = response.json()[0]
+    for field in SENSITIVE_FIELDS:
+        assert item[field] is None, field
+    assert item["username"] == "analyst"
+    assert item["activity_type"] == "review_threat"
+    assert item["related_detection_id"] == 30
+    # The ORM row itself is never modified (it must not be flushed back to the database).
+    assert activity.ip_address == "192.168.1.10"
+    assert activity.activity_data == {"risk": "high"}
+
+
+def test_non_admin_activity_detail_hides_network_session_and_additional_data():
+    activity = _activity_row(activity_id=42)
+    response = _get_as("viewer", "/api/activity/42", activity, detail=True)
+
+    assert response.status_code == 200
+    body = response.json()
+    for field in SENSITIVE_FIELDS:
+        assert body[field] is None, field
+    assert body["activity_id"] == 42
+    assert activity.session_id == "sess-001"
+
+
+def test_admin_activity_list_and_detail_keep_network_session_and_additional_data():
+    list_response = _get_as("admin", "/api/activity", _activity_row())
+    detail_response = _get_as("admin", "/api/activity/42", _activity_row(activity_id=42), detail=True)
+
+    for body in (list_response.json()[0], detail_response.json()):
+        assert body["ip_address"] == "192.168.1.10"
+        assert body["user_agent"] == "Mozilla/5.0"
+        assert body["session_id"] == "sess-001"
+        assert body["activity_data"] == {"risk": "high"}
