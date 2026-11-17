@@ -47,9 +47,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **148** |
+| | **Total** | **147** |
 
-Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 18, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 17, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
