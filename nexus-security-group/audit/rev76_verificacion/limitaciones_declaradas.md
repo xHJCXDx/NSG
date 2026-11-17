@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 148 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 147 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -8,7 +8,7 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 
 | Grupo | Tema | Filas |
 |---|---|---|
-| 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-57, A-58, A-60, A-61, AD-33, AD-35 |
+| 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-58, A-60, A-61, AD-33, AD-35 |
 | 1 | Persistencia atómica por mención | R8A-04, R8A-05, R8B-04, R8B-05, R8B-35, AD-59, AD-60 |
 | 1 | Superposición: la segunda ejecución no crea ni modifica nada | AD-64, AD-94 |
 | 2 | Rol de servicio superusuario | A-52, A-53, R8A-32, AD-14 |
@@ -47,21 +47,20 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **148** |
+| | **Total** | **147** |
 
-Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 18, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 17, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
 ### Purga de las confirmadas (365/730 con minimización)
 
-La especificación corta la purga por fecha de adquisición; elimina las menciones vencidas no confirmadas; a las confirmadas (incluidas las resueltas) les borra la autoría y el contenido original, las conserva solo con revisión de minimización y las elimina a los 730 días. `purge_old_data` corta por fecha de publicación (`created_at`), protege solo las detecciones `confirmed` (las resueltas se purgan) y conserva las confirmadas sin plazo y sin minimizar. **Consecuencia:** las menciones confirmadas retienen datos personales por tiempo indefinido, las resueltas se pierden, y el plazo se cuenta desde la publicación y no desde la adquisición. **Trabajo futuro:** reescribir `purge_old_data` según el Anexo A.2 (corte por `collected_at`, minimización a los 365 días y borrado a los 730).
+La especificación elimina las menciones vencidas no confirmadas; a las confirmadas (incluidas las resueltas) les borra la autoría y el contenido original, las conserva solo con revisión de minimización y las elimina a los 730 días. `purge_old_data` protege solo las detecciones `confirmed` (las resueltas se purgan) y conserva las confirmadas sin plazo y sin minimizar. **Consecuencia:** las menciones confirmadas retienen datos personales por tiempo indefinido y las resueltas se pierden. **Trabajo futuro:** reescribir `purge_old_data` según el Anexo A.2 (minimización a los 365 días y borrado a los 730). El corte por fecha de adquisición (A-57) se implementó en la REV77 (`7edd963`; ver «Cambios REV77»).
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|
 | A-32 | «Detección confirmada» = confirmada o resuelta (la resuelta conserva la protección de la purga) | A.1 l.2007 | Contraria | init.sql:463 `WHERE review_status = 'confirmed'`: las resueltas se purgan |
 | A-56 | Regla 1: las menciones vencidas no confirmadas se eliminan con su análisis, detección y aviso | A.2 l.2033; §7.8.4 l.1150 | Parcial | init.sql:458-464 + cascadas 78, 111, 167. «Confirmada» excluye las resueltas (A-32) |
-| A-57 | El corte usa la fecha de adquisición | A.2 l.2039 | Contraria | init.sql:459 `WHERE created_at < cutoff_date` (fecha de publicación; la de adquisición es `collected_at`, init.sql:24) |
 | A-58 | Regla 2: las confirmadas vencidas pierden la autoría (usuario, ID, banda, verificación) y el contenido original | A.2 l.2034; §7.8.4 l.1150; Tabla 8 l.1168, l.1170 | No implementada | init.sql:449-481: no hay UPDATE que borre author_* ni raw_data |
 | A-60 | Las confirmadas se conservan solo con la revisión de minimización registrada; sin ella se eliminan | A.2 l.2034; §7.8.4 l.1154; Tabla 8 l.1171 | Contraria | init.sql:460-464 conserva toda 'confirmed' sin marca ni control de minimización |
 | A-61 | Las confirmadas conservadas se eliminan al doble del plazo (730 días) | A.2 l.2034; §7.8.4 l.1150 | Contraria | init.sql:460-464: las confirmadas quedan fuera del borrado sin límite (se conservan para siempre) |
@@ -522,4 +521,12 @@ Fecha: 16/11/2026. Nueve filas dejan de ser limitaciones porque se implementaron
 | R8B-09, R8B-39 | Webhook manual sin secreto (tema eliminado) | `99a5f32` |
 
 R8A-34 se completó en dos pasos: el *hash* (`df1f478`) y los datos de red (`3994149`). Total: 157 → 148 filas; 43 → 39 temas.
+
+El 17/11/2026 se implementó también A-57 (rama `fix/rev77-purge-cutoff`):
+
+| Fila | Tema anterior | Commit |
+|---|---|---|
+| A-57 | Purga de las confirmadas (el tema sigue, sin el corte por fecha de publicación) | `7edd963` |
+
+Total: 148 → 147 filas; los temas siguen siendo 39.
 
