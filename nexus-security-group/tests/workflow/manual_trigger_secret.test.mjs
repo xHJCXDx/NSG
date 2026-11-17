@@ -41,6 +41,16 @@ test('the secret check compares the header with a non-empty WEBHOOK_SECRET', () 
   assert.match(notEmpty.leftValue, /\$env\.WEBHOOK_SECRET/);
 });
 
+// A plain string comparison stops at the first different character, so its
+// timing leaks how much of a guess is right. Comparing the SHA-256 digests of
+// both values keeps that timing unrelated to the secret itself.
+test('the secret check compares SHA-256 digests, not the raw values', () => {
+  const { conditions } = node('Check Webhook Secret').parameters.conditions;
+  const equals = conditions.find((c) => c.operator.operation === 'equals');
+  assert.match(equals.leftValue, /\.hash\('sha256'\)/);
+  assert.match(equals.rightValue, /\.hash\('sha256'\)/);
+});
+
 test('a valid secret answers 200 and then queries the three sources', () => {
   assert.deepEqual(targets('Check Webhook Secret', 0), ['Respond Trigger Accepted']);
   const accepted = node('Respond Trigger Accepted');
