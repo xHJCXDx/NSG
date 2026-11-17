@@ -3,7 +3,8 @@
 # (audit/rev76_verificacion/suite_20261113-161324.log) and save the output
 # unedited. Does not start the system.
 # Usage, from any directory: bash audit/rev77_verificacion/correr_suite.sh
-set -u
+# Exits 1 when any block fails, 0 when all pass.
+set -u -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -20,6 +21,15 @@ relative_paths() {
     }'
 }
 
+# Each block prints its own exit code; any non-zero code marks the suite failed.
+# The braces below run in a subshell (they feed a pipe), so the result leaves
+# them through "exit", and pipefail carries it past relative_paths and tee.
+failed=0
+record_exit() {
+    echo "exit: $1"
+    [ "$1" -eq 0 ] || failed=1
+}
+
 # run_scenarios.sh calls python3 -m pytest: use the backend virtualenv.
 export PATH="$PROJECT_DIR/backend/.venv/bin:$PATH"
 
@@ -33,15 +43,18 @@ export PATH="$PROJECT_DIR/backend/.venv/bin:$PATH"
     echo
     echo "## sh tests/scenarios/run_scenarios.sh"
     sh tests/scenarios/run_scenarios.sh
-    echo "exit: $?"
+    record_exit $?
     echo
     echo '## node --test "tests/workflow/*.test.mjs"'
     node --test "tests/workflow/*.test.mjs"
-    echo "exit: $?"
+    record_exit $?
     echo
     echo "## cd backend && .venv/bin/python -m pytest -q -p no:cacheprovider tests"
     (cd backend && .venv/bin/python -m pytest -q -p no:cacheprovider tests)
-    echo "exit: $?"
+    record_exit $?
+    exit "$failed"
 } 2>&1 | relative_paths | tee "$LOG"
+suite_status=$?
 
 echo "log: ${LOG#"$PROJECT_DIR"/}"
+exit "$suite_status"
