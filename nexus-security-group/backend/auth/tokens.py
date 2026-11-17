@@ -45,11 +45,16 @@ def _ensure_user_is_active(db: Session, token_data: TokenData, credentials_excep
     """Reject the request when the token's user no longer exists or is inactive.
 
     The token is checked on every request, not only at login (§8.5.2; A.3,
-    rule 3). The bootstrap administrator has no database row, so it is skipped.
+    rule 3). The bootstrap administrator has no database row: its token is
+    valid only while system_users is empty, the same condition under which the
+    bootstrap login is allowed (auth/routes.py).
     """
-    if token_data.auth_source == BOOTSTRAP_AUTH_SOURCE:
-        return
     try:
+        if token_data.auth_source == BOOTSTRAP_AUTH_SOURCE:
+            if db.query(SystemUser.user_id).first() is not None:
+                logger.warning("Token rejected: bootstrap token used after database users exist")
+                raise credentials_exception
+            return
         query = db.query(SystemUser)
         if token_data.user_id is not None:
             query = query.filter(SystemUser.user_id == token_data.user_id)
