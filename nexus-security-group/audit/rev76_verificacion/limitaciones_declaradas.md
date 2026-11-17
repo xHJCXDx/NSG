@@ -115,7 +115,7 @@ La especificación comprueba el permiso de cada operación con el rol del usuari
 
 ### Contraseña inicial del admin en texto plano
 
-La especificación crea un primer usuario `admin` cuya contraseña se guarda solo como hash. `init.sql` no siembra ningún usuario: mientras la tabla está vacía hay un ingreso de arranque con `ADMIN_PASSWORD`, que se lee del entorno y se compara en texto plano. **Consecuencia:** la contraseña inicial queda legible en el archivo de entorno. **Trabajo futuro:** que el entorno reciba el hash y no la contraseña.
+La especificación crea un primer usuario `admin` cuya contraseña se guarda solo como hash. `init.sql` no siembra ningún usuario: mientras la tabla está vacía hay un ingreso de arranque con `ADMIN_PASSWORD`, que se lee del entorno y se compara en texto plano. **Consecuencia:** la contraseña inicial queda legible en el archivo de entorno. **Trabajo futuro:** que el entorno reciba el hash y no la contraseña. En la REV77 (`3164216`) el token de arranque deja de valer en cuanto existe el primer usuario de la base; antes seguía valiendo hasta vencer.
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|

@@ -2,8 +2,9 @@
 
 Scenario E13 lives in test_scenarios.py; these tests pin the remaining cases:
 an active user is accepted, a missing user is rejected, the bootstrap
-administrator (no database row) is not looked up, and a database failure
-answers 503 instead of letting the request through.
+administrator (no database row) is accepted only while there are no database
+users, and a database failure answers 503 instead of letting the request
+through.
 """
 from datetime import timedelta
 from types import SimpleNamespace
@@ -66,13 +67,36 @@ def test_token_without_user_id_is_looked_up_by_username():
     assert len(db.query_args) == 1
 
 
-def test_bootstrap_admin_token_is_not_looked_up_in_the_database():
+BOOTSTRAP_CLAIMS = {"sub": "test-admin", "role": "admin", "auth_source": "bootstrap"}
+
+
+def test_bootstrap_admin_token_is_accepted_while_there_are_no_database_users():
     db = FakeDb(FakeQuery(first_result=None))
 
-    response = _get_protected(db, {"sub": "test-admin", "role": "admin", "auth_source": "bootstrap"})
+    response = _get_protected(db, BOOTSTRAP_CLAIMS)
 
     assert response.status_code == 200
-    assert db.query_args == []
+    assert response.json() == {"username": "test-admin"}
+    assert len(db.query_args) == 1
+
+
+def test_bootstrap_admin_token_is_rejected_once_a_database_user_exists():
+    """The bootstrap login only works while system_users is empty (auth/routes.py);
+    a bootstrap token issued before the first user was created must stop working."""
+    db = FakeDb(FakeQuery(first_result=SimpleNamespace(user_id=1)))
+
+    response = _get_protected(db, BOOTSTRAP_CLAIMS)
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Could not validate credentials"}
+    assert len(db.query_args) == 1
+
+
+def test_database_failure_during_the_bootstrap_check_answers_503():
+    response = _get_protected(FailingDb(), BOOTSTRAP_CLAIMS)
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Authentication service unavailable"}
 
 
 def test_database_failure_during_the_check_answers_503():
