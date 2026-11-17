@@ -80,3 +80,33 @@ def test_database_failure_during_the_check_answers_503():
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Authentication service unavailable"}
+
+
+def test_token_dependency_runs_outside_the_event_loop():
+    """The per-request lookup is blocking I/O: FastAPI must run it in its threadpool."""
+    import inspect
+
+    assert not inspect.iscoroutinefunction(auth.get_current_user)
+
+
+def test_logout_with_database_user_token_checks_the_user_and_records_activity():
+    from main import app
+
+    active_user = SimpleNamespace(user_id=7, username="analyst1", is_active=True)
+    db = FakeDb(FakeQuery(first_result=active_user))
+    token = auth.create_access_token(
+        {"sub": "analyst1", "user_id": 7, "role": "analyst", "auth_source": "database"},
+        expires_delta=timedelta(minutes=60),
+    )
+    app.dependency_overrides[auth.get_db] = lambda: db
+    try:
+        response = TestClient(app).post(
+            "/api/auth/logout", headers={"Authorization": f"Bearer {token}"}
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Logged out successfully"}
+    assert len(db.query_args) == 1
+    assert [activity.activity_type for activity in db.added] == ["logout"]

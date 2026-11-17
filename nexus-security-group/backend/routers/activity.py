@@ -12,6 +12,17 @@ from schemas.activity import UserActivityResponse
 
 router = APIRouter(prefix="/api/activity", tags=["activity"])
 
+# Network, session and additional data of the activity are readable only by
+# the administration role (Tabla A2); other roles get them as null.
+_ADMIN_ONLY_FIELDS = dict.fromkeys(("ip_address", "user_agent", "session_id", "activity_data"))
+
+
+def _visible_activity(activity, current_user: TokenData):
+    if getattr(current_user, "is_admin", False):
+        return activity
+    # Build a response copy: never modify the ORM row, which belongs to the session.
+    return UserActivityResponse.model_validate(activity).model_copy(update=_ADMIN_ONLY_FIELDS)
+
 
 @router.get("", response_model=list[UserActivityResponse])
 def get_activities(
@@ -29,7 +40,8 @@ def get_activities(
     if activity_type is not None:
         query = query.filter(UserActivity.activity_type == activity_type)
 
-    return query.order_by(UserActivity.activity_timestamp.desc()).limit(limit).all()
+    activities = query.order_by(UserActivity.activity_timestamp.desc()).limit(limit).all()
+    return [_visible_activity(activity, current_user) for activity in activities]
 
 
 @router.get("/{activity_id}", response_model=UserActivityResponse)
@@ -49,4 +61,4 @@ def get_activity(
             detail="User activity not found",
         )
 
-    return activity
+    return _visible_activity(activity, current_user)

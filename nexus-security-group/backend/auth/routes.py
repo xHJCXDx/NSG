@@ -176,7 +176,7 @@ async def logout(
     documented as future work."""
     if token is not None:
         try:
-            current_user = await get_current_user(token=token)
+            current_user = get_current_user(token=token, db=db)
         except HTTPException:
             current_user = None
         if current_user is not None:

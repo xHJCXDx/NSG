@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from auth import get_current_user
+from schemas.auth import TokenData
 from schemas.system import SystemInfoResponse
 
 router = APIRouter(prefix="/api/system", tags=["system"])
@@ -13,5 +15,5 @@ _SYSTEM_INFO = SystemInfoResponse(
 
 
 @router.get("/info", response_model=SystemInfoResponse)
-def get_system_info() -> SystemInfoResponse:
+def get_system_info(current_user: TokenData = Depends(get_current_user)) -> SystemInfoResponse:
     return _SYSTEM_INFO

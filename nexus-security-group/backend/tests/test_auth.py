@@ -418,19 +418,17 @@ async def test_logout_without_token_preserves_ack_and_skips_audit():
     assert db.added == []
 
 
-@pytest.mark.anyio
-async def test_invalid_token_rejected():
+def test_invalid_token_rejected():
     from auth import get_current_user
     from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
-        await get_current_user(token="not-a-jwt")
+        get_current_user(token="not-a-jwt")
 
     assert exc_info.value.status_code == 401
 
 
-@pytest.mark.anyio
-async def test_get_current_user_decodes_permissions_from_token():
+def test_get_current_user_decodes_permissions_from_token():
     import auth
 
     access_token = auth.create_access_token(
@@ -442,7 +440,7 @@ async def test_get_current_user_decodes_permissions_from_token():
         }
     )
 
-    token_data = await auth.get_current_user(token=access_token)
+    token_data = auth.get_current_user(token=access_token)
 
     assert token_data.permissions == ["threats:read", "workflows:execute"]
 

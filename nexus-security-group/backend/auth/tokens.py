@@ -66,7 +66,9 @@ def _ensure_user_is_active(db: Session, token_data: TokenData, credentials_excep
         raise credentials_exception
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    # Plain def: the active-user lookup is blocking database I/O, so FastAPI must
+    # run this dependency in its threadpool instead of on the event loop.
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

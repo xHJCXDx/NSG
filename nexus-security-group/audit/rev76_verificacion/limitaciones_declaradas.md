@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 154 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 148 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -11,12 +11,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 1 | Purga de las confirmadas (365/730 con minimización) | A-32, A-56, A-57, A-58, A-60, A-61, AD-33, AD-35 |
 | 1 | Persistencia atómica por mención | R8A-04, R8A-05, R8B-04, R8B-05, R8B-35, AD-59, AD-60 |
 | 1 | Superposición: la segunda ejecución no crea ni modifica nada | AD-64, AD-94 |
-| 2 | Datos de red legibles por análisis y consulta (`password_hash` corregido en la REV77) | A-15, R8A-34 |
 | 2 | Rol de servicio superusuario | A-52, A-53, R8A-32, AD-14 |
 | 2 | Permisos leídos del token y no de la base | A-73, R8B-51 |
-| 2 | `/api/system/info` público | A-78, R8B-64 |
 | 2 | Contraseña inicial del admin en texto plano | A-80, A-81 |
-| 2 | Webhook manual sin secreto | R8B-09, R8B-39 |
 | 2 | Límite de tasa solo en el ingreso | R8B-40 |
 | 2 | Límite de ingreso detrás del proxy | R8B-47 |
 | 3 | Transiciones de revisión libres; reapertura por cualquier analista | A-29, A-31 |
@@ -50,9 +47,9 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Término sin FK a categoría | A-36 |
 | 12 | Dominios cerrados que faltan (tipo de ejecución, estado por canal) | R8A-28 |
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
-| | **Total** | **154** |
+| | **Total** | **148** |
 
-Por estado en la matriz: No implementada: 69, Parcial: 61, Contraria: 23, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 18, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
@@ -96,17 +93,6 @@ Desde `c81c96f` (arreglo b) las inserciones usan `ON CONFLICT … DO NOTHING`, a
 
 ## Grupo 2 · Seguridad y datos personales
 
-### Datos de red legibles por análisis y consulta (`password_hash` corregido en la REV77)
-
-**REV77:** `df1f478` quitó `password_hash` de lo que leen análisis y consulta (A-50 pasó a «implementar»). Lo que sigue declarado son los datos de red y de sesión de la actividad (A-15 y la parte correspondiente de R8A-34).
-
-La especificación prohíbe que los roles de análisis y consulta lean hashes de contraseña y datos de red o sesión. `init.sql` otorga `SELECT` sobre todas las tablas a esos roles, incluido `system_users` con `password_hash`, y el endpoint de actividad devuelve IP, agente de usuario y sesión a quien tenga `logs:read` (también `analyst`). **Consecuencia:** una credencial de análisis puede leer los hashes y los datos de red de otros usuarios. **Trabajo futuro:** permisos por columna (`REVOKE` + `GRANT` de columnas) y ocultar esos campos en la API.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-15 | Datos de red y sesión de la actividad: solo los leen el rol de servicio y el de administración | Tabla 8 l.1172; Tabla A2 l.2023 | Contraria | init.sql:581, 586 (SELECT ON ALL TABLES a análisis y consulta, sin restricción por columna); API: backend/routers/activity.py:23 (`logs:read`, que tiene analyst, init.sql:818) devuelve ip, user_agent y sesión (backend/schemas/activity.py:58-60) |
-| R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` |
-
 ### Rol de servicio superusuario
 
 La especificación pide un rol de servicio sin superusuario, sin `BYPASSRLS` y sin `CREATEROLE` una vez instalada la base. El backend y n8n se conectan con `POSTGRES_USER`, que en la imagen oficial de Postgres es superusuario, y no se revoca el `EXECUTE` de `PUBLIC` sobre la purga. Esto se infiere del comportamiento estándar de la imagen; no se ejecutó. **Consecuencia:** quien obtenga la credencial del backend o de n8n controla toda la base y pasa por encima de las políticas por fila. **Trabajo futuro:** crear un rol de servicio dedicado y quitarle los privilegios al terminar la instalación. No se hace ahora porque cambiar los roles a esta altura arriesga romper la instalación.
@@ -127,15 +113,6 @@ La especificación comprueba el permiso de cada operación con el rol del usuari
 | A-73 | La API comprueba en cada solicitud el permiso de la operación con el rol del usuario | A.3 l.2068 | Parcial | permissions.py:71-77 compara con los permisos copiados en el JWT (tokens.py:52), no con la base: un cambio de rol no se ve hasta que vence el token |
 | R8B-51 | En cada solicitud se comprueba que el rol tenga el permiso de la operación | §8.5.2 l.1667 | Parcial | backend/auth/permissions.py:66-72 valida los permisos copiados en el token al ingresar (si el rol cambia, quedan desactualizados hasta 60 min) |
 
-### `/api/system/info` público
-
-La especificación exige usuario autenticado para la información del sistema; solo el control de estado es público. `/api/system/info` no tiene dependencia de autenticación y una prueba lo declara público a propósito. **Consecuencia:** cualquiera que alcance la API puede leer esa información. **Trabajo futuro:** exigir usuario autenticado y actualizar la prueba.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| A-78 | Inicio, preferencias e información del sistema exigen usuario autenticado | A.3 regla 4 l.2073 | Contraria | backend/routers/system.py:15-17 `/api/system/info` sin dependencia (declarado «intencionalmente público» en tests/test_route_auth_contract.py:16) |
-| R8B-64 | Inicio, preferencias e información del sistema exigen usuario autenticado; el control de estado es público | Tabla 22 nota l.1696 | Parcial | Estado público (backend/main.py:104); /info sin autenticación (backend/routers/system.py:15-17) |
-
 ### Contraseña inicial del admin en texto plano
 
 La especificación crea un primer usuario `admin` cuya contraseña se guarda solo como hash. `init.sql` no siembra ningún usuario: mientras la tabla está vacía hay un ingreso de arranque con `ADMIN_PASSWORD`, que se lee del entorno y se compara en texto plano. **Consecuencia:** la contraseña inicial queda legible en el archivo de entorno. **Trabajo futuro:** que el entorno reciba el hash y no la contraseña.
@@ -144,15 +121,6 @@ La especificación crea un primer usuario `admin` cuya contraseña se guarda sol
 |---|---|---|---|---|
 | A-80 | La instalación crea un primer usuario `admin` | A.3 regla 5 l.2074 | Parcial | init.sql no siembra ningún usuario en system_users (758-824); solo hay un ingreso de arranque por variables de entorno mientras la tabla está vacía (auth/routes.py:122-142) |
 | A-81 | La contraseña inicial de `admin` se guarda solo como hash | A.3 regla 5 l.2074 | Contraria | backend/config.py:9 `ADMIN_PASSWORD` en el entorno, comparada en texto plano con hmac.compare_digest (auth/routes.py:123) |
-
-### Webhook manual sin secreto
-
-La especificación acepta el disparador manual solo si lo envía la API con un secreto compartido. El webhook de n8n no exige autenticación, la API no envía `WEBHOOK_SECRET` y n8n recibe esa variable pero no la usa. Desde `e990d80` (arreglo d) el puerto 5678 se publica solo en `127.0.0.1`, así que ya no se alcanza desde la red, pero cualquier proceso del equipo o contenedor de la red interna puede disparar el flujo. **Trabajo futuro:** validar el encabezado secreto en el webhook y enviarlo desde la API.
-
-| ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
-|---|---|---|---|---|
-| R8B-09 | El disparador manual HTTP solo se acepta si lo envía la API con un secreto compartido | §8.4.1 l.1616 | Contraria | «Manual OSINT Trigger» es un webhook POST sin autenticación; backend/routers/n8n.py:45-49 no envía WEBHOOK_SECRET |
-| R8B-39 | La ejecución manual la reenvía la API con un secreto que solo ella conoce; ningún otro componente dispara el flujo | §8.5.1 l.1657 | Contraria | backend/routers/n8n.py:45-49 no agrega el secreto; WEBHOOK_SECRET llega a n8n (docker-compose.yml:77) pero no se usa; el puerto 5678 está expuesto |
 
 ### Límite de tasa solo en el ingreso
 
@@ -543,12 +511,15 @@ La matriz se auditó sobre `develop` 9b90270. En la rama `fix/rev76-conformidad`
 
 ## Cambios REV77
 
-Fecha: 16/11/2026. Tres filas dejan de ser limitaciones porque se implementaron (rama `fix/rev77-active-user-and-hash-grant`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
+Fecha: 16/11/2026. Nueve filas dejan de ser limitaciones porque se implementaron (ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth`; detalle en `matriz_conformidad.md`, «Cambios REV77»):
 
 | Fila | Tema anterior | Commit |
 |---|---|---|
 | A-77, R8B-50 | Usuario inactivo con token válido (tema eliminado) | `9ad1573` |
 | A-50 | `password_hash` y datos de red legibles por análisis y consulta (el tema queda solo con los datos de red) | `df1f478` |
+| A-78, R8B-64 | `/api/system/info` público (tema eliminado) | `de14e9b` |
+| A-15, R8A-34 | Datos de red legibles por análisis y consulta (tema eliminado) | `3994149` |
+| R8B-09, R8B-39 | Webhook manual sin secreto (tema eliminado) | `99a5f32` |
 
-R8A-34 sigue declarada porque también exige ocultar los datos de red. Total: 157 → 154 filas; 43 → 42 temas.
+R8A-34 se completó en dos pasos: el *hash* (`df1f478`) y los datos de red (`3994149`). Total: 157 → 148 filas; 43 → 39 temas.
 

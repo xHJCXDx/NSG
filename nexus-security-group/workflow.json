@@ -120,6 +120,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "osint-trigger",
+        "responseMode": "responseNode",
         "options": {}
       },
       "id": "c4a6d531-fe88-444c-bfed-afa5dc3d8cc4",
@@ -131,6 +132,83 @@
         4928
       ],
       "webhookId": "osint-trigger"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "fb2d18ec-98dd-4f59-af21-f8df6d506154",
+              "leftValue": "={{ $env.WEBHOOK_SECRET ?? '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "3f14b2df-c255-491a-8783-e59c72a7a9d4",
+              "leftValue": "={{ $json.headers['x-webhook-secret'] ?? '' }}",
+              "rightValue": "={{ $env.WEBHOOK_SECRET ?? '' }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5a61ffb3-8820-45ff-8fd9-9794a6bee18e",
+      "name": "Check Webhook Secret",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6128,
+        4928
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ message: 'Workflow was started' }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "7e2dd340-1cfe-4e05-abbf-95a353179379",
+      "name": "Respond Trigger Accepted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        6288,
+        4832
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ message: 'Unauthorized' }) }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "096a78e5-cceb-4dec-bc33-1353f7d888a6",
+      "name": "Respond Trigger Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        6288,
+        5024
+      ]
     },
     {
       "parameters": {
@@ -809,17 +887,7 @@
       "main": [
         [
           {
-            "node": "Hacker News API Search",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Fetch Exploit-DB RSS",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Fetch GitHub Security Issues",
+            "node": "Check Webhook Secret",
             "type": "main",
             "index": 0
           }
@@ -1150,6 +1218,45 @@
         [
           {
             "node": "Log Execution (No Items)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Webhook Secret": {
+      "main": [
+        [
+          {
+            "node": "Respond Trigger Accepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Trigger Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Trigger Accepted": {
+      "main": [
+        [
+          {
+            "node": "Hacker News API Search",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Exploit-DB RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch GitHub Security Issues",
             "type": "main",
             "index": 0
           }
