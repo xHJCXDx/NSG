@@ -455,8 +455,10 @@ DECLARE
 BEGIN
     cutoff_date := NOW() - (retention_days || ' days')::INTERVAL;
 
+    -- The retention period runs from acquisition (collected_at), not from
+    -- publication (created_at): see thesis Annex A.2, "Corte de la purga".
     DELETE FROM social_mentions
-    WHERE created_at < cutoff_date
+    WHERE collected_at < cutoff_date
       AND mention_id NOT IN (
           SELECT mention_id
           FROM threat_detections
