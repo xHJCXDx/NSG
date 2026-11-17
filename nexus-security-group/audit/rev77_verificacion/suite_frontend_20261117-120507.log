@@ -1,0 +1,20 @@
+# Frontend suite output (REV77, A7). Not edited, except that paths are shown relative to the project.
+date: 2026-11-17 12:05:07 -03:00
+commit: 9f24de2b323219e684d374b59ddf43cbf504d77a
+branch: develop
+tracked changes outside audit/: 0
+node: v24.21.0
+
+## cd frontend && npx vitest run
+npm notice run frontend@0.0.0 npx
+npm notice run 'vitest' run
+
+ RUN  v4.1.9 frontend
+
+
+ Test Files  33 passed (33)
+      Tests  222 passed (222)
+   Start at  12:05:08
+   Duration  5.89s (transform 6.20s, setup 3.53s, import 17.74s, tests 19.36s, environment 28.92s)
+
+exit: 0
