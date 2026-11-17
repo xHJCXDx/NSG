@@ -123,5 +123,5 @@ expect kept    rev77-acquired-now
 
 echo
 if [ "$FAIL" -eq 0 ]; then echo "RESULT: PASS"; else echo "RESULT: FAIL"; fi
-echo "log: $LOG"
+echo "log: ${LOG#"$PROJECT_DIR"/}"
 exit "$FAIL"

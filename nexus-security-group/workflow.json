@@ -155,8 +155,8 @@
             },
             {
               "id": "3f14b2df-c255-491a-8783-e59c72a7a9d4",
-              "leftValue": "={{ $json.headers['x-webhook-secret'] ?? '' }}",
-              "rightValue": "={{ $env.WEBHOOK_SECRET ?? '' }}",
+              "leftValue": "={{ String($json.headers['x-webhook-secret'] ?? '').hash('sha256') }}",
+              "rightValue": "={{ String($env.WEBHOOK_SECRET ?? '').hash('sha256') }}",
               "operator": {
                 "type": "string",
                 "operation": "equals"

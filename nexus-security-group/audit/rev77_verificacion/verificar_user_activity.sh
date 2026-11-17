@@ -118,5 +118,5 @@ expect ok osint_admin "SELECT password_hash FROM system_users;"
 
 echo
 if [ "$FAIL" -eq 0 ]; then echo "RESULT: PASS"; else echo "RESULT: FAIL"; fi
-echo "log: $LOG"
+echo "log: ${LOG#"$PROJECT_DIR"/}"
 exit "$FAIL"
