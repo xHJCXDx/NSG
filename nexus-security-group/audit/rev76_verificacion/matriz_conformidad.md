@@ -85,7 +85,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 ## Columnas para completar
 
-- **Decisión (A6):** completada el 12/11/2026 con la Opción B, en cada fila que no está *Implementada*. **implementar** marca solo los cuatro arreglos triviales (13 filas: AD-08 se sumó al arreglo c el 12/11/2026, y AD-20 quedó cubierta por el arreglo d al reevaluarla en el paso 4). **corregir el texto** se usa cuando el código es correcto y la tesis se ajusta a él (14 filas). **manual** se usa para los procedimientos humanos (12 filas). **declarar** es una limitación que se informa y no se implementa (157 filas; el detalle está en `limitaciones_declaradas.md`). En la REV77, A-15, A-50, A-77, A-78, R8A-34, R8B-09, R8B-39, R8B-50 y R8B-64 pasaron de **declarar** a **implementar**: quedan 22 filas **implementar** y 148 **declarar** (sección «Cambios REV77»).
+- **Decisión (A6):** completada el 12/11/2026 con la Opción B, en cada fila que no está *Implementada*. **implementar** marca solo los cuatro arreglos triviales (13 filas: AD-08 se sumó al arreglo c el 12/11/2026, y AD-20 quedó cubierta por el arreglo d al reevaluarla en el paso 4). **corregir el texto** se usa cuando el código es correcto y la tesis se ajusta a él (14 filas). **manual** se usa para los procedimientos humanos (12 filas). **declarar** es una limitación que se informa y no se implementa (157 filas; el detalle está en `limitaciones_declaradas.md`). En la REV77, A-15, A-50, A-57, A-77, A-78, R8A-34, R8B-09, R8B-39, R8B-50 y R8B-64 pasaron de **declarar** a **implementar**: quedan 23 filas **implementar** y 147 **declarar** (sección «Cambios REV77»).
 - **Commit:** se completa en B4 con el commit que implementa la regla. En las filas **corregir el texto** dice «tesis REV77», porque la corrección está en la tesis y no en el código (ubicación en «Cambios REV77», «Correcciones del texto (Q-A1)»).
 
 ## Matriz
@@ -488,7 +488,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 ## Cambios REV77
 
-Fecha: 16/11/2026. Ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth` (esta última incluye también los datos de red y el secreto del disparador manual). Las columnas «Estado» y «Evidencia» siguen describiendo la auditoría sobre `9b90270`; los cambios se registran en «Decisión» y «Commit», como en los arreglos de B4.
+Fecha: 16/11/2026 (A-57: 17/11/2026, rama `fix/rev77-purge-cutoff`). Ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-system-info-auth` (esta última incluye también los datos de red y el secreto del disparador manual). Las columnas «Estado» y «Evidencia» siguen describiendo la auditoría sobre `9b90270`; los cambios se registran en «Decisión» y «Commit», como en los arreglos de B4.
 
 | Fila | Antes | Después | Commit | Verificación |
 |---|---|---|---|---|
@@ -503,8 +503,9 @@ Fecha: 16/11/2026. Ramas `fix/rev77-active-user-and-hash-grant` y `fix/rev77-sys
 | R8B-09 | Contraria, declarar | implementar | `99a5f32` | `workflow.json`: el webhook «Manual OSINT Trigger» responde con nodos de respuesta; el nodo «Check Webhook Secret» compara el encabezado `X-Webhook-Secret` con `WEBHOOK_SECRET` (no vacío) y responde 401 sin consultar fuentes (`tests/workflow/manual_trigger_secret.test.mjs`, 6 pruebas). La evidencia original de R8B-39 («el puerto 5678 está expuesto») estaba desactualizada desde `e990d80`, que lo limita a `127.0.0.1` |
 | R8B-39 | Contraria, declarar | implementar | `99a5f32` | `backend/routers/n8n.py` envía `X-Webhook-Secret`; sin secreto configurado responde 503 y no llama a n8n (`backend/tests/test_n8n.py`) |
 | R8A-35 | Implementada | Implementada (corregida) | `4aaf093` | La auditoría la dio por implementada por los `GRANT INSERT`, pero sin `USAGE` sobre las secuencias `BIGSERIAL` el `INSERT` de análisis fallaba (`nextval`). init.sql otorga `USAGE` sobre `threat_detections_detection_id_seq`, `alerts_alert_id_seq` y `user_activity_activity_id_seq` solo a `osint_analyst`. Base limpia: `audit/rev77_verificacion/user_activity_20261116-175822.log`, 33/33 PASS (`nextval` permitido a análisis y denegado a consulta). Solo se aplica al crear la base: un volumen existente necesita recrearse o el `GRANT` a mano |
+| A-57 | Contraria, declarar | implementar | `7edd963` | `purge_old_data` (init.sql) corta por `collected_at` (fecha de adquisición) en lugar de `created_at` (fecha de publicación). Base limpia: `audit/rev77_verificacion/verificar_purga_corte.sh`, con el `init.sql` anterior falla (`purga_corte_20261117-101243_develop.log`: borra la mención publicada hace 800 días y adquirida hoy, y conserva la adquirida hace 366 días) y con el arreglo pasa (`purga_corte_20261117-101304.log`, 4/4 PASS, incluida la confirmada que sigue protegida). Solo se aplica al crear la base: en una base existente hay que volver a ejecutar el `CREATE OR REPLACE PROCEDURE`. Las demás reglas de la purga siguen declaradas |
 
-**Conteos de decisión (196 filas no implementadas por completo):** implementar 13 → 22; corregir el texto 14; manual 12; declarar 157 → 148. Las 148 declaradas, por estado: No implementada 69, Parcial 60, Contraria 18, Contraria (sin ejecutar) 1.
+**Conteos de decisión (196 filas no implementadas por completo):** implementar 13 → 23; corregir el texto 14; manual 12; declarar 157 → 147. Las 147 declaradas, por estado: No implementada 69, Parcial 60, Contraria 17, Contraria (sin ejecutar) 1.
 
 ### Correcciones del texto (Q-A1)
 
