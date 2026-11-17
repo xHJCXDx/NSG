@@ -503,7 +503,7 @@ La matriz se auditó sobre `develop` 9b90270. En la rama `fix/rev76-conformidad`
 | Fila | Qué cambió |
 |---|---|
 | AD-20 | `e990d80` publica 5678 solo en `127.0.0.1`. Al reevaluarla en el paso 4 pasó a «implementar», así que ya no figura en este documento. |
-| R8B-39 | La evidencia menciona el puerto expuesto, que se corrigió en `e990d80`. La falta del secreto sigue. |
+| R8B-39 | La evidencia menciona el puerto expuesto, que se corrigió en `e990d80`. La falta del secreto sigue (resuelto en la REV77 con `99a5f32`, ver «Cambios REV77»). |
 | AD-64, AD-94 | `c81c96f` evita reescribir y el índice único evita el segundo aviso en la base; el reenvío por los canales sigue. Se reevaluaron en el paso 4 y quedan en «declarar». |
 | A-25 | La evidencia cita `ON CONFLICT … DO UPDATE`; desde `c81c96f` es `DO NOTHING`. La instantánea sigue sin existir. |
 | AD-99 | La evidencia dice que el mensaje lleva el autor; desde `8ced8ae` ya no lo lleva. Siguen faltando la vista previa y el identificador. |
