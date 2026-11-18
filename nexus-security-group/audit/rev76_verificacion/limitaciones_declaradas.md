@@ -1,6 +1,6 @@
 # Limitaciones declaradas (REV76)
 
-Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 147 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis (§9.1 y discusión) se ajusta en B7 a partir de este documento.
+Fecha: 12/11/2026. Fuente: `matriz_conformidad.md`, filas con decisión **declarar** (157 filas en la REV76; 147 desde la REV77, sección «Cambios REV77»). Criterio: la devolución REV74 acepta, para cada divergencia, «implementarla o declarar que no se implementó» (T-A1). Estas reglas **no se implementan**: el código no se toca y cada una queda como trabajo futuro. El texto de la tesis se ajustó a partir de este documento en la REV76: §9.1.2 lo cita y resume sus divergencias en «Lo que el prototipo no cumple»; la REV77 y la REV78 lo mantienen.
 
 Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la especificación, qué hace el prototipo, la consecuencia y el trabajo futuro. Las tablas copian la evidencia de la matriz tal cual, tomada sobre `develop` 9b90270. Las filas cuya evidencia cambió con los arreglos de B4 están en la última sección.
 
@@ -49,7 +49,7 @@ Los temas siguen la agrupación de la propuesta A6. Cada tema dice qué exige la
 | 12 | Modelo de datos y flujo «en general» (filas resumen) | AD-15, AD-19 |
 | | **Total** | **147** |
 
-Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 17, Contraria (sin ejecutar): 1 (REV76: 70, 62, 24 y 1).
+Por estado en la matriz: No implementada: 69, Parcial: 60, Contraria: 18, Contraria (sin ejecutar): 0 (REV76: 70, 62, 24 y 1; REV77: 69, 60, 17 y 1; R8A-32 se ejecutó en la REV78).
 
 ## Grupo 1 · Purga, persistencia atómica y superposición
 
@@ -94,14 +94,14 @@ Desde `c81c96f` (arreglo b) las inserciones usan `ON CONFLICT … DO NOTHING`, a
 
 ### Rol de servicio superusuario
 
-La especificación pide un rol de servicio sin superusuario, sin `BYPASSRLS` y sin `CREATEROLE` una vez instalada la base. El backend y n8n se conectan con `POSTGRES_USER`, que en la imagen oficial de Postgres es superusuario, y no se revoca el `EXECUTE` de `PUBLIC` sobre la purga. Esto se infiere del comportamiento estándar de la imagen; no se ejecutó. **Consecuencia:** quien obtenga la credencial del backend o de n8n controla toda la base y pasa por encima de las políticas por fila. **Trabajo futuro:** crear un rol de servicio dedicado y quitarle los privilegios al terminar la instalación. No se hace ahora porque cambiar los roles a esta altura arriesga romper la instalación.
+La especificación pide un rol de servicio sin superusuario, sin `BYPASSRLS` y sin `CREATEROLE` una vez instalada la base. El backend y n8n se conectan con `POSTGRES_USER`, que en la imagen oficial de Postgres es superusuario, y no se revoca el `EXECUTE` de `PUBLIC` sobre la purga. Verificado en la REV78 con una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`): el usuario de los dos es `osint_db`, superusuario, con `CREATEROLE` y `BYPASSRLS`. **Consecuencia:** quien obtenga la credencial del backend o de n8n controla toda la base y pasa por encima de las políticas por fila. **Trabajo futuro:** crear un rol de servicio dedicado y quitarle los privilegios al terminar la instalación. No se hace ahora porque cambiar los roles a esta altura arriesga romper la instalación.
 
 | ID | Regla de la especificación | Sección | Estado | Evidencia (develop 9b90270) |
 |---|---|---|---|---|
 | A-52 | Purga y supresión: solo las ejecuta el rol de servicio | Tabla A2 l.2026; A.2 l.2031, l.2041 | Parcial | init.sql:579 `GRANT EXECUTE ON ALL FUNCTIONS … TO osint_admin`; no se revoca el EXECUTE de PUBLIC sobre purge_old_data; no hay procedimiento de supresión |
-| A-53 | El rol de servicio crea los tres roles de grupo y después no puede crear, modificar ni otorgar roles | Tabla A2 l.2027 | No implementada | docker-compose.yml:14, 87, 180: backend y n8n usan `POSTGRES_USER` (superusuario inicial); no hay ALTER ROLE NOCREATEROLE |
-| R8A-32 | El rol de servicio no es superusuario y pierde CREATEROLE/ADMIN OPTION al terminar la instalación | §8.2.1 l.1520 | Contraria (sin ejecutar) | `POSTGRES_USER` de la imagen oficial es superusuario (docker-compose.yml:14); no hay ALTER ROLE ... NOSUPERUSER/NOCREATEROLE. Se infiere del comportamiento estándar de la imagen; no se ejecutó |
-| AD-14 | Rol de servicio sin superusuario, sin CREATEDB ni BYPASSRLS, con CREATEROLE solo para la instalación; base cuyo propietario es ese rol | C.1.2, l.2103 | No implementada | init.sql:573-575 crea solo los roles de grupo; no hay NOSUPERUSER/NOBYPASSRLS; docker-compose.yml:14 usa POSTGRES_USER (superusuario de la imagen) |
+| A-53 | El rol de servicio crea los tres roles de grupo y después no puede crear, modificar ni otorgar roles | Tabla A2 l.2027 | No implementada | docker-compose.yml:14, 87, 180: backend y n8n usan `POSTGRES_USER` (superusuario inicial); no hay ALTER ROLE NOCREATEROLE. Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. |
+| R8A-32 | El rol de servicio no es superusuario y pierde CREATEROLE/ADMIN OPTION al terminar la instalación | §8.2.1 l.1520 | Contraria | `POSTGRES_USER` de la imagen oficial es superusuario (docker-compose.yml:14); no hay ALTER ROLE ... NOSUPERUSER/NOCREATEROLE. Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. |
+| AD-14 | Rol de servicio sin superusuario, sin CREATEDB ni BYPASSRLS, con CREATEROLE solo para la instalación; base cuyo propietario es ese rol | C.1.2, l.2103 | No implementada | init.sql:573-575 crea solo los roles de grupo; no hay NOSUPERUSER/NOBYPASSRLS; docker-compose.yml:14 usa POSTGRES_USER (superusuario de la imagen). Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. |
 
 ### Permisos leídos del token y no de la base
 
@@ -530,3 +530,10 @@ El 17/11/2026 se implementó también A-57 (rama `fix/rev77-purge-cutoff`):
 
 Total: 148 → 147 filas; los temas siguen siendo 39.
 
+
+## Cambios REV78
+
+Fecha: 18/11/2026. Residuo de AD-37 que se declara (devolución de quinta instancia, V-B3). AD-37 tiene la decisión «corregir el texto», así que no suma filas declaradas: el total sigue en 147 filas y 39 temas.
+
+- **`TRUNCATE` de `osint_admin` sobre `social_mentions`.** El `GRANT ALL PRIVILEGES ON ALL TABLES` (init.sql:579) incluye `TRUNCATE`, que la seguridad por fila no controla: el rol puede vaciar la tabla de menciones aunque sus políticas solo le permitan leerla. **Riesgo acotado:** `osint_admin` se crea sin `LOGIN` (init.sql:575) y ningún rol que se conecta lo hereda (el único `GRANT` de rol es `osint_readonly TO appsmith_readonly`, init.sql:617), así que solo podría asumirlo un superusuario, que ya puede vaciar cualquier tabla. **No se revoca** para no cambiar el código evaluado (`9f24de2`). **Sentencia que lo revoca:** `REVOKE TRUNCATE ON social_mentions FROM osint_admin;`. Declarado en la tesis REV78: C.4 y Tabla A2.
+- **Rol de servicio superusuario (R8A-32, A-53, AD-14).** Verificado con una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`). R8A-32 pasa de «Contraria (sin ejecutar)» a «Contraria»; sigue declarada. Total sin cambios: 147 filas y 39 temas.

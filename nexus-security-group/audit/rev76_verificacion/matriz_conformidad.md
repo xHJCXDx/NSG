@@ -75,7 +75,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 - **Seguridad de la ejecución manual:** el webhook de n8n no exige el secreto y el puerto 5678 se publica en todas las interfaces (R8B-09, R8B-38, R8B-39).
 - **Exposición de datos:** los roles de análisis y consulta leen `password_hash` y los datos de red y sesión (A-15, A-50, R8A-34); `/api/system/info` es público (A-78); la contraseña inicial del administrador se compara en texto plano desde el entorno (A-81).
-- **Rol de servicio superusuario** (R8A-32, A-53, AD-14; inferido de la imagen de postgres, no ejecutado).
+- **Rol de servicio superusuario** (R8A-32, A-53, AD-14; inferido de la imagen de postgres, no ejecutado en esta auditoría; verificado en la REV78 con una consulta, ver «Cambios REV78»).
 - **Avisos:** incluyen la autoría y hablan de «amenaza detectada» y «Confidence %» (A-09, AD-10, AD-11, AD-98); el estado 'sent' se escribe antes de conocer el resultado (R8B-26).
 - **Registro de ejecución:** estado binario; con las tres fuentes caídas se registra 'success' (AD-88); cuenta como persistidas menciones no confirmadas (AD-85).
 - **Normalización:** los ítems sin id no se descartan (AD-52, R8B-17); las fechas faltantes se reemplazan por la hora actual (AD-66); en HN se pierde el título cuando hay texto (R8A-40).
@@ -146,7 +146,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | A-50 | Usuario: análisis y consulta leen sin el hash de contraseña | Tabla A2 l.2024 | | Contraria | init.sql:686-687 `GRANT SELECT ON TABLE system_users` (incluye password_hash, init.sql:667) | sin escenario | implementar | df1f478 (REV77) |
 | A-51 | Resto de entidades: administración lectura/escritura; análisis y consulta lectura | Tabla A2 l.2018, l.2021-2022, l.2025 | | Implementada | init.sql:577-581, 586, 655-658, 721-727 | sin escenario |  |  |
 | A-52 | Purga y supresión: solo las ejecuta el rol de servicio | Tabla A2 l.2026; A.2 l.2031, l.2041 | | Parcial | init.sql:579 `GRANT EXECUTE ON ALL FUNCTIONS … TO osint_admin`; no se revoca el EXECUTE de PUBLIC sobre purge_old_data; no hay procedimiento de supresión | sin escenario | declarar |  |
-| A-53 | El rol de servicio crea los tres roles de grupo y después no puede crear, modificar ni otorgar roles | Tabla A2 l.2027 | | No implementada | docker-compose.yml:14, 87, 180: backend y n8n usan `POSTGRES_USER` (superusuario inicial); no hay ALTER ROLE NOCREATEROLE | sin escenario | declarar |  |
+| A-53 | El rol de servicio crea los tres roles de grupo y después no puede crear, modificar ni otorgar roles | Tabla A2 l.2027 | | No implementada | docker-compose.yml:14, 87, 180: backend y n8n usan `POSTGRES_USER` (superusuario inicial); no hay ALTER ROLE NOCREATEROLE. Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. | sin escenario | declarar |  |
 | A-54 | La purga recibe el plazo en días (365 por defecto) | A.2 l.2031; §7.8.4 l.1150 | | Implementada | init.sql:449 | E14 |  |  |
 | A-55 | La purga se ejecuta en el mantenimiento mensual (como máximo un mes de demora) | A.2 l.2031, l.2037 | | No implementada | Nada programa la llamada a purge_old_data (solo está definida en init.sql:449) | sin escenario | manual |  |
 | A-56 | Regla 1: las menciones vencidas no confirmadas se eliminan con su análisis, detección y aviso | A.2 l.2033; §7.8.4 l.1150 | | Parcial | init.sql:458-464 + cascadas 78, 111, 167. «Confirmada» excluye las resueltas (A-32) | E29 | declarar |  |
@@ -211,7 +211,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | R8A-29 | La categoría de la detección se deriva de su tipo | §8.2 l.1499 | | Implementada | `getThreatCategory()` («Classify Threat») | sin escenario |  |  |
 | R8A-30 | Cinco plataformas reservadas; un valor no reconocido se normaliza a «other» | §8.2 l.1501 | | Implementada | CHECK platform (init.sql:17); `validPlatforms` y fallback a 'other' («Prep Mention Insert», workflow.json:408) | sin escenario |  |  |
 | R8A-31 | Rol de servicio: propietario de las tablas, único que usan el orquestador y la API, no sujeto a RLS | §8.2.1 l.1507; l.1516 | | Implementada | `DATABASE_URL` y n8n con `${POSTGRES_USER}` (docker-compose.yml:87, 128, 180) | sin escenario |  |  |
-| R8A-32 | El rol de servicio no es superusuario y pierde CREATEROLE/ADMIN OPTION al terminar la instalación | §8.2.1 l.1520 | | Contraria (sin ejecutar) | `POSTGRES_USER` de la imagen oficial es superusuario (docker-compose.yml:14); no hay ALTER ROLE ... NOSUPERUSER/NOCREATEROLE. Se infiere del comportamiento estándar de la imagen; no se ejecutó | sin escenario | declarar |  |
+| R8A-32 | El rol de servicio no es superusuario y pierde CREATEROLE/ADMIN OPTION al terminar la instalación | §8.2.1 l.1520 | | Contraria | `POSTGRES_USER` de la imagen oficial es superusuario (docker-compose.yml:14); no hay ALTER ROLE ... NOSUPERUSER/NOCREATEROLE. Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. | sin escenario | declarar |  |
 | R8A-33 | Rol de administración: accede a todo, pero no puede escribir menciones | §8.2.1 l.1508 | | Implementada | GRANT ALL (init.sql:577); RLS activo en social_mentions con política solo FOR SELECT (init.sql:609, 615-617) | sin escenario |  |  |
 | R8A-34 | Análisis y consulta no leen hashes de contraseña ni datos de red/sesión de la actividad | §8.2.1 l.1509-1510 | | Contraria | `GRANT SELECT ON ALL TABLES` (init.sql:581, 586) y `GRANT SELECT ON system_users` (init.sql:686-687) exponen `password_hash` (init.sql:667) e `ip_address`/`session_id` | E12 | implementar | df1f478 (`password_hash`) y 3994149 (datos de red), REV77 |
 | R8A-35 | Análisis registra revisiones y reconocimientos y agrega actividad; consulta es solo lectura; roles de grupo sin login | §8.2.1 l.1509-1512 | | Implementada | init.sql:573-584 (CREATE ROLE sin LOGIN = NOLOGIN); 586. El rol de análisis también recibe INSERT en detecciones y avisos | E12 |  |  |
@@ -353,7 +353,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 | AD-11 | Minimización: los avisos no incluyen la autoría | B nota, l.2096 | | Contraria | «Build Alert Content»: columna Author en el correo y `_author_` en Slack; «Prep Alert Insert»: el mensaje incluye «por <author>» | sin escenario | implementar | 8ced8ae |
 | AD-12 | Remitente, destinatarios y canal de Slack configurados en el despliegue | B nota, l.2096; C.1.5 | | Implementada | docker-compose.yml:74-76 (SLACK_WEBHOOK_URL, ALERT_EMAIL_FROM/TO); «Send Gmail Alert» | sin escenario |  |  |
 | AD-13 | Requisitos de servidor y contenedores | C.1.1, l.2102 | | No aplica (procedimiento manual) | apoyo: docker-compose.yml (postgres, n8n, sentiment-api, traefik) | sin escenario | manual |  |
-| AD-14 | Rol de servicio sin superusuario, sin CREATEDB ni BYPASSRLS, con CREATEROLE solo para la instalación; base cuyo propietario es ese rol | C.1.2, l.2103 | | No implementada | init.sql:573-575 crea solo los roles de grupo; no hay NOSUPERUSER/NOBYPASSRLS; docker-compose.yml:14 usa POSTGRES_USER (superusuario de la imagen) | sin escenario | declarar |  |
+| AD-14 | Rol de servicio sin superusuario, sin CREATEDB ni BYPASSRLS, con CREATEROLE solo para la instalación; base cuyo propietario es ese rol | C.1.2, l.2103 | | No implementada | init.sql:573-575 crea solo los roles de grupo; no hay NOSUPERUSER/NOBYPASSRLS; docker-compose.yml:14 usa POSTGRES_USER (superusuario de la imagen). Ejecutado en la REV78 (`audit/rev78_verificacion/superusuario_20261118-103944.log`): la API y la credencial de n8n usan `osint_db`, con `rolsuper`, `rolcreaterole` y `rolbypassrls` verdaderos. | sin escenario | declarar |  |
 | AD-15 | Modelo de datos: entidades, 3 roles de grupo, políticas por fila, purga y supresión, categorías y términos, permisos y roles, administrador inicial con hash | C.1.3, l.2104 | | Parcial | init.sql:15,76,109,165,247 (tablas); 573-575 (roles); 618-636 (políticas); 449 (purga); 742/756 (seeds); 759/783 (roles y permisos). No hay procedimiento de supresión ni INSERT de administrador en init.sql | sin escenario | declarar |  |
 | AD-16 | Cierre de la instalación: retirar CREATEROLE y la pertenencia con admin option; crear usuarios de base por persona | C.1.4, l.2105 | | No aplica (procedimiento manual) | sin script de apoyo (no hay CREATEROLE en init.sql) | sin escenario | manual |  |
 | AD-17 | Archivo de entorno no versionado con credenciales, clave de tokens, secreto manual, Slack y correo | C.1.5, l.2106 | | Implementada | nexus-security-group/.gitignore:2-3; solo .env.example está versionado (git ls-files) | sin escenario |  |  |
@@ -510,24 +510,36 @@ Fecha: 16/11/2026 (A-57: 17/11/2026, rama `fix/rev77-purge-cutoff`). Ramas `fix/
 
 ### Correcciones del texto (Q-A1)
 
-Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, que no está en este repositorio; por eso su columna «Commit» dice «tesis REV77». La tabla indica dónde está cada corrección en `Tesis_NSG_OSINT_REV77.md`. Las páginas son las del PDF de la REV77 (`Entrega_Tesis_NSG_OSINT_REV77.pdf`, 17/11/2026). Los conteos no cambian.
+Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, que no está en este repositorio; por eso su columna «Commit» dice «tesis REV77». La tabla indica dónde está cada corrección en `Tesis_NSG_OSINT_REV77.md`. La columna «Página (REV78)», agregada el 18/11/2026, da la página de cada corrección en `Entrega_Tesis_NSG_OSINT_REV78.pdf`. Las páginas son las del PDF de la REV77 (`Entrega_Tesis_NSG_OSINT_REV77.pdf`, 17/11/2026). Los conteos no cambian.
 
-| Fila | Qué dice ahora la tesis | Ubicación en la REV77 | Página |
-|---|---|---|---|
-| A-10 | Se guarda la cantidad de seguidores; el Factor 4 usa su banda | Tabla 8 (§7.8.4); Tabla A1, Mención | pp. 45 y 91 |
-| R8A-38 | La mención guarda la cantidad; el factor la convierte en banda | §8.1.1 | p. 58 |
-| A-27 | Puntaje normalizado entre 0 y 1 (el flujo lo acota a 0,99) | Tabla A1, Detección; §8.1.1, «Métricas derivadas» | pp. 59 y 92 |
-| A-39 | Éxito, éxito parcial o error; la base admite además advertencia y tiempo agotado | Tabla A1, Registro de ejecución | p. 92 |
-| A-76 | Bajas lógicas; el administrador puede además eliminar en forma definitiva | A.3, regla 3 | p. 96 |
-| R8A-02 | La fecha de adquisición es la hora en que se guarda la mención (aproxima la recepción) | §8.1, Etapa 1 | p. 51 |
-| R8B-12 | Ídem, en la consulta de cada fuente | Tabla 21, paso 1 | p. 69 |
-| AD-48 | Ídem, para todos los ítems de la respuesta | D.1, regla 2; aclaración del estado por fuente en Tabla A1 (Registro de ejecución) y D.4 | pp. 92, 100 y 102 |
-| AD-61 | El análisis y la detección registran la hora en que se guardan | D.1, regla 5 | p. 101 |
-| R8B-42 | PBKDF2-SHA256 con 600.000 iteraciones; bcrypt solo verifica *hashes* anteriores | §8.5.2, «Contraseñas» | p. 71 |
-| R8B-43 | Ídem | §8.5.2, «Contraseñas» | p. 71 |
-| R8B-62 | «Ver automatización» da acceso a la vista; sus datos se leen con «Ver registros de ejecución» | Tabla 22 | p. 72 |
-| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (sin cambios; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 |
-| AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | p. 102 |
+| Fila | Qué dice ahora la tesis | Ubicación en la REV77 | Página | Página (REV78) |
+|---|---|---|---|---|
+| A-10 | Se guarda la cantidad de seguidores; el Factor 4 usa su banda | Tabla 8 (§7.8.4); Tabla A1, Mención | pp. 45 y 91 | pp. 45 y 92 |
+| R8A-38 | La mención guarda la cantidad; el factor la convierte en banda | §8.1.1 | p. 58 | p. 58 |
+| A-27 | Puntaje normalizado entre 0 y 1 (el flujo lo acota a 0,99) | Tabla A1, Detección; §8.1.1, «Métricas derivadas» | pp. 59 y 92 | pp. 59 y 93 |
+| A-39 | Éxito, éxito parcial o error; la base admite además advertencia y tiempo agotado | Tabla A1, Registro de ejecución | p. 92 | p. 93 |
+| A-76 | Bajas lógicas; el administrador puede además eliminar en forma definitiva | A.3, regla 3 | p. 96 | p. 97 |
+| R8A-02 | La fecha de adquisición es la hora en que se guarda la mención (aproxima la recepción) | §8.1, Etapa 1 | p. 51 | p. 51 |
+| R8B-12 | Ídem, en la consulta de cada fuente | Tabla 21, paso 1 | p. 69 | p. 69 |
+| AD-48 | Ídem, para todos los ítems de la respuesta | D.1, regla 2; aclaración del estado por fuente en Tabla A1 (Registro de ejecución) y D.4 | pp. 92, 100 y 102 | pp. 93, 102 y 103 |
+| AD-61 | El análisis y la detección registran la hora en que se guardan | D.1, regla 5 | p. 101 | p. 102 |
+| R8B-42 | PBKDF2-SHA256 con 600.000 iteraciones; bcrypt solo verifica *hashes* anteriores | §8.5.2, «Contraseñas» | p. 71 | p. 71 |
+| R8B-43 | Ídem | §8.5.2, «Contraseñas» | p. 71 | p. 71 |
+| R8B-62 | «Ver automatización» da acceso a la vista; sus datos se leen con «Ver registros de ejecución» | Tabla 22 | p. 72 | p. 72 |
+| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (cambió respecto del PDF de 126 páginas evaluado por el tribunal: tesis REV78, Anexo J, Tabla J3, fila 12; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 | pp. 62, 94 y 100 |
+| AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | p. 102 | p. 103 |
 
 **AD-37.** La evidencia de la fila es incompleta. `osint_admin` recibe `GRANT ALL` (init.sql:577), pero `social_mentions` tiene RLS activa con una sola política, `FOR SELECT` (init.sql:609 y 615-617 en `9b90270`; 625 y 631-633 en la REV77). `osint_admin` no es propietario de la tabla ni tiene `BYPASSRLS`, así que solo puede leer menciones (igual que R8A-33 y A-47). El texto de C.4 ya lo decía y no se modificó.
 
+## Cambios REV78
+
+Fecha: 18/11/2026. Devolución de quinta instancia, V-M1: el rol de conexión se verificó ejecutando una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`). La API y la credencial PostgreSQL de n8n se conectan con `osint_db`, que es superusuario, puede crear roles y elude las políticas por fila.
+
+| Fila | Cambio |
+|---|---|
+| R8A-32 | Estado «Contraria (sin ejecutar)» → «Contraria»; evidencia ejecutada |
+| A-53, AD-14 | Se agrega la evidencia ejecutada; el estado no cambia (No implementada) |
+
+Las 37 contrarias no cambian; las 147 declaradas, por estado: No implementada 69, Parcial 60, Contraria 18, Contraria (sin ejecutar) 0. En la tesis REV78, §9.1.2 («Rol de conexión y control de acceso») dice «superusuario» y cita el log.
+
+V-A1 (18/11/2026): la fila AD-37 de «Correcciones del texto (Q-A1)» decía «C.4 (sin cambios)». El texto de C.4 sí cambió respecto del PDF de 126 páginas que recibió el tribunal; la ubicación se corrige y la tesis REV78 lo informa en el Anexo J (Tabla J3, fila 12).

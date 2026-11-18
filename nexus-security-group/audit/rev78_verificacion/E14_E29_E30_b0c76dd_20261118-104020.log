@@ -1,0 +1,66 @@
+# REV78 V-M2: E14, E29, E30 on a clean database
+date: 2026-11-18T10:40:20-03:00
+commit (HEAD): 9a547b04f21f73be3dffd7c4816e96cc64105cb5
+init.sql source: git ref b0c76dd (b0c76dd)
+init.sql sha256: 1f03f3928b46e92c3476d6958c6087430e33f6e01bae9ad845b6ab2074f21cac
+purge cut line: 459:    WHERE created_at < cutoff_date
+scenario script: audit/rev76_verificacion/manuales/E14_E29_E30_purga.sql sha256 5a7af76c2e42697cbfe75db117f17d35b5b554a7255be933ba6f424f503ff4e4
+== Uncommitted tracked changes (empty means clean)
+
+/var/run/postgresql:5432 - accepting connections
+## E14_E29_E30_purga.sql
+BEGIN
+== Real rows older than 365 days before the purge (should be 0: A8 data is from today)
+ old_real_mentions | old_real_logs | real_mentions_before | real_logs_before 
+-------------------+---------------+----------------------+------------------
+                 0 |             0 |                    0 |                0
+(1 row)
+
+INSERT 0 4
+INSERT 0 4
+INSERT 0 1
+== Before the purge
+  external_id  | review_status |  created   |    author_username     | author_id |      raw_data       
+---------------+---------------+------------+------------------------+-----------+---------------------
+ rev76-e14     | confirmed     | 2025-11-17 | rev76-synthetic-author | rev76-a1  | {"synthetic": true}
+ rev76-e29-inv | investigating | 2025-11-17 | rev76-synthetic-author | rev76-a3  | {"synthetic": true}
+ rev76-e29-res | resolved      | 2025-11-17 | rev76-synthetic-author | rev76-a2  | {"synthetic": true}
+ rev76-e30     | confirmed     | 2025-10-14 | rev76-synthetic-author | rev76-a4  | {"synthetic": true}
+(4 rows)
+
+ log_id | workflow_name |  started   
+--------+---------------+------------
+      1 | rev76-e30     | 2025-10-14
+(1 row)
+
+== CALL purge_old_data()
+CALL
+== After the purge: mentions that survive (E14: author and raw data kept? E29: which one survives?)
+NOTICE:  Purge completed: 2 mentions, 1 logs deleted (cutoff: 2025-11-18 13:40:22.908975+00)
+ external_id | review_status |  created   |    author_username     | author_id |      raw_data       
+-------------+---------------+------------+------------------------+-----------+---------------------
+ rev76-e14   | confirmed     | 2025-11-17 | rev76-synthetic-author | rev76-a1  | {"synthetic": true}
+ rev76-e30   | confirmed     | 2025-10-14 | rev76-synthetic-author | rev76-a4  | {"synthetic": true}
+(2 rows)
+
+== After the purge: E30 execution log (kept while its mention exists?)
+ e30_logs_left 
+---------------
+             0
+(1 row)
+
+== Real rows deleted by the purge (should be 0)
+ real_mentions_now | real_logs_now 
+-------------------+---------------
+                 0 |             0
+(1 row)
+
+ROLLBACK
+== After ROLLBACK: synthetic rows left (should be 0 and 0)
+ mentions | logs 
+----------+------
+        0 |    0
+(1 row)
+
+
+log: audit/rev78_verificacion/E14_E29_E30_b0c76dd_20261118-104020.log
