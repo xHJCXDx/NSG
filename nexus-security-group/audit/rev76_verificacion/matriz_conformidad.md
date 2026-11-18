@@ -75,7 +75,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 
 - **Seguridad de la ejecución manual:** el webhook de n8n no exige el secreto y el puerto 5678 se publica en todas las interfaces (R8B-09, R8B-38, R8B-39).
 - **Exposición de datos:** los roles de análisis y consulta leen `password_hash` y los datos de red y sesión (A-15, A-50, R8A-34); `/api/system/info` es público (A-78); la contraseña inicial del administrador se compara en texto plano desde el entorno (A-81).
-- **Rol de servicio superusuario** (R8A-32, A-53, AD-14; inferido de la imagen de postgres, no ejecutado).
+- **Rol de servicio superusuario** (R8A-32, A-53, AD-14; inferido de la imagen de postgres, no ejecutado en esta auditoría; verificado en la REV78 con una consulta, ver «Cambios REV78»).
 - **Avisos:** incluyen la autoría y hablan de «amenaza detectada» y «Confidence %» (A-09, AD-10, AD-11, AD-98); el estado 'sent' se escribe antes de conocer el resultado (R8B-26).
 - **Registro de ejecución:** estado binario; con las tres fuentes caídas se registra 'success' (AD-88); cuenta como persistidas menciones no confirmadas (AD-85).
 - **Normalización:** los ítems sin id no se descartan (AD-52, R8B-17); las fechas faltantes se reemplazan por la hora actual (AD-66); en HN se pierde el título cuando hay texto (R8A-40).
