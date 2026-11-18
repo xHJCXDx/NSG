@@ -468,7 +468,7 @@ Estas reglas son **Contrarias** y no figuraban en la muestra del profesor:
 2. ★ «Política por fila para cada rol»: ahora Implementada por 1040a87 (el profesor la había marcado Parcial). Pero la exclusión de password_hash y de los datos de red es Contraria (R8A-34). La regla de HN sigue siendo Contraria.
 3. No se persisten la instantánea, la versión de reglas ni raw_score; el upsert permite reclasificar en el lugar (R8A-24). E06 y E07 no son reproducibles.
 4. R8A-04 (transacción) afecta a E08. En HN el texto es story_text || title (R8A-40).
-5. R8A-32 se infiere del comportamiento estándar de la imagen postgres; no se ejecutó. La credencial Postgres de n8n se configura en la interfaz de n8n y no está en el repositorio.
+5. R8A-32 se infirió en la REV76 del comportamiento estándar de la imagen postgres, sin ejecutarse; en la REV78 se ejecutó una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`, ver «Cambios REV78»). La credencial Postgres de n8n se configura en la interfaz de n8n y no está en el repositorio: que use `osint_db` lo declara el autor.
 
 **Capítulo 8, §8.4–8.5:**
 
@@ -529,11 +529,11 @@ Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, 
 | AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (cambió respecto del PDF de 126 páginas evaluado por el tribunal: tesis REV78, Anexo J, Tabla J3, fila 12; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 | pp. 62, 94 y 100 |
 | AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | p. 102 | p. 103 |
 
-**AD-37.** La evidencia de la fila es incompleta. `osint_admin` recibe `GRANT ALL` (init.sql:577), pero `social_mentions` tiene RLS activa con una sola política, `FOR SELECT` (init.sql:609 y 615-617 en `9b90270`; 625 y 631-633 en la REV77). `osint_admin` no es propietario de la tabla ni tiene `BYPASSRLS`, así que solo puede leer menciones (igual que R8A-33 y A-47). El texto de C.4 ya lo decía y no se modificó.
+**AD-37.** La evidencia de la fila es incompleta. `osint_admin` recibe `GRANT ALL` (init.sql:577), pero `social_mentions` tiene RLS activa con una sola política, `FOR SELECT` (init.sql:609 y 615-617 en `9b90270`; 625 y 631-633 en la REV77). `osint_admin` no es propietario de la tabla ni tiene `BYPASSRLS`, así que solo puede leer menciones (igual que R8A-33 y A-47). C.4 lo dice, pero su texto cambió respecto del PDF de 126 páginas que recibió el tribunal (tesis REV78, Anexo J, Tabla J3, fila 12; ver «Cambios REV78»).
 
 ## Cambios REV78
 
-Fecha: 18/11/2026. Devolución de quinta instancia, V-M1: el rol de conexión se verificó ejecutando una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`). La API y la credencial PostgreSQL de n8n se conectan con `osint_db`, que es superusuario, puede crear roles y elude las políticas por fila.
+Fecha: 18/11/2026. Devolución de quinta instancia, V-M1: el rol de conexión se verificó ejecutando una consulta (`audit/rev78_verificacion/superusuario_20261118-103944.log`). La API se conecta con `osint_db`, que es superusuario, puede crear roles y elude las políticas por fila. Que la credencial PostgreSQL de n8n use el mismo usuario lo declara el autor: la consulta se ejecutó con ese nombre de usuario y no lee la credencial.
 
 | Fila | Cambio |
 |---|---|
@@ -543,3 +543,15 @@ Fecha: 18/11/2026. Devolución de quinta instancia, V-M1: el rol de conexión se
 Las 37 contrarias no cambian; las 147 declaradas, por estado: No implementada 69, Parcial 60, Contraria 18, Contraria (sin ejecutar) 0. En la tesis REV78, §9.1.2 («Rol de conexión y control de acceso») dice «superusuario» y cita el log.
 
 V-A1 (18/11/2026): la fila AD-37 de «Correcciones del texto (Q-A1)» decía «C.4 (sin cambios)». El texto de C.4 sí cambió respecto del PDF de 126 páginas que recibió el tribunal; la ubicación se corrige y la tesis REV78 lo informa en el Anexo J (Tabla J3, fila 12).
+
+## Cambios REV79
+
+Fecha: 18/11/2026. Devolución de sexta instancia, W-B2 (a) y W-B3. Se corrigen tres textos de este archivo que contradecían «Cambios REV78»; ninguna fila, estado ni cifra cambia.
+
+| Lugar | Cambio |
+|---|---|
+| «Notas de cada bloque», nota 5 | R8A-32 se ejecutó en la REV78 (log de superusuario); el usuario de la credencial de n8n es declarado |
+| «Notas de cada bloque», nota sobre AD-37 | El texto de C.4 sí cambió respecto del PDF de 126 páginas (tesis REV78, Anexo J, Tabla J3, fila 12) |
+| «Cambios REV78», primer párrafo | Se separa lo verificado (la conexión de la API) de lo declarado (la credencial de n8n) |
+
+En `escenarios.md`, el procedimiento de E14 y la nota sobre la purga (E14, E29 y E30) dicen que el corte es por `collected_at` desde `7edd963` y era por `created_at` hasta `b0c76dd` (W-B2 b). En la tesis REV79, la Tabla J5 del Anexo J lista estos cambios, y §9.1.2 dice que el usuario de n8n es declarado.
