@@ -530,3 +530,9 @@ El 17/11/2026 se implementó también A-57 (rama `fix/rev77-purge-cutoff`):
 
 Total: 148 → 147 filas; los temas siguen siendo 39.
 
+
+## Cambios REV78
+
+Fecha: 18/11/2026. Residuo de AD-37 que se declara (devolución de quinta instancia, V-B3). AD-37 tiene la decisión «corregir el texto», así que no suma filas declaradas: el total sigue en 147 filas y 39 temas.
+
+- **`TRUNCATE` de `osint_admin` sobre `social_mentions`.** El `GRANT ALL PRIVILEGES ON ALL TABLES` (init.sql:579) incluye `TRUNCATE`, que la seguridad por fila no controla: el rol puede vaciar la tabla de menciones aunque sus políticas solo le permitan leerla. **Riesgo acotado:** `osint_admin` se crea sin `LOGIN` (init.sql:575) y ningún rol que se conecta lo hereda (el único `GRANT` de rol es `osint_readonly TO appsmith_readonly`, init.sql:617), así que solo podría asumirlo un superusuario, que ya puede vaciar cualquier tabla. **No se revoca** para no cambiar el código evaluado (`9f24de2`). **Sentencia que lo revoca:** `REVOKE TRUNCATE ON social_mentions FROM osint_admin;`. Declarado en la tesis REV78: C.4 y Tabla A2.
