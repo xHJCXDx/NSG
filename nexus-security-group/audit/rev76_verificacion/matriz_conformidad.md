@@ -526,7 +526,7 @@ Fecha: 17/11/2026. Las 14 filas **corregir el texto** se resuelven en la tesis, 
 | R8B-42 | PBKDF2-SHA256 con 600.000 iteraciones; bcrypt solo verifica *hashes* anteriores | §8.5.2, «Contraseñas» | p. 71 |
 | R8B-43 | Ídem | §8.5.2, «Contraseñas» | p. 71 |
 | R8B-62 | «Ver automatización» da acceso a la vista; sus datos se leen con «Ver registros de ejecución» | Tabla 22 | p. 72 |
-| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (sin cambios; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 |
+| AD-37 | El rol de administración tiene privilegios sobre todas las tablas, pero sus políticas por fila solo le permiten leer las menciones | C.4 (cambió respecto del PDF de 126 páginas evaluado por el tribunal: tesis REV78, Anexo J, Tabla J3, fila 12; coincide con §8.2.1 y la Tabla A2) | pp. 62, 93 y 99 |
 | AD-77 | Con token, la operación de análisis lo exige; la de estado no | D.3 | p. 102 |
 
 **AD-37.** La evidencia de la fila es incompleta. `osint_admin` recibe `GRANT ALL` (init.sql:577), pero `social_mentions` tiene RLS activa con una sola política, `FOR SELECT` (init.sql:609 y 615-617 en `9b90270`; 625 y 631-633 en la REV77). `osint_admin` no es propietario de la tabla ni tiene `BYPASSRLS`, así que solo puede leer menciones (igual que R8A-33 y A-47). El texto de C.4 ya lo decía y no se modificó.
@@ -541,3 +541,5 @@ Fecha: 18/11/2026. Devolución de quinta instancia, V-M1: el rol de conexión se
 | A-53, AD-14 | Se agrega la evidencia ejecutada; el estado no cambia (No implementada) |
 
 Las 37 contrarias no cambian; las 147 declaradas, por estado: No implementada 69, Parcial 60, Contraria 18, Contraria (sin ejecutar) 0. En la tesis REV78, §9.1.2 («Rol de conexión y control de acceso») dice «superusuario» y cita el log.
+
+V-A1 (18/11/2026): la fila AD-37 de «Correcciones del texto (Q-A1)» decía «C.4 (sin cambios)». El texto de C.4 sí cambió respecto del PDF de 126 páginas que recibió el tribunal; la ubicación se corrige y la tesis REV78 lo informa en el Anexo J (Tabla J3, fila 12).
