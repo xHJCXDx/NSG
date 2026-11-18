@@ -1,0 +1,18 @@
+# REV78 V-M1: are the API and n8n database users superusers?
+date: 2026-11-18T10:39:44-03:00
+commit: 9a547b04f21f73be3dffd7c4816e96cc64105cb5
+branch: develop
+code changed since 9f24de2 outside audit/: 0 files
+== Uncommitted tracked changes (empty means clean)
+== Containers
+osint-dashboard-api  nexus-security-group-dashboard-api  Up 2 minutes (healthy)
+osint-postgres-n8n  postgres:17  Up 2 minutes (healthy)
+osint-postgres  postgres:17  Up 2 minutes (healthy)
+
+## 1. API connection (DATABASE_URL of osint-dashboard-api)
+current_user=osint_db rolsuper=True rolcreaterole=True rolbypassrls=True
+
+## 2. n8n PostgreSQL credential (user declared by the author: osint_db)
+current_user=osint_db rolsuper=t rolcreaterole=t rolbypassrls=t
+
+log: audit/rev78_verificacion/superusuario_20261118-103944.log
